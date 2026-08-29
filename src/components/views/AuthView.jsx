@@ -11,6 +11,9 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // URL Direct-Render Logo dari Google Drive
+  const LOGO_URL = "https://lh3.googleusercontent.com/d/1h3Q3evvS0pdVDkuD7REUEAF1NMHrQqb2";
+
   const handleLogin = (e) => {
     e.preventDefault();
     const uClean = username.trim().toLowerCase();
@@ -128,10 +131,15 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
           </svg>
         </div>
 
-        {/* Top Header Tag */}
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 p-1 flex items-center justify-center font-black text-xs text-sky-400">
-            P
+        {/* Top Header Tag dengan Logo Mini */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shadow-md border border-slate-700">
+            <img 
+              src={LOGO_URL} 
+              alt="Logo PRISM" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
           </div>
           <span className="font-extrabold tracking-wider text-xs uppercase text-slate-200">
             PRISM
@@ -141,12 +149,15 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
           </span>
         </div>
 
-        {/* Middle Hero Typography */}
+        {/* Middle Hero Typography & Logo Card */}
         <div className="relative z-10 my-auto py-12 max-w-lg space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-white p-2 shadow-xl flex items-center justify-center border border-slate-700">
-            <span className="text-xl font-black tracking-tight text-slate-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              PRISM
-            </span>
+          <div className="w-20 h-20 rounded-2xl bg-white p-2.5 shadow-2xl flex items-center justify-center border border-slate-700">
+            <img 
+              src={LOGO_URL} 
+              alt="Logo Utama PRISM" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
           </div>
 
           <div className="space-y-2">
