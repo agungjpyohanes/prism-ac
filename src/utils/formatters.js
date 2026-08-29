@@ -93,6 +93,20 @@ export const fmtPct = (n) => {
 
 export const formatPercent = fmtPct;
 
+// Helper konversi Hex Color ke RGBA (hexA) - Dibutuhkan oleh OverviewView.jsx
+export const hexA = (hex, alpha = 1) => {
+  if (!hex) return `rgba(100, 116, 139, ${alpha})`;
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map((x) => x + x).join('');
+  }
+  const numVal = parseInt(c, 16);
+  const r = (numVal >> 16) & 255;
+  const g = (numVal >> 8) & 255;
+  const b = numVal & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 // Helper cek status selesai
 export const isDone = (val) => {
   if (!val) return false;
