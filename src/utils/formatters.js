@@ -23,14 +23,21 @@ export const parseDateVal = (val) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-// Helper awal hari
+// Helper awal hari (00:00:00.000)
 export const startOfDay = (d) => {
-  const date = new Date(d);
+  const date = parseDateVal(d) || new Date();
   date.setHours(0, 0, 0, 0);
   return date;
 };
 
-// Helper format ISO Date string YYYY-MM-DD (Dibutuhkan oleh Header.jsx)
+// Helper akhir hari (23:59:59.999) - Dibutuhkan oleh OverviewView.jsx
+export const endOfDay = (d) => {
+  const date = parseDateVal(d) || new Date();
+  date.setHours(23, 59, 59, 999);
+  return date;
+};
+
+// Helper format ISO Date string YYYY-MM-DD
 export const iso = (d = new Date()) => {
   const date = parseDateVal(d) || new Date();
   const year = date.getFullYear();
@@ -39,7 +46,10 @@ export const iso = (d = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-// Helper cek status pekerjaan selesai (isDone)
+// Helper ISO format saat ini
+export const nowISO = () => iso(new Date());
+
+// Helper cek status pekerjaan selesai
 export const isDone = (val) => {
   if (!val) return false;
   const s = String(val).trim().toLowerCase();
@@ -65,4 +75,13 @@ export const formatDateID = (val) => {
     month: 'short',
     year: 'numeric'
   });
+};
+
+// Helper warna badge status
+export const badgeColor = (status) => {
+  const s = String(status || '').toLowerCase();
+  if (s.includes('done') || s.includes('selesai') || s.includes('ok')) return 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400';
+  if (s.includes('progress') || s.includes('proses') || s.includes('running')) return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400';
+  if (s.includes('pending') || s.includes('hold') || s.includes('antri')) return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950/40 dark:text-blue-400';
+  return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-400';
 };
