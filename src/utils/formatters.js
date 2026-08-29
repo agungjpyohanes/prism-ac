@@ -16,6 +16,15 @@ export const cell = (row, idx) => {
   return '';
 };
 
+// Helper kategori JOP (Dibutuhkan oleh ProductionView.jsx)
+export const jopCat = (row) => {
+  if (!row) return '-';
+  if (typeof row === 'object' && !Array.isArray(row)) {
+    return row.category || row.divisi || row.div || '-';
+  }
+  return cell(row, 7) || cell(row, 0) || '-';
+};
+
 // Helper parsing tanggal
 export const parseDateVal = (val) => {
   if (!val) return null;
@@ -77,7 +86,7 @@ export const fmtDateTime = (val) => {
   return `${fmtDate(d)} ${fmtTime(d)}`;
 };
 
-// Format Rentang Periode (fmtPeriodRange) - Dibutuhkan oleh ProductionView.jsx
+// Format Rentang Periode (fmtPeriodRange)
 export const fmtPeriodRange = (period) => {
   if (!period) return 'Semua Periode';
   if (typeof period === 'string') return period;
@@ -116,7 +125,7 @@ export const isDone = (val) => {
   return s === 'done' || s === 'selesai' || s === 'finish' || s === 'finished' || s === 'ok';
 };
 
-// Helper konversi string durasi "HH:MM:SS" / "MM:SS" ke menit
+// Helper konversi string durasi ke menit
 export const durToMin = (durationStr) => {
   if (!durationStr) return 0;
   const parts = String(durationStr).split(':');
