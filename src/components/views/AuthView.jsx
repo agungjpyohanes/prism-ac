@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
 import { supabase } from '../../services/supabase';
-import { Eye, EyeOff, KeyRound, UserPlus, LogIn } from 'lucide-react';
+import { 
+  Eye, 
+  EyeOff, 
+  KeyRound, 
+  UserPlus, 
+  LogIn, 
+  ShieldCheck, 
+  CheckCircle2, 
+  Server, 
+  Database,
+  Lock,
+  User,
+  Sparkles
+} from 'lucide-react';
 
 export default function AuthView({ usersData = [], onLoginSuccess, onToast, serverStatus = {} }) {
   const [tab, setTab] = useState('login');
@@ -107,188 +120,249 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
   const allConnected = tables.every((t) => serverStatus[t.key] === 'live');
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl space-y-5 border border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-600 text-white flex items-center justify-center font-display font-extrabold text-2xl shadow-lg">
-            P
-          </div>
-          <div>
-            <div className="font-display font-black text-xl text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              PRISM
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 font-bold">
-                V 1.0
-              </span>
+    <div className="relative min-h-screen w-full bg-[#090d16] text-slate-100 flex items-center justify-center p-4 sm:p-6 overflow-hidden select-none font-sans">
+      
+      {/* Background Aurora Lighting Effects */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px] pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-sky-500/20 rounded-full blur-[128px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[160px] pointer-events-none" />
+      
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+      {/* Main Glassmorphic Card Container */}
+      <div className="relative w-full max-w-[460px] bg-slate-900/70 backdrop-blur-2xl border border-slate-700/50 rounded-3xl p-7 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)] space-y-6 z-10 transition-all">
+        
+        {/* Brand Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-2xl blur opacity-70 group-hover:opacity-100 transition duration-300" />
+              <div className="relative w-12 h-12 rounded-2xl bg-slate-950 border border-slate-700/80 flex items-center justify-center font-display font-black text-2xl text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-indigo-400 shadow-inner">
+                P
+              </div>
             </div>
-            <div className="text-[11px] text-slate-400 font-medium">Prepress Integrated System & Monitoring</div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-display font-black text-xl tracking-tight text-white">
+                  PRISM
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                  V 1.0
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-400">
+                Prepress Integrated System & Monitoring
+              </p>
+            </div>
+          </div>
+          
+          <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-[10px] font-semibold text-slate-300">
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span>Smart Suite</span>
           </div>
         </div>
 
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl text-xs font-bold">
+        {/* Tab Navigation Switcher */}
+        <div className="flex p-1 bg-slate-950/60 border border-slate-800/80 rounded-2xl text-xs font-bold">
           <button
             onClick={() => setTab('login')}
-            className={`flex-1 py-2 rounded-xl transition ${
-              tab === 'login' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow' : 'text-slate-400'
+            className={`flex-1 py-2 rounded-xl transition-all duration-200 ${
+              tab === 'login'
+                ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-600/30 font-extrabold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Masuk
           </button>
           <button
             onClick={() => setTab('signup')}
-            className={`flex-1 py-2 rounded-xl transition ${
-              tab === 'signup' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow' : 'text-slate-400'
+            className={`flex-1 py-2 rounded-xl transition-all duration-200 ${
+              tab === 'signup'
+                ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-600/30 font-extrabold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Sign Up
           </button>
           <button
             onClick={() => setTab('change_pwd')}
-            className={`flex-1 py-2 rounded-xl transition ${
-              tab === 'change_pwd' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow' : 'text-slate-400'
+            className={`flex-1 py-2 rounded-xl transition-all duration-200 ${
+              tab === 'change_pwd'
+                ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-600/30 font-extrabold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Ubah Sandi
           </button>
         </div>
 
+        {/* Form Area */}
         <form
           onSubmit={
             tab === 'login' ? handleLogin : tab === 'signup' ? handleSignup : handleChangePassword
           }
-          className="space-y-3.5"
+          className="space-y-4"
         >
-          <div>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+          {/* Username Input */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1">
               Username
             </label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="inp w-full py-2.5 px-3.5 text-xs font-semibold dark:bg-slate-800 dark:text-white dark:border-slate-700"
-              placeholder="Masukkan username..."
-            />
-          </div>
-
-          {tab === 'signup' && (
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                Role Akses
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="inp w-full py-2.5 px-3.5 text-xs font-semibold dark:bg-slate-800 dark:text-white dark:border-slate-700"
-              >
-                <option value="operator">Operator (Menu 1-5)</option>
-                <option value="staff">Staff (Menu 1-5)</option>
-                <option value="koordinator">Koordinator (Menu 1-5)</option>
-                <option value="supervisor">Supervisor (Menu 1-5)</option>
-                <option value="prepress">Prepress (Menu 1-10)</option>
-                <option value="manager">Manager (Menu 1-10)</option>
-                <option value="developer">Developer (Menu 1-10)</option>
-              </select>
-            </div>
-          )}
-
-          <div className="relative">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-              {tab === 'change_pwd' ? 'Password Lama' : 'Password'}
-            </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="inp w-full py-2.5 px-3.5 text-xs font-semibold pr-10 dark:bg-slate-800 dark:text-white dark:border-slate-700"
-              placeholder="Masukkan password..."
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-8 text-slate-400 hover:text-slate-600"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-
-          {tab === 'change_pwd' && (
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                Password Baru
-              </label>
+            <div className="relative flex items-center">
+              <User className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
               <input
-                type="password"
+                type="text"
                 required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="inp w-full py-2.5 px-3.5 text-xs font-semibold dark:bg-slate-800 dark:text-white dark:border-slate-700"
-                placeholder="Masukkan password baru..."
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full bg-slate-950/70 border border-slate-700/70 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-100 text-xs font-semibold rounded-xl pl-10 pr-4 py-2.5 outline-none transition placeholder:text-slate-600"
+                placeholder="Masukkan username..."
               />
             </div>
+          </div>
+
+          {/* Role Selector (Only for Sign Up) */}
+          {tab === 'signup' && (
+            <div className="space-y-1.5 anim-in">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1">
+                Role Akses
+              </label>
+              <div className="relative flex items-center">
+                <ShieldCheck className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full bg-slate-950/70 border border-slate-700/70 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-100 text-xs font-semibold rounded-xl pl-10 pr-4 py-2.5 outline-none transition cursor-pointer"
+                >
+                  <option value="operator">Operator (Menu 1-5)</option>
+                  <option value="staff">Staff (Menu 1-5)</option>
+                  <option value="koordinator">Koordinator (Menu 1-5)</option>
+                  <option value="supervisor">Supervisor (Menu 1-5)</option>
+                  <option value="prepress">Prepress (Menu 1-10)</option>
+                  <option value="manager">Manager (Menu 1-10)</option>
+                  <option value="developer">Developer (Menu 1-10)</option>
+                </select>
+              </div>
+            </div>
           )}
 
+          {/* Password Input */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1">
+              {tab === 'change_pwd' ? 'Password Lama' : 'Password'}
+            </label>
+            <div className="relative flex items-center">
+              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-950/70 border border-slate-700/70 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-100 text-xs font-semibold rounded-xl pl-10 pr-10 py-2.5 outline-none transition placeholder:text-slate-600"
+                placeholder="Masukkan password..."
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 text-slate-500 hover:text-slate-300 transition"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* New Password Input (Only for Change Password) */}
+          {tab === 'change_pwd' && (
+            <div className="space-y-1.5 anim-in">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1">
+                Password Baru
+              </label>
+              <div className="relative flex items-center">
+                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full bg-slate-950/70 border border-slate-700/70 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-100 text-xs font-semibold rounded-xl pl-10 pr-4 py-2.5 outline-none transition placeholder:text-slate-600"
+                  placeholder="Masukkan password baru..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Action Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary w-full py-2.5 text-xs font-bold rounded-xl shadow-lg mt-1 flex items-center justify-center gap-2"
+            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 hover:from-indigo-600 hover:to-blue-700 active:scale-[0.99] text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition duration-200 disabled:opacity-50 cursor-pointer"
           >
             {tab === 'login' && <LogIn className="w-4 h-4" />}
             {tab === 'signup' && <UserPlus className="w-4 h-4" />}
             {tab === 'change_pwd' && <KeyRound className="w-4 h-4" />}
             <span>
               {loading
-                ? 'Memproses...'
+                ? 'Memproses Autentikasi...'
                 : tab === 'login'
                 ? 'Masuk ke Sistem (Tekan Enter)'
                 : tab === 'signup'
-                ? 'Daftarkan Akun'
-                : 'Simpan Password Baru'}
+                ? 'Daftarkan Akun Baru'
+                : 'Perbarui Kata Sandi'}
             </span>
           </button>
         </form>
 
-        <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300">
-          <div className="font-bold flex items-center justify-between">
-            <span>Akun demo: <b>guest / 123456</b></span>
+        {/* Demo Account Indicator Box */}
+        <div className="p-3 bg-emerald-950/30 border border-emerald-500/20 rounded-2xl flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div>
+              <span className="text-emerald-300 font-semibold text-[11px]">Akun Demo: </span>
+              <span className="font-bold text-white text-[11px]">guest / 123456</span>
+            </div>
           </div>
-          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">
-            ✓ {(usersData || []).length} akun master_user termuat dari Supabase.
-          </div>
+          <span className="text-[10px] text-emerald-400/80 font-medium">
+            {(usersData || []).length} Akun Terdaftar
+          </span>
         </div>
 
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+        {/* Database & Table Health Indicator Grid */}
+        <div className="pt-4 border-t border-slate-800 space-y-2.5">
+          <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Koneksi Tabel Supabase</span>
+            </div>
+            <span className={allConnected ? 'text-emerald-400 font-extrabold' : 'text-amber-400'}>
+              {allConnected ? 'ONLINE 100%' : 'CONNECTING...'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {tables.map((t) => {
               const isLive = serverStatus[t.key] === 'live';
               return (
-                <div key={t.key} className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                <div
+                  key={t.key}
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/80"
+                >
+                  <span className="text-[10px] font-bold text-slate-300 truncate pr-1">
+                    {t.label}
+                  </span>
                   <span
-                    className={`w-2 h-2 rounded-full ${
-                      isLive ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-rose-500'
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      isLive 
+                        ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' 
+                        : 'bg-rose-500 shadow-[0_0_8px_#f43f5e]'
                     }`}
                   />
-                  <span className="font-semibold">{t.label}</span>
-                  <span className="text-[9px] text-slate-400">{isLive ? 'live ✓' : 'offline ✗'}</span>
                 </div>
               );
             })}
           </div>
-
-          <div className="text-[10px] flex items-center gap-1.5 pt-1 text-slate-500 dark:text-slate-400">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                allConnected ? 'bg-emerald-500' : 'bg-amber-500'
-              }`}
-            />
-            <span>
-              {allConnected
-                ? '✓ Terhubung ke Database Supabase.'
-                : 'Menghubungkan ke Database Supabase...'}
-            </span>
-          </div>
         </div>
+
       </div>
     </div>
   );
