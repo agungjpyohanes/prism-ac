@@ -30,7 +30,7 @@ export const startOfDay = (d) => {
   return date;
 };
 
-// Helper akhir hari (23:59:59.999) - Dibutuhkan oleh OverviewView.jsx
+// Helper akhir hari (23:59:59.999)
 export const endOfDay = (d) => {
   const date = parseDateVal(d) || new Date();
   date.setHours(23, 59, 59, 999);
@@ -46,28 +46,10 @@ export const iso = (d = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-// Helper ISO format saat ini
 export const nowISO = () => iso(new Date());
 
-// Helper cek status pekerjaan selesai
-export const isDone = (val) => {
-  if (!val) return false;
-  const s = String(val).trim().toLowerCase();
-  return s === 'done' || s === 'selesai' || s === 'finish' || s === 'finished' || s === 'ok';
-};
-
-// Format mata uang / angka desimal
-export const formatNumber = (n) => {
-  return num(n).toLocaleString('id-ID');
-};
-
-// Format persentase
-export const formatPercent = (n) => {
-  return `${num(n).toFixed(1)}%`;
-};
-
-// Format tanggal standar ID
-export const formatDateID = (val) => {
+// Format Tanggal (fmtDate)
+export const fmtDate = (val) => {
   const d = parseDateVal(val);
   if (!d) return '-';
   return d.toLocaleDateString('id-ID', {
@@ -75,6 +57,47 @@ export const formatDateID = (val) => {
     month: 'short',
     year: 'numeric'
   });
+};
+
+export const formatDateID = fmtDate;
+
+// Format Waktu (fmtTime)
+export const fmtTime = (val) => {
+  if (!val) return '-';
+  if (typeof val === 'string' && val.includes(':')) {
+    return val.slice(0, 5);
+  }
+  const d = parseDateVal(val);
+  if (!d) return '-';
+  return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+};
+
+// Format Tanggal & Waktu (fmtDateTime)
+export const fmtDateTime = (val) => {
+  const d = parseDateVal(val);
+  if (!d) return '-';
+  return `${fmtDate(d)} ${fmtTime(d)}`;
+};
+
+// Format Angka (fmtNum & formatNumber)
+export const fmtNum = (n) => {
+  return num(n).toLocaleString('id-ID');
+};
+
+export const formatNumber = fmtNum;
+
+// Format Persen (fmtPct & formatPercent)
+export const fmtPct = (n) => {
+  return `${num(n).toFixed(1)}%`;
+};
+
+export const formatPercent = fmtPct;
+
+// Helper cek status selesai
+export const isDone = (val) => {
+  if (!val) return false;
+  const s = String(val).trim().toLowerCase();
+  return s === 'done' || s === 'selesai' || s === 'finish' || s === 'finished' || s === 'ok';
 };
 
 // Helper warna badge status
