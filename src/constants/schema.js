@@ -18,7 +18,25 @@ export const PROD_KEYS = [
   'rec_etching'
 ];
 
-// 3. Konfigurasi Overview Sets (Dibutuhkan oleh OverviewView.jsx)
+// 3. Konfigurasi Warna Kategori / Divisi (Dibutuhkan oleh ProductionView & Charts)
+export const CAT_COLORS = {
+  rec_ctcp: '#3b82f6',
+  rec_ctp: '#6366f1',
+  rec_screen: '#10b981',
+  rec_flexo: '#f59e0b',
+  rec_etching: '#ef4444',
+  ctcp: '#3b82f6',
+  ctp: '#6366f1',
+  screen: '#10b981',
+  flexo: '#f59e0b',
+  etching: '#ef4444',
+  baik: '#10b981',
+  rusak: '#ef4444',
+  ganti: '#f59e0b',
+  total: '#6366f1'
+};
+
+// 4. Konfigurasi Overview Sets
 export const OVER_SETS = [
   { key: 'rec_ctcp', label: 'CTCP', unit: 'Plat', color: '#3b82f6' },
   { key: 'rec_ctp', label: 'CTP', unit: 'Plat', color: '#6366f1' },
@@ -27,7 +45,7 @@ export const OVER_SETS = [
   { key: 'rec_etching', label: 'ETCHING', unit: 'Plat', color: '#ef4444' }
 ];
 
-// 4. Metadata Divisi
+// 5. Metadata Divisi
 export const DIVISIONS = [
   { key: 'rec_ctcp', label: 'CTCP', table: TABLE_NAMES.CTCP, unit: 'Plat' },
   { key: 'rec_ctp', label: 'CTP', table: TABLE_NAMES.CTP, unit: 'Plat' },
@@ -36,7 +54,7 @@ export const DIVISIONS = [
   { key: 'rec_etching', label: 'ETCHING', table: TABLE_NAMES.ETCHING, unit: 'Plat' }
 ];
 
-// 5. Konfigurasi Index Kolom & Skema
+// 6. Konfigurasi Index Kolom & Skema
 export const SHEETS = {
   rec_ctcp: {
     name: 'rec_ctcp',
@@ -179,7 +197,7 @@ export const SHEETS = {
   }
 };
 
-// 6. Daftar Kolom Tabel
+// 7. Daftar Kolom Tabel
 export const TABLE_COLUMNS = {
   [TABLE_NAMES.USERS]: ['id', 'username', 'role', 'password_hash'],
   [TABLE_NAMES.CTCP]: Object.keys(SHEETS.rec_ctcp.i),
