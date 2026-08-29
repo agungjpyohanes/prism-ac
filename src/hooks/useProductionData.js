@@ -1,98 +1,237 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/supabase';
-import { TABLE_NAMES } from '../constants/schema';
+import { fetchAllRows } from '../services/supabase';
+import { ALL_KEYS, PROD_KEYS, SHEETS } from '../constants/schema';
+import { parseDateVal } from '../utils/formatters';
 
-export const useProductionData = () => {
-  const [data, setData] = useState({
-    rec_ctcp: [],
-    rec_ctp: [],
-    rec_screen: [],
-    rec_flexo: [],
-    rec_etching: [],
-    jop_active: [],
-    master_user: [],
-    rec_user: [],
-    ctcp: [],
-    ctp: [],
-    screen: [],
-    flexo: [],
-    etching: [],
-    jobActive: []
-  });
-
-  const [period, setPeriod] = useState({ type: 'all', start: null, end: null });
-  const [status, setStatus] = useState('online');
+export function useProductionData() {
+  const [data, setData] = useState({});
+  const [status, setStatus] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [period, setPeriod] = useState({ from: null, to: null });
 
-  const fetchAllData = useCallback(async () => {
+  const mapSupabaseRowToMatrix = (row, key) => {
+    if (Array.isArray(row)) return row;
+
+    const find = (...patterns) => {
+      const keys = Object.keys(row);
+      for (const p of patterns) {
+        const cleanP = p.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const matchedKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanP);
+        if (matchedKey && row[matchedKey] !== undefined && row[matchedKey] !== null) {
+          return row[matchedKey];
+        }
+      }
+      return '';
+    };
+
+    if (key === 'jop_active') {
+      return [
+        find('id'),
+        find('job_name'),
+        find('job_no'),
+        find('file_no'),
+        find('status'),
+        find('start_time'),
+        find('date'),
+        find('category')
+      ];
+    }
+
+    if (key === 'rec_ctcp') {
+      return [
+        find('id'),
+        find('job_name'),
+        find('job_no'),
+        find('plate_no'),
+        find('date'),
+        find('expose_mach'),
+        find('print_mach'),
+        find('paper_type'),
+        find('plate_size'),
+        find('qty_new'),
+        find('qty_replace'),
+        find('qty_good'),
+        find('qty_defect'),
+        find('replace_reason'),
+        find('special_request'),
+        find('defect_reason'),
+        find('notes'),
+        find('shift'),
+        find('operator'),
+        find('po_helper')
+      ];
+    }
+
+    if (key === 'rec_ctp') {
+      return [
+        find('id'),
+        find('job_name'),
+        find('job_no'),
+        find('plate_no'),
+        find('date'),
+        find('expose_mach'),
+        find('plate_size'),
+        find('print_mach'),
+        find('paper_type'),
+        find('qty_new'),
+        find('qty_replace'),
+        find('qty_good'),
+        find('qty_defect'),
+        find('replace_reason'),
+        find('special_request'),
+        find('defect_reason'),
+        find('notes'),
+        find('shift'),
+        find('operator')
+      ];
+    }
+
+    if (key === 'rec_screen') {
+      return [
+        find('id'),
+        find('job_name'),
+        find('job_no'),
+        find('file_no'),
+        find('screen_type'),
+        find('status'),
+        find('start_time'),
+        find('finish_time'),
+        find('duration'),
+        find('date'),
+        find('description'),
+        find('screen_mesh'),
+        find('shift'),
+        find('notes'),
+        find('qty_good'),
+        find('qty_defect'),
+        find('qty_replace'),
+        find('defect_reason'),
+        find('replace_reason'),
+        find('operator')
+      ];
+    }
+
+    if (key === 'rec_flexo') {
+      return [
+        find('id'),
+        find('job_name'),
+        find('job_no'),
+        find('file_no'),
+        find('status'),
+        find('start_time'),
+        find('finish_time'),
+        find('duration'),
+        find('date'),
+        find('description'),
+        find('lpi'),
+        find('flexo_thickness', 'thickness'),
+        find('print_mach'),
+        find('rip_pos'),
+        find('keterangan'),
+        find('notes'),
+        find('qty_good'),
+        find('qty_defect'),
+        find('qty_replace'),
+        find('defect_reason'),
+        find('replace_reason'),
+        find('shift'),
+        find('operator'),
+        find('po_helper')
+      ];
+    }
+
+    if (key === 'rec_etching') {
+      return [
+        find('id'),
+        find('job_name'),
+        find('job_no'),
+        find('file_no'),
+        find('plate_type'),
+        find('status'),
+        find('start_time'),
+        find('finish_time'),
+        find('duration'),
+        find('date'),
+        find('description'),
+        find('plate_thickness'),
+        find('keterangan'),
+        find('qty_good'),
+        find('qty_defect'),
+        find('qty_replace'),
+        find('defect_reason'),
+        find('replace_reason'),
+        find('shift'),
+        find('operator'),
+        find('po_helper')
+      ];
+    }
+
+    return Object.values(row);
+  };
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    const newData = {};
+    const newStatus = {};
+
     try {
-      setLoading(true);
+      await Promise.all(
+        ALL_KEYS.map(async (k) => {
+          try {
+            const rows = await fetchAllRows(k);
+            if (k === 'master_user') {
+              newData[k] = (rows || []).map((r) => [
+                String(r.username || r.user || '').trim(),
+                String(r.role || 'guest').toLowerCase().trim(),
+                String(r.password_hash || r.password || '').trim(),
+                String(r.id || '').trim()
+              ]);
+            } else {
+              newData[k] = (rows || []).map((row) => mapSupabaseRowToMatrix(row, k));
+            }
+            newStatus[k] = newData[k].length ? 'live' : 'empty';
+          } catch (e) {
+            newData[k] = [];
+            newStatus[k] = 'fail';
+          }
+        })
+      );
 
-      const [
-        ctcpRes,
-        ctpRes,
-        screenRes,
-        flexoRes,
-        etchingRes,
-        jobActiveRes,
-        usersRes
-      ] = await Promise.all([
-        supabase.from(TABLE_NAMES.CTCP).select('*').order('date', { ascending: false }),
-        supabase.from(TABLE_NAMES.CTP).select('*').order('date', { ascending: false }),
-        supabase.from(TABLE_NAMES.SCREEN).select('*').order('date', { ascending: false }),
-        supabase.from(TABLE_NAMES.FLEXO).select('*').order('date', { ascending: false }),
-        supabase.from(TABLE_NAMES.ETCHING).select('*').order('date', { ascending: false }),
-        supabase.from(TABLE_NAMES.JOB_ACTIVE).select('*').order('date', { ascending: false }),
-        supabase.from(TABLE_NAMES.USERS).select('*')
-      ]);
+      setData(newData);
+      setStatus(newStatus);
 
-      const ctcp = ctcpRes.data || [];
-      const ctp = ctpRes.data || [];
-      const screen = screenRes.data || [];
-      const flexo = flexoRes.data || [];
-      const etching = etchingRes.data || [];
-      const jop_active = jobActiveRes.data || [];
-      const users = usersRes.data || [];
-
-      setData({
-        rec_ctcp: ctcp,
-        rec_ctp: ctp,
-        rec_screen: screen,
-        rec_flexo: flexo,
-        rec_etching: etching,
-        jop_active: jop_active,
-        master_user: users,
-        rec_user: users,
-        ctcp,
-        ctp,
-        screen,
-        flexo,
-        etching,
-        jobActive: jop_active
+      // Sinkronisasi rentang tanggal awal
+      const allTimestamps = [];
+      [...PROD_KEYS, 'jop_active'].forEach((k) => {
+        const cfg = SHEETS[k];
+        if (cfg && cfg.i && newData[k]) {
+          newData[k].forEach((r) => {
+            const d = parseDateVal(r[cfg.i.date]);
+            if (d && !isNaN(d.getTime())) {
+              allTimestamps.push(d.getTime());
+            }
+          });
+        }
       });
 
-      setStatus('online');
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching production data:', err);
-      setStatus('offline');
-      setError(err.message);
+      if (allTimestamps.length > 0) {
+        const maxDate = new Date(Math.max(...allTimestamps));
+        const minDate = new Date(Math.min(...allTimestamps));
+        const startOfMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+        setPeriod({
+          from: startOfMonth < minDate ? minDate : startOfMonth,
+          to: maxDate
+        });
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
+    loadAll();
+  }, [loadAll]);
 
-  return {
-    data,
-    status,
-    loading,
-    period,
-    setPeriod,
-    reload: fetchAllData
-  };
-};
+  return { data, status, loading, period, setPeriod, reload: loadAll };
+}
