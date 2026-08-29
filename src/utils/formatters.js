@@ -30,6 +30,15 @@ export const startOfDay = (d) => {
   return date;
 };
 
+// Helper format ISO Date string YYYY-MM-DD (Dibutuhkan oleh Header.jsx)
+export const iso = (d = new Date()) => {
+  const date = parseDateVal(d) || new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Helper cek status pekerjaan selesai (isDone)
 export const isDone = (val) => {
   if (!val) return false;
