@@ -151,3 +151,6 @@ export const CAT_COLORS = {
 
 export const PROD_KEYS = ['rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'];
 export const ALL_KEYS = ['jop_active', 'rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching', 'master_user'];
+
+// Tambahan alias untuk kompatibilitas import di service
+export const TABLE_NAMES = ALL_KEYS;
