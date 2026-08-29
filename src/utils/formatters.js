@@ -77,6 +77,21 @@ export const fmtDateTime = (val) => {
   return `${fmtDate(d)} ${fmtTime(d)}`;
 };
 
+// Format Rentang Periode (fmtPeriodRange) - Dibutuhkan oleh ProductionView.jsx
+export const fmtPeriodRange = (period) => {
+  if (!period) return 'Semua Periode';
+  if (typeof period === 'string') return period;
+  if (period.type === 'today') return `Hari Ini (${fmtDate(new Date())})`;
+  if (period.type === 'all') return 'Semua Data';
+  if (period.start && period.end) {
+    if (iso(period.start) === iso(period.end)) return fmtDate(period.start);
+    return `${fmtDate(period.start)} - ${fmtDate(period.end)}`;
+  }
+  if (period.start) return `Sejak ${fmtDate(period.start)}`;
+  if (period.end) return `Hingga ${fmtDate(period.end)}`;
+  return 'Semua Periode';
+};
+
 // Format Angka (fmtNum & formatNumber)
 export const fmtNum = (n) => num(n).toLocaleString('id-ID');
 export const formatNumber = fmtNum;
@@ -124,7 +139,7 @@ export const groupBy = (arr, keyFn) => {
   }, {});
 };
 
-// Helper Count By (Dibutuhkan oleh ProductionView.jsx)
+// Helper Count By
 export const countBy = (arr, keyFn) => {
   const list = safeArr(arr);
   return list.reduce((acc, item) => {
