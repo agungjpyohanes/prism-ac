@@ -118,7 +118,7 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
           }} 
         />
 
-        {/* Watermark Target / Registration Mark Cetak */}
+        {/* Watermark Registration Mark Cetak */}
         <div className="absolute right-[-40px] bottom-[-40px] w-96 h-96 opacity-10 pointer-events-none">
           <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full text-slate-300">
             <circle cx="100" cy="100" r="80" />
@@ -134,7 +134,7 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
             P
           </div>
           <span className="font-extrabold tracking-wider text-xs uppercase text-slate-200">
-            PREPRESS SMART
+            PRISM
           </span>
           <span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 font-bold border border-sky-500/30">
             V 1.0
@@ -151,8 +151,11 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
 
           <div className="space-y-2">
             <h1 className="text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              Prepress<br />Smart
+              PRISM
             </h1>
+            <p className="text-xs lg:text-sm text-slate-300 font-medium tracking-wide">
+              (Prepress Integrated System & Monitoring)
+            </p>
             <p className="text-xs lg:text-sm text-slate-400 leading-relaxed max-w-md pt-2">
               Pusat kendali data prepress — monitoring plate CTCP & CTP, screen, flexo, dan etching dalam satu dashboard terintegrasi.
             </p>
@@ -325,12 +328,9 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
           </p>
 
           {/* Akun Demo Alert Box */}
-          <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl text-xs space-y-1">
+          <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl text-xs">
             <div className="text-[11px] text-emerald-900">
               <span className="font-bold">Akun demo (selalu aktif):</span> <b>guest / 123456</b>
-            </div>
-            <div className="text-[10px] text-emerald-700">
-              ✓ {(usersData || []).length} akun master_user termuat dari Database.
             </div>
           </div>
 
@@ -359,7 +359,7 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
         </div>
 
         <p className="mt-8 text-[11px] text-slate-400 text-center">
-          &copy; 2026 Prepress Smart &bull; Database Supabase Cloud
+          &copy; 2026 Aether Code
         </p>
       </div>
 
