@@ -14,9 +14,9 @@ import DataTableView from './components/views/DataTableView';
 import FormsView from './components/views/FormsView';
 import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
 import OperatorShiftView from './components/views/OperatorShiftView';
-import LeaderboardView from './components/views/LeaderboardView';
+// import LeaderboardView from './components/views/LeaderboardView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
-import PersonalKpiView from './components/views/PersonalKpiView';
+// import PersonalKpiView from './components/views/PersonalKpiView';
 import Modal from './components/common/Modal';
 
 export default function App() {
@@ -68,7 +68,7 @@ export default function App() {
   const handleLogin = (u) => {
     setCurrentUser(u);
     sessionStorage.setItem('pf_session', JSON.stringify(u));
-    addToast(`Selamat datang, ${u.USER} 👋`, 'ok');
+    addToast(`Selamat datang, ${u.USER || u.username || 'Pengguna'} 👋`, 'ok');
   };
 
   const handleLogout = () => {
@@ -143,7 +143,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <AuthView
-        usersData={data.rec_user}
+        usersData={data?.rec_user || data?.master_user}
         onLoginSuccess={handleLogin}
         onToast={addToast}
         serverStatus={status}
@@ -239,25 +239,8 @@ export default function App() {
                 />
               )}
 
-              {viewType === 'leaderboard' && (
-                <LeaderboardView
-                  data={data}
-                  period={period}
-                  onOpenList={openRecordList}
-                />
-              )}
-
               {viewType === 'executive_overall' && (
                 <ExecutiveOverallView
-                  data={data}
-                  period={period}
-                  onOpenList={openRecordList}
-                />
-              )}
-
-              {viewType === 'kpi_personal' && (
-                <PersonalKpiView
-                  user={currentUser}
                   data={data}
                   period={period}
                   onOpenList={openRecordList}
