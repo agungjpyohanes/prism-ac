@@ -11,8 +11,8 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // URL Direct-Render Logo dari Google Drive
-  const LOGO_URL = "https://lh3.googleusercontent.com/d/1h3Q3evvS0pdVDkuD7REUEAF1NMHrQqb2";
+  // URL Direct-Render Logo Baru dari Google Drive
+  const LOGO_URL = "https://lh3.googleusercontent.com/d/1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx";
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -165,7 +165,7 @@ export default function AuthView({ usersData = [], onLoginSuccess, onToast, serv
               PRISM
             </h1>
             <p className="text-xs lg:text-sm text-slate-300 font-medium tracking-wide">
-              (Prepress Integrated System & Monitoring)
+              Integrated System & Monitoring
             </p>
             <p className="text-xs lg:text-sm text-slate-400 leading-relaxed max-w-md pt-2">
               Pusat kendali data prepress — monitoring plate CTCP & CTP, screen, flexo, dan etching dalam satu dashboard terintegrasi.
