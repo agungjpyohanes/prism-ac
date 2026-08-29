@@ -1,193 +1,60 @@
-// Konfigurasi Skema & Indeks Kolom Database Prepress
-export const SHEETS = {
-  db_ctcp: {
-    label: 'CTCP Offset',
-    unit: 'Plate',
-    i: {
-      id: 0,
-      jop: 1,
-      nojop: 2,
-      noplate: 3,
-      date: 4,
-      mesin_expose: 5,
-      mesin_cetak: 6,
-      kertas: 7,
-      baru: 8,
-      ganti: 9,
-      baik: 10,
-      rusak: 11,
-      sebab_ganti: 12,
-      permintaan_khusus: 13,
-      sebab_rusak: 14,
-      shift: 15,
-      op: 16,
-      po: 17
-    }
-  },
-  db_ctp: {
-    label: 'CTP Thermal',
-    unit: 'Plate',
-    i: {
-      id: 0,
-      jop: 1,
-      nojop: 2,
-      noplate: 3,
-      date: 4,
-      mesin_expose: 5,
-      mesin_cetak: 6,
-      kertas: 7,
-      baru: 8,
-      ganti: 9,
-      baik: 10,
-      rusak: 11,
-      sebab_ganti: 12,
-      permintaan_khusus: 13,
-      sebab_rusak: 14,
-      shift: 15,
-      op: 16,
-      po: -1
-    }
-  },
-  db_screen: {
-    label: 'Screen Printing',
-    unit: 'Screen',
-    i: {
-      id: 0,
-      jop: 1,
-      nojop: 2,
-      nob: 3,
-      tipe: 4,
-      status: 5,
-      date: 6,
-      baik: 7,
-      rusak: 8,
-      ganti: 9,
-      sebab_rusak: 10,
-      sebab_ganti: 11,
-      shift: 12,
-      op: 13,
-      po: -1
-    }
-  },
-  db_flexo: {
-    label: 'Flexography',
-    unit: 'Plate',
-    i: {
-      id: 0,
-      jop: 1,
-      nojop: 2,
-      nob: 3,
-      status: 4,
-      date: 5,
-      lpi: 6,
-      tebal: 7,
-      mesin_cetak: 8,
-      rip: 9,
-      baik: 10,
-      rusak: 11,
-      ganti: 12,
-      sebab_rusak: 13,
-      sebab_ganti: 14,
-      shift: 15,
-      op: 16,
-      po: 17
-    }
-  },
-  db_etching: {
-    label: 'Etching Plate',
-    unit: 'Plate',
-    i: {
-      id: 0,
-      jop: 1,
-      nojop: 2,
-      nob: 3,
-      tipe: 4,
-      status: 5,
-      date: 6,
-      tebal: 7,
-      baik: 8,
-      rusak: 9,
-      ganti: 10,
-      sebab_rusak: 11,
-      sebab_ganti: 12,
-      shift: 13,
-      op: 14,
-      po: 15
-    }
-  }
+// Mapping tabel dan skema database Supabase
+export const TABLE_NAMES = {
+  USERS: 'master_user',
+  CTCP: 'rec_ctcp',
+  CTP: 'rec_ctp',
+  SCREEN: 'rec_screen',
+  FLEXO: 'rec_flexo',
+  ETCHING: 'rec_etching',
+  JOB_ACTIVE: 'jop_active'
 };
 
-// Konfigurasi Overview Sets untuk Ringkasan Global
-export const OVER_SETS = [
-  { key: 'db_ctcp', label: 'CTCP Offset', unit: 'Plate', color: '#3b82f6' },
-  { key: 'db_ctp', label: 'CTP Thermal', unit: 'Plate', color: '#06b6d4' },
-  { key: 'db_screen', label: 'Screen Printing', unit: 'Screen', color: '#f59e0b' },
-  { key: 'db_flexo', label: 'Flexography', unit: 'Plate', color: '#10b981' },
-  { key: 'db_etching', label: 'Etching Plate', unit: 'Plate', color: '#8b5cf6' }
+export const DIVISIONS = [
+  { key: 'ctcp', label: 'CTCP', table: TABLE_NAMES.CTCP },
+  { key: 'ctp', label: 'CTP', table: TABLE_NAMES.CTP },
+  { key: 'screen', label: 'SCREEN', table: TABLE_NAMES.SCREEN },
+  { key: 'flexo', label: 'FLEXO', table: TABLE_NAMES.FLEXO },
+  { key: 'etching', label: 'ETCHING', table: TABLE_NAMES.ETCHING }
 ];
 
-// Konfigurasi Link/Form Input Entry Data
-export const FORMS = {
-  db_ctcp: {
-    title: 'Form Input CTCP Offset',
-    desc: 'Input laporan harian produksi plate CTCP',
-    url: ''
-  },
-  db_ctp: {
-    title: 'Form Input CTP Thermal',
-    desc: 'Input laporan harian produksi plate CTP',
-    url: ''
-  },
-  db_screen: {
-    title: 'Form Input Screen Printing',
-    desc: 'Input laporan harian afdruk & pembuatan screen',
-    url: ''
-  },
-  db_flexo: {
-    title: 'Form Input Flexography',
-    desc: 'Input laporan harian pembuatan plate flexo',
-    url: ''
-  },
-  db_etching: {
-    title: 'Form Input Etching Plate',
-    desc: 'Input laporan harian proses etching plate',
-    url: ''
-  }
+export const TABLE_COLUMNS = {
+  [TABLE_NAMES.USERS]: [
+    'id', 'username', 'role', 'password_hash'
+  ],
+  [TABLE_NAMES.CTCP]: [
+    'id', 'job_name', 'job_no', 'plate_no', 'date', 'expose_mach', 
+    'print_mach', 'paper_type', 'plate_size', 'qty_new', 'qty_replace', 
+    'qty_good', 'qty_defect', 'replace_reason', 'special_request', 
+    'defect_reason', 'notes', 'shift', 'operator', 'po_helper'
+  ],
+  [TABLE_NAMES.CTP]: [
+    'id', 'job_name', 'job_no', 'plate_no', 'date', 'expose_mach', 
+    'plate_size', 'print_mach', 'paper_type', 'qty_new', 'qty_replace', 
+    'qty_good', 'qty_defect', 'replace_reason', 'special_request', 
+    'defect_reason', 'notes', 'shift', 'operator'
+  ],
+  [TABLE_NAMES.SCREEN]: [
+    'id', 'job_name', 'job_no', 'file_no', 'screen_type', 'status', 
+    'start_time', 'finish_time', 'duration', 'date', 'description', 
+    'screen_mesh', 'shift', 'notes', 'qty_good', 'qty_defect', 
+    'qty_replace', 'defect_reason', 'replace_reason', 'operator'
+  ],
+  [TABLE_NAMES.FLEXO]: [
+    'id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 
+    'finish_time', 'duration', 'date', 'description', 'lpi', 
+    'flexo_thickness', 'print_mach', 'rip_pos', 'keterangan', 'notes', 
+    'qty_good', 'qty_defect', 'qty_replace', 'defect_reason', 
+    'replace_reason', 'shift', 'operator', 'po_helper'
+  ],
+  [TABLE_NAMES.ETCHING]: [
+    'id', 'job_name', 'job_no', 'file_no', 'plate_type', 'status', 
+    'start_time', 'finish_time', 'duration', 'date', 'description', 
+    'plate_thickness', 'keterangan', 'qty_good', 'qty_defect', 
+    'qty_replace', 'defect_reason', 'replace_reason', 'shift', 
+    'operator', 'po_helper'
+  ],
+  [TABLE_NAMES.JOB_ACTIVE]: [
+    'id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 
+    'date', 'category'
+  ]
 };
-
-// Kategori JOP
-export const JOP_CATS = [
-  ['O', 'Offset'],
-  ['F', 'Flexo'],
-  ['S', 'Screen'],
-  ['E', 'Etching'],
-  ['D', 'Digital']
-];
-
-// Warna Palette Kategori untuk Visualisasi / Chart
-export const CAT_COLORS = {
-  Offset: '#3b82f6',
-  Flexo: '#10b981',
-  Screen: '#f59e0b',
-  Etching: '#8b5cf6',
-  Digital: '#ec4899',
-  Lainnya: '#64748b'
-};
-
-// Kunci Lini Produksi
-export const PROD_KEYS = [
-  'db_ctcp',
-  'db_ctp',
-  'db_screen',
-  'db_flexo',
-  'db_etching'
-];
-
-// Semua Kunci Sheet
-export const ALL_KEYS = [
-  'db_ctcp',
-  'db_ctp',
-  'db_screen',
-  'db_flexo',
-  'db_etching'
-];

@@ -1,88 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, Calendar as CalendarIcon, RotateCcw, Printer } from 'lucide-react';
-import { SHEETS } from '../../constants/schema';
-import { iso } from '../../utils/formatters';
+import React from 'react';
+import { Menu, RotateCcw, Printer, Calendar } from 'lucide-react';
+import { iso, parseDateVal } from '../../utils/formatters';
 
-export default function Header({ view, period, onPeriodChange, onReset, onOpenPrint, onToggleSidebar }) {
-  const [type, key] = view.includes(':') ? view.split(':') : [view, null];
-  const [clock, setClock] = useState('');
+export default function Header({
+  period,
+  onPeriodChange,
+  onReset,
+  onOpenPrint,
+  onToggleSidebar
+}) {
+  const fromStr = period?.from ? iso(period.from) : '';
+  const toStr = period?.to ? iso(period.to) : '';
 
-  useEffect(() => {
-    const updateClock = () => {
-      setClock(new Date().toLocaleString('id-ID', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      }));
-    };
-    updateClock();
-    const interval = setInterval(updateClock, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const getTitle = () => {
-    if (type === 'overview') return 'Dashboard Overview';
-    if (type === 'prod') return `Dashboard Produksi — ${SHEETS[key]?.label || ''}`;
-    if (type === 'data') return `Data Produksi — ${SHEETS[key]?.label || ''}`;
-    if (type === 'compare') return 'Dashboard Komparasi';
-    if (type === 'analytics') return `Analytics ${SHEETS[key]?.label || ''}`;
-    if (type === 'operator_shift') return 'Evaluasi Operator, PO & Shift';
-    if (type === 'executive_overall') return 'Executive Dashboard Overall';
-    if (type === 'forms') return 'Form Permintaan';
-    return 'Dashboard Prepress';
-  };
-
-  const getSub = () => {
-    if (type === 'overview') return 'Ringkasan SCREEN · FLEXO · ETCHING';
-    if (type === 'compare') return 'Bandingkan capaian antar periode';
-    if (type === 'analytics') return `Audit parameter mutu & mesin — ${SHEETS[key]?.label || ''}`;
-    if (type === 'operator_shift') return 'Analisis produktivitas individu dan efisiensi giliran kerja';
-    if (type === 'executive_overall') return 'Pusat kendali makro lintas seluruh lini proses';
-    if (type === 'forms') return 'Terhubung langsung ke Google Form';
-    return SHEETS[key]?.desc || '';
+  const handleDateChange = (type, valStr) => {
+    if (!onPeriodChange) return;
+    const parsed = parseDateVal(valStr);
+    onPeriodChange((prev) => ({
+      ...prev,
+      [type]: parsed
+    }));
   };
 
   return (
-    <header id="topbar" className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur no-print">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 lg:px-6 py-3">
-        <button onClick={onToggleSidebar} className="icon-btn" title="Sembunyikan / tampilkan menu">
-          <Menu className="w-4 h-4" />
-        </button>
-
-        <div className="min-w-0">
-          <h1 className="font-display font-bold text-slate-900 text-base lg:text-lg leading-tight truncate">{getTitle()}</h1>
-          <p className="text-[11px] text-slate-500 truncate">{getSub()}</p>
+    <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 no-print">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
+            title="Menu Sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="font-display font-extrabold text-base lg:text-lg text-slate-900 dark:text-white leading-tight">
+              PRISM
+            </h1>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              Prepress Integrated System & Monitoring
+            </p>
+          </div>
         </div>
 
-        {type !== 'compare' && (
-          <div id="topbarTools" className="ml-auto flex flex-wrap items-center gap-2">
-            <span className="hidden 2xl:inline text-xs text-slate-500 mr-1">{clock}</span>
-            
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5" title="Filter periode">
-              <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="date"
-                value={iso(period?.from)}
-                onChange={e => onPeriodChange({ ...period, from: e.target.value ? new Date(e.target.value) : null })}
-                className="text-xs outline-none bg-transparent w-[122px]"
-              />
-              <span className="text-slate-400 text-xs">–</span>
-              <input
-                type="date"
-                value={iso(period?.to)}
-                onChange={e => onPeriodChange({ ...period, to: e.target.value ? new Date(e.target.value) : null })}
-                className="text-xs outline-none bg-transparent w-[122px]"
-              />
-            </div>
-
-            <button onClick={onReset} className="icon-btn" title="Reset filter ke periode data">
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
-            <button onClick={onOpenPrint} className="btn btn-primary !py-2 text-xs">
-              <Printer className="w-3.5 h-3.5" /> Print / PDF
-            </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+            <input
+              type="date"
+              value={fromStr}
+              onChange={(e) => handleDateChange('from', e.target.value)}
+              className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none w-28"
+            />
+            <span className="text-slate-400 text-xs">s/d</span>
+            <input
+              type="date"
+              value={toStr}
+              onChange={(e) => handleDateChange('to', e.target.value)}
+              className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none w-28"
+            />
           </div>
-        )}
+
+          <button
+            onClick={onReset}
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
+            title="Muat Ulang Data"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={onOpenPrint}
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 px-3 font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print / PDF</span>
+          </button>
+        </div>
       </div>
     </header>
   );

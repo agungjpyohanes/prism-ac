@@ -1,38 +1,34 @@
 import { useEffect, useRef } from 'react';
 
-const IDLE_TIMEOUT = 15 * 60 * 1000; // 15 Menit sesi berakhir
-const IDLE_WARN = 13 * 60 * 1000;    // 13 Menit peringatan
-
-export function useIdleTimer({ onWarn, onTimeout, active = true }) {
-  const idleTimer = useRef(null);
-  const warnTimer = useRef(null);
-
-  const resetTimer = () => {
-    if (!active) return;
-    if (idleTimer.current) clearTimeout(idleTimer.current);
-    if (warnTimer.current) clearTimeout(warnTimer.current);
-
-    warnTimer.current = setTimeout(() => {
-      onWarn?.();
-    }, IDLE_WARN);
-
-    idleTimer.current = setTimeout(() => {
-      onTimeout?.();
-    }, IDLE_TIMEOUT);
-  };
+export function useIdleTimer({ active = true, onWarn, onTimeout, warnMs = 13 * 60 * 1000, timeoutMs = 15 * 60 * 1000 }) {
+  const warnRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     if (!active) return;
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-    events.forEach(e => document.addEventListener(e, resetTimer));
-    resetTimer();
+
+    const resetTimers = () => {
+      if (warnRef.current) clearTimeout(warnRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+      warnRef.current = setTimeout(() => {
+        if (onWarn) onWarn();
+      }, warnMs);
+
+      timeoutRef.current = setTimeout(() => {
+        if (onTimeout) onTimeout();
+      }, timeoutMs);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(e => window.removeEventListener(e, resetTimers));
+    events.forEach(e => window.addEventListener(e, resetTimers));
+    resetTimers();
 
     return () => {
-      events.forEach(e => document.removeEventListener(e, resetTimer));
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-      if (warnTimer.current) clearTimeout(warnTimer.current);
+      events.forEach(e => window.removeEventListener(e, resetTimers));
+      if (warnRef.current) clearTimeout(warnRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [active]);
-
-  return { resetTimer };
+  }, [active, onWarn, onTimeout, warnMs, timeoutMs]);
 }
