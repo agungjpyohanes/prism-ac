@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Helper Class PRISM */
+.card {
+  @apply bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-sm transition-all;
+}
+
+.card-title {
+  @apply font-display font-extrabold text-sm text-slate-800 dark:text-slate-100;
+}
+
+.inp {
+  @apply rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition px-3 py-2 text-xs;
+}
+
+.btn-primary {
+  @apply bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition rounded-xl;
+}
+
+.badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold;
+}
+
+/* Animasi Halus */
+.anim-in {
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast Notifications */
+.toast {
+  @apply px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold text-white transition-all transform;
+}
+.toast.ok { @apply bg-emerald-600; }
+.toast.err { @apply bg-rose-600; }
+.toast.warn { @apply bg-amber-600; }
+.toast.info { @apply bg-slate-800 dark:bg-slate-700; }
+
+/* Aturan Cetak / Print PDF */
+@media print {
+  aside,
+  header,
+  #toasts,
+  .no-print,
+  button {
+    display: none !important;
+  }
+
+  #mainWrap {
+    padding-left: 0 !important;
+  }
+
+  body, html {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    page-break-inside: avoid;
+  }
+
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: #64748b;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 6px;
+    background: #ffffff;
+  }
+}
+
+.print-footer {
+  display: none;
+}
