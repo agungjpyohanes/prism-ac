@@ -151,6 +151,4 @@ export const badgeColor = (status) => {
   if (s.includes('progress') || s.includes('proses') || s.includes('running')) return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400';
   if (s.includes('pending') || s.includes('hold') || s.includes('antri')) return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950/40 dark:text-blue-400';
   return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-400';
-};git add .
-git commit -m "Export countBy, groupBy, and sumBy in formatters.js"
-git push origin v2-refactor
+};
