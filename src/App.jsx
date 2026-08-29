@@ -29,7 +29,6 @@ export default function App() {
     reload
   } = useProductionData();
 
-  // Tampilkan halaman login jika user belum terotentikasi
   if (!user) {
     return <AuthView onLogin={(authenticatedUser) => setUser(authenticatedUser)} status={status} />;
   }
@@ -63,7 +62,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans antialiased">
-      {/* Sidebar Navigasi */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -71,7 +69,6 @@ export default function App() {
         onLogout={() => setUser(null)}
       />
 
-      {/* Konten Utama & Header */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Header
           user={user}
@@ -87,7 +84,6 @@ export default function App() {
         </main>
       </div>
 
-      {/* Modal Popup Global */}
       {modalConfig && (
         <Modal
           config={modalConfig}
