@@ -18,7 +18,17 @@ export const PROD_KEYS = [
   'rec_etching'
 ];
 
-// 3. Konfigurasi Overview Sets
+// 3. Konfigurasi Form Input (Dibutuhkan oleh FormsView.jsx)
+export const FORMS = [
+  { key: 'rec_ctcp', title: 'Form Input CTCP', label: 'CTCP', desc: 'Input data rekaman produksi harian divisi CTCP' },
+  { key: 'rec_ctp', title: 'Form Input CTP', label: 'CTP', desc: 'Input data rekaman produksi harian divisi CTP' },
+  { key: 'rec_screen', title: 'Form Input SCREEN', label: 'SCREEN', desc: 'Input rekaman pembuatan dan afdruk screen' },
+  { key: 'rec_flexo', title: 'Form Input FLEXO', label: 'FLEXO', desc: 'Input data proses pembuatan plat flexo/polymer' },
+  { key: 'rec_etching', title: 'Form Input ETCHING', label: 'ETCHING', desc: 'Input rekaman pembuatan plat klise etching' },
+  { key: 'jop_active', title: 'Form JOP Active', label: 'JOP Active', desc: 'Input dan update status pekerjaan antrian aktif' }
+];
+
+// 4. Konfigurasi Overview Sets
 export const OVER_SETS = [
   { key: 'rec_ctcp', label: 'CTCP', unit: 'Plat', color: '#3b82f6' },
   { key: 'rec_ctp', label: 'CTP', unit: 'Plat', color: '#6366f1' },
@@ -27,7 +37,7 @@ export const OVER_SETS = [
   { key: 'rec_etching', label: 'ETCHING', unit: 'Plat', color: '#ef4444' }
 ];
 
-// 4. Kategori JOP & Warna
+// 5. Kategori JOP & Warna
 export const JOP_CATS = [
   { key: 'rec_ctcp', label: 'CTCP' },
   { key: 'rec_ctp', label: 'CTP' },
@@ -53,7 +63,7 @@ export const CAT_COLORS = {
   total: '#6366f1'
 };
 
-// 5. Metadata Divisi
+// 6. Metadata Divisi
 export const DIVISIONS = [
   { key: 'rec_ctcp', label: 'CTCP', table: TABLE_NAMES.CTCP, unit: 'Plat' },
   { key: 'rec_ctp', label: 'CTP', table: TABLE_NAMES.CTP, unit: 'Plat' },
@@ -65,7 +75,7 @@ export const DIVISIONS = [
 export const SHIFT_LIST = ['1', '2', '3', 'Non Shift'];
 export const STATUS_LIST = ['Pending', 'In Progress', 'Done', 'Hold'];
 
-// 6. Skema Kolom Index
+// 7. Skema Kolom Index
 export const SHEETS = {
   rec_ctcp: {
     name: 'rec_ctcp',
@@ -126,6 +136,7 @@ export const SHEETS = {
   }
 };
 
+// 8. Definisi Kolom Tabel
 export const TABLE_COLUMNS = {
   [TABLE_NAMES.USERS]: ['id', 'username', 'role', 'password_hash'],
   [TABLE_NAMES.CTCP]: Object.keys(SHEETS.rec_ctcp.i),
