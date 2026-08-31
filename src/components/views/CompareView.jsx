@@ -120,7 +120,7 @@ export default function CompareView({ data, onToast }) {
           </div>
         </div>
 
-        {/* Action Buttons (Tertata Rapih dengan Background Pill Glassmorphism) */}
+        {/* Action Buttons */}
         <div className="flex gap-3 mt-6 flex-wrap items-center pt-4 border-t border-white/10">
           <button
             onClick={() => onToast?.('Komparasi diperbarui', 'ok')}

@@ -33,7 +33,7 @@ export default function App() {
   const [modalState, setModalState] = useState(null);
   const [modalHistory, setModalHistory] = useState([]);
 
-  // State Tema (Dark / Light)
+  // Theme State
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('prism_theme') || 'dark';
   });
@@ -275,7 +275,7 @@ export default function App() {
           )}
         </main>
 
-        <footer className="p-4 border-t border-white/10 text-center text-xs text-slate-400 font-mono bg-slate-950/40 backdrop-blur-md">
+        <footer className="p-4 border-t border-white/10 text-center text-xs opacity-60 font-mono bg-black/10 backdrop-blur-md">
           &copy; 2026 PRISM &bull; Integrated System & Monitoring
         </footer>
       </div>
