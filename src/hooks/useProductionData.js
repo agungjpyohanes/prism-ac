@@ -6,7 +6,6 @@ function mapRowToMatrix(key, row) {
   if (!row) return [];
   if (Array.isArray(row)) return row;
 
-  // Kamus alias nama kolom database ke headers schema
   const aliases = {
     job_name: ['job_name', 'nama_pekerjaan', 'jop', 'nama_job', 'job', 'nama', 'pekerjaan'],
     job_no: ['job_no', 'no_jop', 'nojop', 'no_spk', 'spk', 'nomor_jop'],
@@ -20,15 +19,13 @@ function mapRowToMatrix(key, row) {
   const findVal = (field) => {
     if (!field) return '';
     if (row[field] !== undefined && row[field] !== null) return row[field];
-    
-    // Cek kemungkinan alias
+
     const targetKey = field.toLowerCase();
     const aliasList = aliases[targetKey] || [targetKey];
     for (const a of aliasList) {
       if (row[a] !== undefined && row[a] !== null) return row[a];
     }
 
-    // Pencocokan fleksibel tanpa underscore/tanda baca
     const targetClean = targetKey.replace(/[^a-z0-9]/g, '');
     for (const k of Object.keys(row)) {
       if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean) {
@@ -76,16 +73,7 @@ export function useProductionData() {
     await Promise.all(
       ALL_KEYS.map(async (key) => {
         try {
-          let rawRows = await fetchAllRows(key);
-          
-          // Fallback: Jika tabel di database Supabase bernama jop_active
-          if ((!rawRows || rawRows.length === 0) && key === 'job_active') {
-            const fallbackRows = await fetchAllRows('jop_active');
-            if (fallbackRows && fallbackRows.length > 0) {
-              rawRows = fallbackRows;
-            }
-          }
-
+          const rawRows = await fetchAllRows(key);
           const matrix = (rawRows || []).map((r) => mapRowToMatrix(key, r));
           results[key] = matrix;
           statuses[key] = matrix.length > 0 ? 'live' : 'live';
@@ -96,11 +84,6 @@ export function useProductionData() {
         }
       })
     );
-
-    // Salin juga ke jop_active agar kompatibel
-    if (results.job_active) {
-      results.jop_active = results.job_active;
-    }
 
     setData(results);
     setServerStatus(statuses);

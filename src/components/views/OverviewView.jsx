@@ -32,7 +32,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 
   const rawRows = data?.job_active || [];
 
-  // Filter baris data Job Aktif
   const filtered = useMemo(() => {
     const fromTime = period?.from ? startOfDay(period.from)?.getTime() : null;
     const toTime = period?.to ? endOfDay(period.to)?.getTime() : null;
@@ -41,30 +40,24 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     return rawRows.filter((r) => {
       if (!r || !r.length) return false;
 
-      // Ambil ID, nama pekerjaan, atau nomor JOP
       const idVal = cell(r, cfg.i.id, '').trim();
       const jobName = cell(r, cfg.i.job_name, '').trim();
       const jobNo = cell(r, cfg.i.job_no, '').trim();
       
-      // Lewati baris yang benar-benar kosong
       if (!idVal && !jobName && !jobNo) return false;
 
-      // Filter tanggal (hanya jika baris memiliki data tanggal yang valid)
       const d = parseDateVal(r[cfg.i.date]);
       if (d && fromTime && toTime) {
         const t = d.getTime();
         if (t < fromTime || t > toTime) return false;
       }
 
-      // Filter status
       const st = cell(r, cfg.i.status, '').trim();
       if (statusFilter !== 'ALL' && st && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
 
-      // Filter kategori
       const cat = cell(r, cfg.i.category, '').trim();
       if (categoryFilter !== 'ALL' && cat && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
 
-      // Pencarian
       if (q) {
         return r.some((c) => String(c || '').toLowerCase().includes(q));
       }
@@ -72,7 +65,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
   }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
 
-  // Sorting
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
       const valA = a[sortCol] ?? '';
@@ -86,11 +78,9 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
   }, [filtered, sortCol, sortAsc]);
 
-  // Pagination
   const totalPages = Math.ceil(sorted.length / pageSize) || 1;
   const paginatedRows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
-  // Agregasi Status & Kategori
   const stats = useMemo(() => {
     const statusCount = {};
     const categoryCount = {};
@@ -147,7 +137,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 
   return (
     <div className="space-y-5 anim-in">
-      {/* Header Overview */}
       <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -167,7 +156,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* KPI Cards Glow */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div
           onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
@@ -235,7 +223,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* Chart Section */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
@@ -308,7 +295,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* Tabel Rincian Data */}
       <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
