@@ -18,8 +18,8 @@ import { Check, AlertTriangle, RotateCcw, Layers, Percent } from 'lucide-react';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export default function ProductionView({ tabKey, data, period, onSelectRow, onOpenList, onOpenMetric, onOpenDayModal, onGoToData }) {
-  const cfg = SHEETS[tabKey];
-  const rawRows = data[tabKey] || [];
+  const cfg = SHEETS[tabKey] || SHEETS.rec_ctcp;
+  const rawRows = (data && data[tabKey]) || [];
 
   const rows = useMemo(() => {
     return rawRows.filter(r => {
@@ -30,8 +30,8 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
 
       const d = parseDateVal(r[cfg.i.date]);
       if (!d) return true;
-      const from = period.from ? startOfDay(period.from).getTime() : null;
-      const to = period.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
+      const from = period?.from ? startOfDay(period.from).getTime() : null;
+      const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
       if (from && d.getTime() < from) return false;
       if (to && d.getTime() > to) return false;
       return true;
@@ -57,11 +57,11 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
   };
 
   const cards = [
-    { metric: 'baik', label: cfg.cards.baik, val: m.baik, icon: Check, cls: 'text-emerald-600 bg-emerald-50' },
-    { metric: 'rusak', label: cfg.cards.rusak, val: m.rusak, icon: AlertTriangle, cls: 'text-rose-600 bg-rose-50' },
-    { metric: 'ganti', label: cfg.cards.ganti, val: m.ganti, icon: RotateCcw, cls: 'text-amber-600 bg-amber-50' },
-    { metric: 'pakai', label: cfg.cards.pakai, val: m.pakai, icon: Layers, cls: 'text-blue-600 bg-blue-50' },
-    { metric: 'pct', label: 'Total ' + cfg.unit + ' Rusak', val: m.pct, icon: Percent, cls: pctCls(m.pct), pct: true }
+    { metric: 'baik', label: cfg?.cards?.baik || 'Baik', val: m.baik, icon: Check, cls: 'text-emerald-600 bg-emerald-50' },
+    { metric: 'rusak', label: cfg?.cards?.rusak || 'Rusak', val: m.rusak, icon: AlertTriangle, cls: 'text-rose-600 bg-rose-50' },
+    { metric: 'ganti', label: cfg?.cards?.ganti || 'Ganti', val: m.ganti, icon: RotateCcw, cls: 'text-amber-600 bg-amber-50' },
+    { metric: 'pakai', label: cfg?.cards?.pakai || 'Total Pakai', val: m.pakai, icon: Layers, cls: 'text-blue-600 bg-blue-50' },
+    { metric: 'pct', label: 'Total ' + (cfg.unit || 'Item') + ' Rusak', val: m.pct, icon: Percent, cls: pctCls(m.pct), pct: true }
   ];
 
   // Daily Data
@@ -105,27 +105,28 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
     return { labels, counts, idx };
   }, [rows, cfg]);
 
-  // Sebab Rusak & Ganti
+  // Sebab Rusak (Perbaikan Object.entries)
   const pr = useMemo(() => {
     if (cfg.i.penyRusak === undefined || cfg.i.penyRusak === -1) return { labels: [], counts: [] };
     const mp = countBy(rows.filter(r => cell(r, cfg.i.penyRusak).trim() !== ''), r => cell(r, cfg.i.penyRusak));
-    const arr = [...mp.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const arr = Object.entries(mp).sort((a, b) => b[1] - a[1]).slice(0, 8);
     return { labels: arr.map(a => a[0]), counts: arr.map(a => a[1]) };
   }, [rows, cfg]);
 
+  // Sebab Ganti (Perbaikan Object.entries)
   const pg = useMemo(() => {
     if (cfg.i.penyGanti === undefined || cfg.i.penyGanti === -1) return { labels: [], counts: [] };
     const mp = countBy(rows.filter(r => cell(r, cfg.i.penyGanti).trim() !== ''), r => cell(r, cfg.i.penyGanti));
-    const arr = [...mp.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const arr = Object.entries(mp).sort((a, b) => b[1] - a[1]).slice(0, 8);
     return { labels: arr.map(a => a[0]), counts: arr.map(a => a[1]) };
   }, [rows, cfg]);
 
   // Extra Chart Data
   const exData = useMemo(() => {
-    const ex = cfg.charts.extra;
+    const ex = cfg.charts?.extra;
     if (!ex || ex.col === undefined) return null;
     const mp = countBy(rows.filter(r => cell(r, ex.col).trim() !== ''), r => cell(r, ex.col));
-    return { labels: [...mp.keys()], counts: [...mp.values()], ex };
+    return { labels: Object.keys(mp), counts: Object.values(mp), ex };
   }, [rows, cfg]);
 
   return (
@@ -136,9 +137,9 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
         </span>
         <div>
           <h3 className="card-title">Dashboard Produksi {cfg.label}</h3>
-          <p className="text-xs text-slate-500">{cfg.desc} · Periode {fmtPeriodRange(period.from, period.to)} · {rows.length} baris</p>
+          <p className="text-xs text-slate-500">{cfg.label} · Periode {fmtPeriodRange(period?.from, period?.to)} · {rows.length} baris</p>
         </div>
-        <button onClick={() => onGoToData(tabKey)} className="btn btn-ghost ml-auto text-xs">
+        <button onClick={() => onGoToData?.(tabKey)} className="btn btn-ghost ml-auto text-xs">
           Lihat Data {cfg.label} →
         </button>
       </div>
@@ -149,13 +150,13 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
           return (
             <button
               key={c.metric}
-              onClick={() => onOpenMetric(tabKey, c.metric, rows)}
-              className="card card-h p-4 text-left bg-white"
+              onClick={() => onOpenMetric?.(tabKey, c.metric, rows)}
+              className="card card-h p-4 text-left bg-white dark:bg-slate-900 cursor-pointer"
             >
               <span className={`w-8 h-8 rounded-lg grid place-items-center ${c.cls}`}>
                 <Icon className="w-4 h-4" />
               </span>
-              <div className="mt-3 font-display font-extrabold text-2xl text-slate-800">
+              <div className="mt-3 font-display font-extrabold text-2xl text-slate-800 dark:text-slate-100">
                 <CountUp target={c.val} isPct={c.pct} />
               </div>
               <div className="text-[11px] font-semibold text-slate-500 mt-0.5">{c.label} {c.pct ? '' : '(pcs)'}</div>
@@ -169,7 +170,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
           <div className="grid gap-4 xl:grid-cols-3">
             <div className="card p-4 xl:col-span-2">
               <div className="flex justify-between items-center flex-wrap gap-2">
-                <h3 className="card-title">{cfg.charts.daily}</h3>
+                <h3 className="card-title">{cfg.charts?.daily || 'Output Harian'}</h3>
                 <span className="text-[11px] text-slate-400">klik batang = detail harian</span>
               </div>
               <div className="h-72">
@@ -186,7 +187,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
                     scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
                     onClick: (e, els) => {
                       if (!els.length) return;
-                      onOpenDayModal(tabKey, daily.keys[els[0].index]);
+                      onOpenDayModal?.(tabKey, daily.keys[els[0].index]);
                     }
                   }}
                 />
@@ -210,7 +211,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
                     onClick: (e, els) => {
                       if (!els.length) return;
                       const cat = jop.labels[els[0].index];
-                      onOpenList(`Kategori JOP: ${cat}`, tabKey, rows.filter(r => jopCat(cell(r, cfg.i.nojop)) === cat));
+                      onOpenList?.(`Kategori JOP: ${cat}`, tabKey, rows.filter(r => jopCat(cell(r, cfg.i.nojop)) === cat));
                     }
                   }}
                 />
@@ -231,7 +232,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
                     onClick: (e, els) => {
                       if (!els.length) return;
                       const c = pr.labels[els[0].index];
-                      onOpenList(`Sebab Rusak: ${c}`, tabKey, rows.filter(r => cell(r, cfg.i.penyRusak) === c));
+                      onOpenList?.(`Sebab Rusak: ${c}`, tabKey, rows.filter(r => cell(r, cfg.i.penyRusak) === c));
                     }
                   }}
                 />
@@ -250,7 +251,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
                     onClick: (e, els) => {
                       if (!els.length) return;
                       const c = pg.labels[els[0].index];
-                      onOpenList(`Sebab Ganti: ${c}`, tabKey, rows.filter(r => cell(r, cfg.i.penyGanti) === c));
+                      onOpenList?.(`Sebab Ganti: ${c}`, tabKey, rows.filter(r => cell(r, cfg.i.penyGanti) === c));
                     }
                   }}
                 />
@@ -270,7 +271,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
                         onClick: (e, els) => {
                           if (!els.length) return;
                           const c = exData.labels[els[0].index];
-                          onOpenList(`${exData.ex.title}: ${c}`, tabKey, rows.filter(r => cell(r, exData.ex.col) === c));
+                          onOpenList?.(`${exData.ex.title}: ${c}`, tabKey, rows.filter(r => cell(r, exData.ex.col) === c));
                         }
                       }}
                     />
@@ -287,7 +288,7 @@ export default function ProductionView({ tabKey, data, period, onSelectRow, onOp
                         onClick: (e, els) => {
                           if (!els.length) return;
                           const c = exData.labels[els[0].index];
-                          onOpenList(`${exData.ex.title}: ${c}`, tabKey, rows.filter(r => cell(r, exData.ex.col) === c));
+                          onOpenList?.(`${exData.ex.title}: ${c}`, tabKey, rows.filter(r => cell(r, exData.ex.col) === c));
                         }
                       }}
                     />
