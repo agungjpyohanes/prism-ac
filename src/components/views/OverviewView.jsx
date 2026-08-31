@@ -12,63 +12,9 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
-import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle2 } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
-
-// Helper Palet Warna Status Job
-const getStatusBadgeClass = (statusStr = '') => {
-  const s = String(statusStr).toUpperCase().trim();
-  if (s.includes('DONE') || s.includes('SELESAI') || s.includes('OK')) {
-    return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
-  }
-  if (s.includes('PROGRESS') || s.includes('PROSES') || s.includes('JALAN')) {
-    return 'bg-sky-500/15 text-sky-400 border border-sky-500/30';
-  }
-  if (s.includes('ANTRI') || s.includes('QUEUE') || s.includes('PENDING')) {
-    return 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
-  }
-  if (s.includes('EXPOSE') || s.includes('MAIN EXPOSE')) {
-    return 'bg-purple-500/15 text-purple-400 border border-purple-500/30';
-  }
-  if (s.includes('WASHING') || s.includes('CUCI')) {
-    return 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30';
-  }
-  if (s.includes('DRYING') || s.includes('KERING')) {
-    return 'bg-orange-500/15 text-orange-400 border border-orange-500/30';
-  }
-  if (s.includes('POLES') || s.includes('POLISH')) {
-    return 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30';
-  }
-  if (s.includes('TUNGGU') || s.includes('INFO') || s.includes('FILE')) {
-    return 'bg-rose-500/15 text-rose-400 border border-rose-500/30';
-  }
-  return 'bg-slate-700/40 text-slate-300 border border-slate-600/40';
-};
-
-// Helper Palet Warna Category Job
-const getCategoryBadgeClass = (catStr = '') => {
-  const c = String(catStr).toUpperCase().trim();
-  if (c.includes('OFFSET') || c === 'O') {
-    return 'bg-purple-500/15 text-purple-300 border border-purple-500/40';
-  }
-  if (c.includes('FLEXO')) {
-    return 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/40';
-  }
-  if (c.includes('SCREEN')) {
-    return 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40';
-  }
-  if (c.includes('ETCHING')) {
-    return 'bg-amber-500/15 text-amber-300 border border-amber-500/40';
-  }
-  if (c.includes('SAMPLE')) {
-    return 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
-  }
-  if (c.includes('REPRINT')) {
-    return 'bg-pink-500/15 text-pink-300 border border-pink-500/40';
-  }
-  return 'bg-slate-800 text-slate-300 border border-slate-700';
-};
 
 export default function OverviewView({ data = {}, period, onOpenList, onSelectRow }) {
   const [search, setSearch] = useState('');
@@ -81,7 +27,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 
   const cfg = SHEETS.job_active || {
     headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
-    i: { id: 0, jop: 1, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
+    i: { id: 0, job_name: 1, jop: 1, job_no: 2, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
   };
 
   const rawRows = data.job_active || [];
@@ -171,225 +117,128 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     }
   };
 
-  const handleDoughnutClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
-    const clickedIndex = elements[0].index;
-    const catName = Object.keys(stats.categoryCount)[clickedIndex];
-    if (catName && stats.categoryRows[catName]) {
-      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
-    }
-  };
-
-  const handleBarClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
-    const clickedIndex = elements[0].index;
-    const statusName = Object.keys(stats.statusCount)[clickedIndex];
-    if (statusName && stats.statusRows[statusName]) {
-      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
-    }
-  };
+  const inProgCount = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('progress') || cell(r, cfg.i.status).toLowerCase().includes('proses')).length;
+  const pendingCount = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('queue') || cell(r, cfg.i.status).toLowerCase().includes('pending') || cell(r, cfg.i.status).toLowerCase().includes('antri')).length;
+  const doneCount = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('selesai') || cell(r, cfg.i.status).toLowerCase().includes('done')).length;
 
   return (
-    <div className="space-y-5 anim-in">
-      {/* Header Banner */}
-      <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 anim-in">
+      {/* Header Overview Banner */}
+      <div className="card p-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-sky-400/20 text-sky-300 font-bold">MONITORING PRODUKSI</span>
-            <span className="text-xs text-slate-300">· Real-time Job Status</span>
+            <span className="badge">MONITORING WIP</span>
+            <span className="text-xs text-slate-300">Live Active Queue</span>
           </div>
-          <h2 className="font-display font-extrabold text-2xl mt-1 text-white">
+          <h2 className="font-display font-black text-2xl text-white mt-1">
             Dashboard Overview — Job Aktif (WIP)
           </h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Integrated System & Monitoring — Antrean dan status pengerjaan job berjalan
+          <p className="text-xs text-slate-300">
+            Daftar seluruh pekerjaan yang sedang dalam antrean atau proses pembuatan di Prepress[cite: 1, 2]
           </p>
         </div>
         <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Periode</div>
-          <div className="font-bold text-sm text-sky-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Periode Aktif</div>
+          <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}[cite: 1, 2]</div>
         </div>
       </div>
 
-      {/* KPI Cards Ringkasan */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* 4 Scorecards Sesuai Slide 2 PDF */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
-          onClick={() => onOpenList?.('Semua Job Aktif (WIP)', 'job_active', filtered)}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:scale-[1.01] transition"
+          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
+          className="card p-5 cursor-pointer hover:border-cyan-400 flex items-center justify-between"
         >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">TOTAL JOB AKTIF</span>
-            <Activity className="w-4 h-4 text-sky-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">
-            {filtered.length.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat seluruh antrean →</div>
-        </div>
-
-        <div
-          onClick={() => {
-            const inProg = filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('expose') || s.includes('washing') || s.includes('drying') || s.includes('poles');
-            });
-            onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
-          }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN PROGRESS</span>
-            <PlayCircle className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">
-            {filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('expose') || s.includes('washing') || s.includes('drying') || s.includes('poles');
-            }).length.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat job yang sedang berjalan →</div>
-        </div>
-
-        <div
-          onClick={() => {
-            const pending = filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-            });
-            onOpenList?.('Job Dalam Antrean (Queue / Antri)', 'job_active', pending);
-          }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN QUEUE / ANTREAN</span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">
-            {filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-            }).length.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat antrean job →</div>
-        </div>
-
-        <div
-          onClick={() => onOpenList?.('Daftar Kategori Job Aktif', 'job_active', filtered)}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">KATEGORI PROSES</span>
-            <Layers className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-indigo-600">
-            {Object.keys(stats.categoryCount).length}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan pemohon →</div>
-        </div>
-      </div>
-
-      {/* Chart Section */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Card Chart Donut Kategori */}
-        <div className="card p-5 bg-white dark:bg-slate-900 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="card-title">Porsi Job Berdasarkan Kategori</h3>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                Total {filtered.length} Job
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 mb-3">Klik diagram atau badge untuk membuka detail data per divisi</p>
-
-            {/* Pill Badges Jumlah & Persentase per Kategori */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {Object.entries(stats.categoryCount).map(([cat, count], idx) => {
-                const colors = ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b'];
-                const color = colors[idx % colors.length];
-                const pct = filtered.length > 0 ? ((count / filtered.length) * 100).toFixed(1) : 0;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => onOpenList?.(`Job Aktif Kategori: ${cat}`, 'job_active', stats.categoryRows[cat] || [])}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition hover:scale-105 cursor-pointer"
-                    style={{
-                      backgroundColor: `${color}15`,
-                      borderColor: `${color}40`,
-                      color: color
-                    }}
-                  >
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                    <span>{cat}:</span>
-                    <span className="font-extrabold">{count} Job</span>
-                    <span className="text-[10px] opacity-80">({pct}%)</span>
-                  </button>
-                );
-              })}
-            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Job Aktif</p>
+            <h3 className="text-3xl font-black text-white mt-1 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+              {filtered.length.toLocaleString('id-ID')}
+            </h3>
+            <p className="text-[10px] text-cyan-400 mt-1">Klik untuk audit antrean</p>
           </div>
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400">
+            <Activity className="w-6 h-6" />
+          </div>
+        </div>
 
-          <div className="h-60 relative flex items-center justify-center">
+        <div className="card p-5 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Berjalan / In Progress</p>
+            <h3 className="text-3xl font-black text-emerald-400 mt-1 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">
+              {inProgCount.toLocaleString('id-ID')}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1">Sedang diproses mesin</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+            <PlayCircle className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="card p-5 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending / Antrean</p>
+            <h3 className="text-3xl font-black text-amber-400 mt-1 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">
+              {pendingCount.toLocaleString('id-ID')}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1">Menunggu giliran</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400">
+            <Clock className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="card p-5 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Selesai / Passed</p>
+            <h3 className="text-3xl font-black text-indigo-300 mt-1 drop-shadow-[0_0_10px_rgba(129,140,248,0.5)]">
+              {doneCount.toLocaleString('id-ID')}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1">Siap kirim / arsip</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-400/30 flex items-center justify-center text-indigo-400">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Grid Sesuai Slide 2 PDF */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="card-title">Breakdown per Category[cite: 3]</h3>
+            <span className="text-[10px] text-cyan-400 font-mono">Porsi Lini</span>
+          </div>
+          <div className="h-64 flex items-center justify-center">
             {Object.keys(stats.categoryCount).length === 0 ? (
               <span className="text-xs text-slate-400">Tidak ada data kategori</span>
             ) : (
-              <>
-                <Doughnut
-                  data={{
-                    labels: Object.keys(stats.categoryCount).map(
-                      (cat) => `${cat} (${stats.categoryCount[cat]} Job)`
-                    ),
-                    datasets: [
-                      {
-                        data: Object.values(stats.categoryCount),
-                        backgroundColor: ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b'],
-                        borderWidth: 2,
-                        borderColor: '#0f172a'
-                      }
-                    ]
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    cutout: '68%',
-                    plugins: {
-                      legend: {
-                        display: false
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: (context) => {
-                            const val = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                            return ` ${val} Job (${pct}%)`;
-                          }
-                        }
-                      }
-                    },
-                    onClick: handleDoughnutClick
-                  }}
-                />
-                {/* Total Ringkasan di Tengah Lubang Donat */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-black text-slate-800 dark:text-white leading-none">
-                    {filtered.length}
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                    Total Job
-                  </span>
-                </div>
-              </>
+              <Doughnut
+                data={{
+                  labels: Object.keys(stats.categoryCount),
+                  datasets: [
+                    {
+                      data: Object.values(stats.categoryCount),
+                      backgroundColor: ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'],
+                      borderColor: 'rgba(5, 7, 22, 0.8)',
+                      borderWidth: 3
+                    }
+                  ]
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                  }
+                }}
+              />
             )}
           </div>
         </div>
 
-        {/* Card Chart Bar Status */}
-        <div className="card p-5 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h3 className="card-title">Distribusi Status Pengerjaan</h3>
-              <p className="text-[11px] text-slate-400">Klik batang diagram untuk membuka detail status</p>
-            </div>
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="card-title">Distribusi Status Pengerjaan</h3>
+            <span className="text-[10px] text-cyan-400 font-mono">Volume Job</span>
           </div>
           <div className="h-64">
             {Object.keys(stats.statusCount).length === 0 ? (
@@ -402,14 +251,22 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                     {
                       label: 'Jumlah Job',
                       data: Object.values(stats.statusCount),
-                      backgroundColor: '#0284c7',
-                      borderRadius: 4
+                      backgroundColor: '#06b6d4',
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: '#22d3ee'
                     }
                   ]
                 }}
                 options={{
                   maintainAspectRatio: false,
-                  onClick: handleBarClick
+                  scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                  },
+                  plugins: {
+                    legend: { display: false }
+                  }
                 }}
               />
             )}
@@ -417,26 +274,23 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* Tabel Data Job Aktif dengan Search, Sort, dan Pagination */}
-      <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
+      {/* Tabel Data Job Aktif WIP */}
+      <div className="card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display font-extrabold text-lg text-slate-800 dark:text-white">
-              Daftar Antrean & Eksekusi Job Aktif
+            <h2 className="font-display font-bold text-lg text-white">
+              Job Aktif Saat Ini[cite: 3]
             </h2>
-            <p className="text-xs text-slate-500">
-              Menampilkan <b>{sorted.length.toLocaleString('id-ID')} pekerjaan</b> · Klik baris untuk detail lengkap
+            <p className="text-xs text-slate-400">
+              Menampilkan <b>{sorted.length.toLocaleString('id-ID')} pekerjaan</b>
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <select
               value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
-              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
+              onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+              className="inp"
             >
               <option value="ALL">Semua Kategori</option>
               {distinctCategories.map((c) => (
@@ -446,11 +300,8 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 
             <select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              className="inp"
             >
               <option value="ALL">Semua Status</option>
               {distinctStatuses.map((s) => (
@@ -459,31 +310,28 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
             </select>
 
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Cari Job, No SPK, File..."
+                placeholder="Cari Job, SPK..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="inp !pl-8 text-xs py-1.5 w-48 sm:w-56 dark:bg-slate-800 dark:text-white"
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="inp !pl-10 w-48 sm:w-56"
               />
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="tbl">
+            <thead>
               <tr>
-                <th className="py-2.5 px-3">No</th>
+                <th>No</th>
                 {(cfg.headers || []).map((h, i) => (
                   <th
                     key={i}
                     onClick={() => handleSort(i)}
-                    className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                    className="whitespace-nowrap cursor-pointer hover:text-cyan-300 transition"
                   >
                     <div className="flex items-center gap-1">
                       <span>{h.replace(/_/g, ' ')}</span>
@@ -493,42 +341,37 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody>
               {paginatedRows.map((row, idx) => (
                 <tr
                   key={idx}
                   onClick={() => onSelectRow?.('job_active', row)}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
                 >
-                  <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
+                  <td className="text-slate-400 font-mono">{(page - 1) * pageSize + idx + 1}</td>
                   {(cfg.headers || []).map((_, colIdx) => {
                     const val = row[colIdx];
-
-                    // Kolom STATUS dengan warna badge spesifik
                     if (colIdx === cfg.i.status) {
+                      const isDone = String(val).toLowerCase().includes('selesai') || String(val).toLowerCase().includes('done');
+                      const isInProg = String(val).toLowerCase().includes('progress') || String(val).toLowerCase().includes('proses');
                       return (
-                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(val)}`}>
-                            {val || '—'}
+                        <td key={colIdx} className="whitespace-nowrap">
+                          <span
+                            className={`badge ${
+                              isDone
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                : isInProg
+                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            }`}
+                          >
+                            {val || '-'}
                           </span>
                         </td>
                       );
                     }
-
-                    // Kolom CATEGORY dengan warna badge spesifik
-                    if (colIdx === cfg.i.category) {
-                      return (
-                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getCategoryBadgeClass(val)}`}>
-                            {val || '—'}
-                          </span>
-                        </td>
-                      );
-                    }
-
                     return (
-                      <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
-                        {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '—')}
+                      <td key={colIdx} className="whitespace-nowrap text-slate-200 font-medium">
+                        {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '-')}
                       </td>
                     );
                   })}
@@ -536,8 +379,8 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
               ))}
               {paginatedRows.length === 0 && (
                 <tr>
-                  <td colSpan={cfg.headers.length + 1} className="text-center py-8 text-slate-400">
-                    Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian/filter.
+                  <td colSpan={cfg.headers.length + 1} className="text-center py-10 text-slate-400">
+                    Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian.
                   </td>
                 </tr>
               )}
@@ -546,22 +389,20 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
-          <span>
-            Halaman <b>{page}</b> dari <b>{totalPages}</b>
-          </span>
+        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+          <span>Halaman <b>{page}</b> dari <b>{totalPages}</b></span>
           <div className="flex items-center gap-1">
             <button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2 rounded-full border border-white/10 disabled:opacity-30 hover:bg-white/10 text-cyan-300"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2 rounded-full border border-white/10 disabled:opacity-30 hover:bg-white/10 text-cyan-300"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
