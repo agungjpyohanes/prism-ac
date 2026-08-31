@@ -14,7 +14,7 @@
   }
 }
 
-/* Glassmorphism Classes */
+/* Glassmorphism Panel Utilities */
 .glass-panel {
   @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] transition-all duration-300;
 }
@@ -43,7 +43,7 @@
   @apply inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold border border-white/10;
 }
 
-/* Custom Scrollbar */
+/* Custom Cosmic Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -77,3 +77,12 @@
     transform: translateY(0) scale(1); 
   }
 }
+
+/* Toast Notification Styles */
+.toast {
+  @apply px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold text-white transition-all transform;
+}
+.toast.ok { @apply bg-emerald-600/90 backdrop-blur-md border border-emerald-400/40; }
+.toast.err { @apply bg-rose-600/90 backdrop-blur-md border border-rose-400/40; }
+.toast.warn { @apply bg-amber-600/90 backdrop-blur-md border border-amber-400/40; }
+.toast.info { @apply bg-slate-800/90 backdrop-blur-md border border-slate-600/40; }
