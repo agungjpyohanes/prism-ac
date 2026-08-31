@@ -25,12 +25,14 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
   const [page, setPage] = useState(1);
   const pageSize = 15;
 
-  const cfg = SHEETS.jop_active || {
+  // PERBAIKAN: Gunakan SHEETS.job_active (bukan jop_active)
+  const cfg = SHEETS.job_active || {
     headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
-    i: { id: 0, jop: 1, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
+    i: { id: 0, job_name: 1, jop: 1, job_no: 2, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
   };
 
-  const rawRows = data.jop_active || [];
+  // PERBAIKAN: Ambil data dari job_active
+  const rawRows = data.job_active || [];
 
   // Filter baris data Job Aktif
   const filtered = useMemo(() => {
@@ -121,29 +123,26 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     }
   };
 
-  // Handler klik Chart Doughnut Kategori
   const handleDoughnutClick = (event, elements) => {
     if (!elements || elements.length === 0) return;
     const clickedIndex = elements[0].index;
     const catName = Object.keys(stats.categoryCount)[clickedIndex];
     if (catName && stats.categoryRows[catName]) {
-      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'jop_active', stats.categoryRows[catName]);
+      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
     }
   };
 
-  // Handler klik Bar Chart Status
   const handleBarClick = (event, elements) => {
     if (!elements || elements.length === 0) return;
     const clickedIndex = elements[0].index;
     const statusName = Object.keys(stats.statusCount)[clickedIndex];
     if (statusName && stats.statusRows[statusName]) {
-      onOpenList?.(`Job Aktif Status: ${statusName}`, 'jop_active', stats.statusRows[statusName]);
+      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
     }
   };
 
   return (
     <div className="space-y-5 anim-in">
-      {/* Header Banner */}
       <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -163,10 +162,9 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* KPI Cards Ringkasan */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div
-          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'jop_active', filtered)}
+          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
           className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:shadow-md transition"
         >
           <div className="flex items-center justify-between text-slate-400">
@@ -182,7 +180,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         <div
           onClick={() => {
             const inProg = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('progress') || cell(r, cfg.i.status).toLowerCase().includes('proses'));
-            onOpenList?.('Job Sedang Berjalan (In Progress)', 'jop_active', inProg);
+            onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
           }}
           className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:shadow-md transition"
         >
@@ -199,7 +197,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         <div
           onClick={() => {
             const pending = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('queue') || cell(r, cfg.i.status).toLowerCase().includes('pending') || cell(r, cfg.i.status).toLowerCase().includes('antri'));
-            onOpenList?.('Job Dalam Antrean (Queue)', 'jop_active', pending);
+            onOpenList?.('Job Dalam Antrean (Queue)', 'job_active', pending);
           }}
           className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:shadow-md transition"
         >
@@ -225,7 +223,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* Chart Section */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
@@ -286,7 +283,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* Tabel Data Job Aktif dengan Search, Sort, dan Pagination */}
       <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -299,7 +295,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Filter Kategori */}
             <select
               value={categoryFilter}
               onChange={(e) => {
@@ -314,7 +309,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
               ))}
             </select>
 
-            {/* Filter Status */}
             <select
               value={statusFilter}
               onChange={(e) => {
@@ -329,7 +323,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
               ))}
             </select>
 
-            {/* Pencarian */}
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
@@ -369,7 +362,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
               {paginatedRows.map((row, idx) => (
                 <tr
                   key={idx}
-                  onClick={() => onSelectRow?.('jop_active', row)}
+                  onClick={() => onSelectRow?.('job_active', row)}
                   className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
                 >
                   <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
@@ -413,7 +406,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </table>
         </div>
 
-        {/* Pagination Controls */}
         <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
           <span>
             Halaman <b>{page}</b> dari <b>{totalPages}</b>
