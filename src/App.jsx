@@ -36,9 +36,10 @@ export default function App() {
 
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTabKey, setActiveTabKey] = useState('rec_ctp'); // Default ke CTP yang memiliki data
+  const [activeTabKey, setActiveTabKey] = useState('rec_ctcp');
   const [modalState, setModalState] = useState(null);
 
+  // Filter Tanggal Default: 30 Hari Terakhir
   const [period, setPeriod] = useState(() => {
     const to = new Date();
     const from = new Date();
@@ -201,7 +202,7 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; PT Solo Murni
+          &copy; Aether Code 2026 PRISM Integrated System & Monitoring
         </footer>
       </div>
 
