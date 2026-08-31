@@ -1,16 +1,123 @@
-# React + Vite
+Berikut adalah ringkasan penjelasan **README** yang ringkas, terstruktur, dan siap pakai untuk proyek **PRISM**:
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+# 📖 PRISM — Prepress Integrated System & Monitoring
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**PRISM** adalah sistem dashboard web terintegrasi untuk visualisasi, analitik, dan pemantauan operasional lintas lini produksi *Prepress* secara *real-time*.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🚀 Fitur Utama
 
-## Expanding the ESLint configuration
+1. **Dashboard Overview (WIP & Antrean):**
+* Monitoring antrean pekerjaan aktif (*In Queue*, *In Progress*, *Done*).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+* Filter dinamis berdasarkan kategori divisi percetakan dan status pengerjaan.
+
+
+
+
+2. **Monitoring 5 Lini Proses Prepress:**
+* **CTCP Offset**, **CTP Thermal**, **Screen Printing**, **Flexography**, dan **Etching Plate**.
+
+
+* Rekap otomatis *Good Output*, *Reject (Loss)*, *Replace (Ganti)*, dan *Total Output*.
+
+
+
+
+3. **Analisis Mutu & Parameter Teknis:**
+* Perhitungan *Loss Rate (%)* otomatis dengan batas toleransi standar target (≤ 1.0%).
+
+
+* Audit parameter teknis (mesin expose, tipe plate/screen, ketebalan, dan mesin cetak).
+
+
+
+
+4. **Evaluasi Tim, Shift & PO:**
+* Analisis produktivitas antar shift kerja.
+
+
+* Leaderboard performa Operator dan rekapan volume order per PO (Customer).
+
+
+
+
+5. **Komparasi Periode & Executive View:**
+* Perbandingan performa produksi antar rentang tanggal (misal: Bulan Lalu vs Bulan Ini).
+
+
+* *Alert Center* untuk deteksi cepat lonjakan *reject/loss rate*.
+
+
+
+
+6. **Akses Berbasis Peran (*Role-based Access*):**
+* Mendukung hak akses khusus untuk *Admin*, *Manager*, *Supervisor*, *Operator*, dan *Guest*.
+
+
+
+
+
+---
+
+### 🛠️ Tech Stack
+
+* **Frontend:** React 19, Vite, Tailwind CSS
+
+
+* **Komponen & Visualisasi:** Chart.js, `react-chartjs-2`, Lucide React
+
+
+* **Database & Integrasi:** Supabase (`@supabase/supabase-js`)
+
+
+
+---
+
+### 📂 Struktur Tabel Data Utama (Supabase)
+
+* `master_user`: Data autentikasi dan role pengguna.
+
+
+* `job_active`: Data antrean & progres pengerjaan aktif.
+
+
+* `rec_ctcp`, `rec_ctp`, `rec_screen`, `rec_flexo`, `rec_etching`: Tabel rekaman transaksi produksi tiap lini proses.
+
+
+
+---
+
+### ⚡ Panduan Instalasi & Menjalankan
+
+1. **Clone & Install Dependensi:**
+```bash
+git clone <repository-url>
+cd performa-webapps
+npm install
+
+```
+
+
+2. **Setup Variabel Lingkungan (`.env`):**
+Buat file `.env` di root direktori:
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+```
+
+
+3. **Jalankan Aplikasi:**
+```bash
+npm run dev
+
+```
+
+
+
+*(Kredensial Demo Pengujian: `guest` / `123456`)*
