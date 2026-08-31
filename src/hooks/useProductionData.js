@@ -74,7 +74,7 @@ export function useProductionData() {
           results[key] = matrix;
           statuses[key] = matrix.length > 0 ? 'live' : 'live';
         } catch (err) {
-          console.error(`Gagal load key ${key}:`, err);
+          console.error(`Gagal memuat tabel ${key}:`, err);
           results[key] = [];
           statuses[key] = 'offline';
         }

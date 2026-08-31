@@ -5,8 +5,8 @@ import { Bar } from 'react-chartjs-2';
 import { Check, RotateCcw, GitCompare } from 'lucide-react';
 
 export default function CompareView({ data, onToast }) {
-  const [key, setKey] = useState('db_ctcp');
-  const cfg = SHEETS[key];
+  const [key, setKey] = useState('rec_ctcp');
+  const cfg = SHEETS[key] || SHEETS.rec_ctcp;
 
   const defaultPeriods = () => {
     const today = new Date();
@@ -136,7 +136,7 @@ export default function CompareView({ data, onToast }) {
           <div className="mt-3 flex items-end gap-3">
             <div className="flex-1">
               <div className="text-[11px] text-slate-400">Periode 1</div>
-              <div className="font-display font-extrabold text-2xl text-slate-700">{m1.pakai.toLocaleString('id-ID')}</div>
+              <div className="font-display font-extrabold text-2xl text-slate-700 dark:text-slate-200">{m1.pakai.toLocaleString('id-ID')}</div>
               <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
             </div>
             <div className="text-slate-300 text-xl pb-1">→</div>
@@ -146,7 +146,7 @@ export default function CompareView({ data, onToast }) {
               <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
             <span className="text-slate-500">Delta</span>
             <span className={`font-bold ${dHasil.dir === 'up' ? 'text-emerald-600' : dHasil.dir === 'down' ? 'text-rose-600' : 'text-slate-600'}`}>
               {dHasil.pct > 0 ? '+' : ''}{dHasil.pct.toFixed(1)}%
@@ -173,7 +173,7 @@ export default function CompareView({ data, onToast }) {
               <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
             <span className="text-slate-500">Delta</span>
             <span className={`font-bold ${dRusak.dir === 'up' ? 'text-rose-600' : dRusak.dir === 'down' ? 'text-emerald-600' : 'text-slate-600'}`}>
               {dRusak.pct > 0 ? '+' : ''}{dRusak.pct.toFixed(1)}%
@@ -200,9 +200,9 @@ export default function CompareView({ data, onToast }) {
               <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
             <span className="text-slate-500">Delta</span>
-            <span className="font-bold text-slate-600">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
+            <span className="font-bold text-slate-600 dark:text-slate-300">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
           </div>
         </div>
       </div>

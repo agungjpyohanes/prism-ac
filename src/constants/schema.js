@@ -1,6 +1,6 @@
 export const SHEETS = {
   job_active: {
-    label: 'Job Aktif',
+    label: 'Job Aktif (WIP)',
     unit: 'Job',
     color: '#0284c7',
     headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
@@ -75,29 +75,6 @@ export const CAT_COLORS = {
   ETCHING: '#f59e0b',
   SAMPLE: '#10b981',
   REPRINT: '#ec4899'
-};
-
-export const FORMS = {
-  rec_ctcp: {
-    title: 'Input Data CTCP Offset',
-    fields: ['job_name', 'job_no', 'plate_no', 'date', 'expose_mach', 'print_mach', 'paper_type', 'plate_size', 'qty_new', 'qty_replace', 'qty_good', 'qty_defect', 'replace_reason', 'special_request', 'defect_reason', 'notes', 'shift', 'operator', 'po_helper']
-  },
-  rec_ctp: {
-    title: 'Input Data CTP Thermal',
-    fields: ['job_name', 'job_no', 'plate_no', 'date', 'expose_mach', 'plate_size', 'print_mach', 'paper_type', 'qty_new', 'qty_replace', 'qty_good', 'qty_defect', 'replace_reason', 'special_request', 'defect_reason', 'notes', 'shift', 'operator']
-  },
-  rec_screen: {
-    title: 'Input Data Screen Printing',
-    fields: ['job_name', 'job_no', 'file_no', 'screen_type', 'status', 'start_time', 'finish_time', 'duration', 'date', 'description', 'screen_mesh', 'shift', 'notes', 'qty_good', 'qty_defect', 'qty_replace', 'defect_reason', 'replace_reason', 'operator']
-  },
-  rec_flexo: {
-    title: 'Input Data Flexography',
-    fields: ['job_name', 'job_no', 'file_no', 'status', 'start_time', 'finish_time', 'duration', 'date', 'description', 'lpi', 'flexo_thickness', 'print_mach', 'rip_pos', 'keterangan', 'notes', 'qty_good', 'qty_defect', 'qty_replace', 'defect_reason', 'replace_reason', 'shift', 'operator', 'po_helper']
-  },
-  rec_etching: {
-    title: 'Input Data Etching Plate',
-    fields: ['job_name', 'job_no', 'file_no', 'plate_type', 'status', 'start_time', 'finish_time', 'duration', 'date', 'description', 'plate_thickness', 'keterangan', 'qty_good', 'qty_defect', 'qty_replace', 'defect_reason', 'replace_reason', 'shift', 'operator', 'po_helper']
-  }
 };
 
 export const PROD_KEYS = ['rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'];
