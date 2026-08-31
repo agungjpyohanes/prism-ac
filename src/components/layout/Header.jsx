@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, RotateCcw, Printer, Calendar } from 'lucide-react';
+import { Menu, RotateCcw, Printer, Calendar, Sun, Moon } from 'lucide-react';
 import { iso, parseDateVal } from '../../utils/formatters';
 
 export default function Header({
@@ -7,7 +7,9 @@ export default function Header({
   onPeriodChange,
   onReset,
   onOpenPrint,
-  onToggleSidebar
+  onToggleSidebar,
+  theme,
+  onToggleTheme
 }) {
   const fromStr = period?.from ? iso(period.from) : '';
   const toStr = period?.to ? iso(period.to) : '';
@@ -37,7 +39,7 @@ export default function Header({
               PRISM
             </h1>
             <p className="text-[11px] text-cyan-400 font-semibold">
-              Prepress Integrated System & Monitoring
+              Integrated System & Monitoring
             </p>
           </div>
         </div>
@@ -61,6 +63,17 @@ export default function Header({
             />
           </div>
 
+          {/* Toggle Dark / Light Mode */}
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className="p-2 rounded-full bg-slate-950/60 text-amber-400 hover:text-amber-300 transition border border-white/10 backdrop-blur-md"
+            title={theme === 'dark' ? 'Mode Terang (Light)' : 'Mode Gelap (Dark)'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-cyan-300" />}
+          </button>
+
+          {/* Reset / Reload Data */}
           <button
             onClick={onReset}
             className="p-2 rounded-full bg-slate-950/60 text-slate-300 hover:text-cyan-300 hover:border-cyan-400/40 transition border border-white/10 backdrop-blur-md"
@@ -69,6 +82,7 @@ export default function Header({
             <RotateCcw className="w-4 h-4" />
           </button>
 
+          {/* Print Button */}
           <button
             onClick={onOpenPrint}
             className="btn-primary text-xs py-2 px-4 font-semibold flex items-center gap-1.5"

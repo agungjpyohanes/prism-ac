@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProductionData } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -32,6 +32,22 @@ export default function App() {
   const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
   const [modalState, setModalState] = useState(null);
   const [modalHistory, setModalHistory] = useState([]);
+
+  // State Tema (Dark / Light)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('prism_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark', 'light');
+    root.classList.add(theme);
+    localStorage.setItem('prism_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const [period, setPeriod] = useState({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -244,6 +260,8 @@ export default function App() {
           onReset={reload}
           onOpenPrint={() => window.print()}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         <main className="p-6 flex-1 space-y-6">
@@ -258,11 +276,10 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-white/10 text-center text-xs text-slate-400 font-mono bg-slate-950/40 backdrop-blur-md">
-          &copy; 2026 PRISM &bull; Prepress Integrated System & Monitoring
+          &copy; 2026 PRISM &bull; Integrated System & Monitoring
         </footer>
       </div>
 
-      {/* Modal Popup Global Glassmorphism */}
       <Modal
         modalState={modalState}
         onClose={() => setModalState(null)}
