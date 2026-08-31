@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { PROD_KEYS, SHEETS } from '../../constants/schema';
 import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso } from '../../utils/formatters';
 import { Bar } from 'react-chartjs-2';
-import { Check, RotateCcw, GitCompare } from 'lucide-react';
+import { Check, RotateCcw, GitCompare, Calendar } from 'lucide-react';
 
 export default function CompareView({ data, onToast }) {
   const [key, setKey] = useState('rec_ctcp');
@@ -22,7 +22,7 @@ export default function CompareView({ data, onToast }) {
   const getMetrics = (fromStr, toStr) => {
     const from = new Date(fromStr).setHours(0, 0, 0, 0);
     const to = new Date(toStr).setHours(23, 59, 59, 999);
-    const rows = (data[key] || []).filter(r => {
+    const rows = (data[key] || []).filter((r) => {
       const idVal = cell(r, cfg.i.id).trim();
       if (!idVal) return false;
       const d = parseDateVal(r[cfg.i.date]);
@@ -30,7 +30,7 @@ export default function CompareView({ data, onToast }) {
     });
 
     let baik = 0, rusak = 0, ganti = 0;
-    rows.forEach(r => {
+    rows.forEach((r) => {
       baik += num(r[cfg.i.baik]);
       rusak += num(r[cfg.i.rusak]);
       ganti += num(r[cfg.i.ganti]);
@@ -53,17 +53,17 @@ export default function CompareView({ data, onToast }) {
   const dGanti = delta(m2.ganti, m1.ganti);
 
   const arrow = (d, mode) => {
-    let color = 'text-slate-500 bg-slate-100', label = 'TETAP';
+    let color = 'text-slate-400 bg-white/5 border-white/10', label = 'TETAP';
     if (d.dir === 'up') {
-      if (mode === 'normal') { color = 'text-emerald-600 bg-emerald-50'; label = 'NAIK'; }
-      else if (mode === 'invert') { color = 'text-rose-600 bg-rose-50'; label = 'NAIK'; }
-      else { color = 'text-orange-600 bg-orange-50'; label = 'NAIK'; }
+      if (mode === 'normal') { color = 'text-emerald-300 bg-emerald-950/40 border-emerald-500/40'; label = 'NAIK'; }
+      else if (mode === 'invert') { color = 'text-rose-300 bg-rose-950/40 border-rose-500/40'; label = 'NAIK'; }
+      else { color = 'text-orange-300 bg-orange-950/40 border-orange-500/40'; label = 'NAIK'; }
     } else if (d.dir === 'down') {
-      if (mode === 'normal') { color = 'text-rose-600 bg-rose-50'; label = 'TURUN'; }
-      else { color = 'text-emerald-600 bg-emerald-50'; label = 'TURUN'; }
+      if (mode === 'normal') { color = 'text-rose-300 bg-rose-950/40 border-rose-500/40'; label = 'TURUN'; }
+      else { color = 'text-emerald-300 bg-emerald-950/40 border-emerald-500/40'; label = 'TURUN'; }
     }
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${color}`}>
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
         {label}
       </span>
     );
@@ -80,145 +80,180 @@ export default function CompareView({ data, onToast }) {
   };
 
   return (
-    <div className="space-y-4 anim-in">
-      <div className="card p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-11 h-11 rounded-xl grid place-items-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
-            <GitCompare className="w-5 h-5" />
+    <div className="space-y-6 anim-in">
+      {/* Control Filter Card */}
+      <div className="card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <span className="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+            <GitCompare className="w-6 h-6" />
           </span>
           <div>
-            <h3 className="card-title">Dashboard Komparasi</h3>
-            <p className="text-xs text-slate-500">Bandingkan capaian antar periode untuk menganalisis tren produksi</p>
+            <h3 className="card-title text-base">Dashboard Komparasi</h3>
+            <p className="text-xs text-slate-300">Bandingkan capaian antar periode untuk menganalisis tren produksi[cite: 1, 2]</p>
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <label className="text-xs font-semibold text-slate-500 mb-1 block">Jenis Capaian</label>
-            <select value={key} onChange={e => setKey(e.target.value)} className="inp">
-              {PROD_KEYS.map(k => (
+            <label className="text-xs font-semibold text-cyan-300 mb-1.5 block">Jenis Capaian</label>
+            <select value={key} onChange={(e) => setKey(e.target.value)} className="inp w-full">
+              {PROD_KEYS.map((k) => (
                 <option key={k} value={k}>{SHEETS[k].label}</option>
               ))}
             </select>
           </div>
+
           <div>
-            <label className="text-xs font-semibold text-slate-500 mb-1 block">Periode 1 (Pembanding)</label>
-            <input type="date" value={periods.p1.from} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp" />
-            <input type="date" value={periods.p1.to} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp mt-1.5" />
+            <label className="text-xs font-semibold text-cyan-300 mb-1.5 block">Periode 1 (Pembanding)</label>
+            <div className="grid grid-cols-2 gap-2">
+              <input type="date" value={periods.p1.from} onChange={(e) => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp w-full" />
+              <input type="date" value={periods.p1.to} onChange={(e) => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp w-full" />
+            </div>
           </div>
+
           <div>
-            <label className="text-xs font-semibold text-slate-500 mb-1 block">Periode 2 (Dibandingkan)</label>
-            <input type="date" value={periods.p2.from} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp" />
-            <input type="date" value={periods.p2.to} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp mt-1.5" />
+            <label className="text-xs font-semibold text-cyan-300 mb-1.5 block">Periode 2 (Dibandingkan)</label>
+            <div className="grid grid-cols-2 gap-2">
+              <input type="date" value={periods.p2.from} onChange={(e) => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp w-full" />
+              <input type="date" value={periods.p2.to} onChange={(e) => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp w-full" />
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4 flex-wrap">
-          <button onClick={() => onToast?.('Komparasi diperbarui', 'ok')} className="btn btn-primary text-xs">
+        {/* Action Buttons (Tertata Rapih dengan Background Pill Glassmorphism) */}
+        <div className="flex gap-3 mt-6 flex-wrap items-center pt-4 border-t border-white/10">
+          <button
+            onClick={() => onToast?.('Komparasi diperbarui', 'ok')}
+            className="btn-primary text-xs py-2.5 px-5 flex items-center gap-2"
+          >
             <Check className="w-4 h-4" /> Terapkan Komparasi
           </button>
-          <button onClick={handleSwap} className="btn btn-ghost text-xs">
-            <RotateCcw className="w-4 h-4" /> Tukar Periode
+          
+          <button
+            onClick={handleSwap}
+            className="btn-ghost flex items-center gap-2"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Tukar Periode
           </button>
-          <button onClick={handleLastMonth} className="btn btn-ghost text-xs">
-            Bulan Lalu vs Bulan Ini
+          
+          <button
+            onClick={handleLastMonth}
+            className="btn-ghost flex items-center gap-2"
+          >
+            <Calendar className="w-3.5 h-3.5" /> Bulan Lalu vs Bulan Ini
           </button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 stagger">
-        <div className="card p-5 relative overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-1" style={{ background: cfg.color }}></div>
+      {/* Metric Delta Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Hasil</span>
+            <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Total Hasil</span>
             {arrow(dHasil, 'normal')}
           </div>
-          <div className="mt-3 flex items-end gap-3">
-            <div className="flex-1">
-              <div className="text-[11px] text-slate-400">Periode 1</div>
-              <div className="font-display font-extrabold text-2xl text-slate-700 dark:text-slate-200">{m1.pakai.toLocaleString('id-ID')}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div>
+              <div className="text-[10px] text-slate-400">Periode 1</div>
+              <div className="font-display font-black text-2xl text-slate-200">{m1.pakai.toLocaleString('id-ID')}</div>
             </div>
-            <div className="text-slate-300 text-xl pb-1">→</div>
-            <div className="flex-1">
-              <div className="text-[11px] text-slate-400">Periode 2</div>
-              <div className="font-display font-extrabold text-2xl" style={{ color: cfg.color }}>{m2.pakai.toLocaleString('id-ID')}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
+            <div className="text-cyan-400 text-xl font-bold pb-1">→</div>
+            <div>
+              <div className="text-[10px] text-slate-400">Periode 2</div>
+              <div className="font-display font-black text-2xl text-cyan-300">{m2.pakai.toLocaleString('id-ID')}</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500">Delta</span>
-            <span className={`font-bold ${dHasil.dir === 'up' ? 'text-emerald-600' : dHasil.dir === 'down' ? 'text-rose-600' : 'text-slate-600'}`}>
+          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+            <span className="text-slate-400">Delta Capaian</span>
+            <span className={`font-black ${dHasil.dir === 'up' ? 'text-emerald-400' : dHasil.dir === 'down' ? 'text-rose-400' : 'text-slate-300'}`}>
               {dHasil.pct > 0 ? '+' : ''}{dHasil.pct.toFixed(1)}%
             </span>
           </div>
         </div>
 
-        <div className="card p-5 relative overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-1 bg-rose-500"></div>
+        <div className="card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Rusak</span>
+            <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Total Rusak</span>
             {arrow(dRusak, 'invert')}
           </div>
-          <div className="mt-3 flex items-end gap-3">
-            <div className="flex-1">
-              <div className="text-[11px] text-slate-400">Periode 1</div>
-              <div className="font-display font-extrabold text-2xl text-rose-500">{m1.rusak.toLocaleString('id-ID')}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div>
+              <div className="text-[10px] text-slate-400">Periode 1</div>
+              <div className="font-display font-black text-2xl text-rose-400">{m1.rusak.toLocaleString('id-ID')}</div>
             </div>
-            <div className="text-slate-300 text-xl pb-1">→</div>
-            <div className="flex-1">
-              <div className="text-[11px] text-slate-400">Periode 2</div>
-              <div className="font-display font-extrabold text-2xl text-rose-600">{m2.rusak.toLocaleString('id-ID')}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
+            <div className="text-rose-400 text-xl font-bold pb-1">→</div>
+            <div>
+              <div className="text-[10px] text-slate-400">Periode 2</div>
+              <div className="font-display font-black text-2xl text-rose-400">{m2.rusak.toLocaleString('id-ID')}</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500">Delta</span>
-            <span className={`font-bold ${dRusak.dir === 'up' ? 'text-rose-600' : dRusak.dir === 'down' ? 'text-emerald-600' : 'text-slate-600'}`}>
+          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+            <span className="text-slate-400">Delta Rusak</span>
+            <span className={`font-black ${dRusak.dir === 'up' ? 'text-rose-400' : dRusak.dir === 'down' ? 'text-emerald-400' : 'text-slate-300'}`}>
               {dRusak.pct > 0 ? '+' : ''}{dRusak.pct.toFixed(1)}%
             </span>
           </div>
         </div>
 
-        <div className="card p-5 relative overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-1 bg-orange-500"></div>
+        <div className="card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Ganti</span>
+            <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Total Ganti</span>
             {arrow(dGanti, 'warning')}
           </div>
-          <div className="mt-3 flex items-end gap-3">
-            <div className="flex-1">
-              <div className="text-[11px] text-slate-400">Periode 1</div>
-              <div className="font-display font-extrabold text-2xl text-orange-500">{m1.ganti.toLocaleString('id-ID')}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div>
+              <div className="text-[10px] text-slate-400">Periode 1</div>
+              <div className="font-display font-black text-2xl text-amber-400">{m1.ganti.toLocaleString('id-ID')}</div>
             </div>
-            <div className="text-slate-300 text-xl pb-1">→</div>
-            <div className="flex-1">
-              <div className="text-[11px] text-slate-400">Periode 2</div>
-              <div className="font-display font-extrabold text-2xl text-orange-600">{m2.ganti.toLocaleString('id-ID')}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
+            <div className="text-amber-400 text-xl font-bold pb-1">→</div>
+            <div>
+              <div className="text-[10px] text-slate-400">Periode 2</div>
+              <div className="font-display font-black text-2xl text-amber-300">{m2.ganti.toLocaleString('id-ID')}</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500">Delta</span>
-            <span className="font-bold text-slate-600 dark:text-slate-300">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
+          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+            <span className="text-slate-400">Delta Ganti</span>
+            <span className="font-black text-amber-300">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
           </div>
         </div>
       </div>
 
+      {/* Chart Komparasi */}
       <div className="card p-5">
-        <h3 className="card-title mb-3">Grafik Komparasi — Total Hasil & Total Ganti</h3>
+        <h3 className="card-title mb-4">Grafik Komparasi — Hasil, Ganti & Rusak[cite: 1, 2]</h3>
         <div className="h-80">
           <Bar
             data={{
               labels: ['Total Hasil', 'Total Ganti', 'Total Rusak'],
               datasets: [
-                { label: 'Periode 1', data: [m1.pakai, m1.ganti, m1.rusak], backgroundColor: hexA(cfg.color, 0.4), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 },
-                { label: 'Periode 2', data: [m2.pakai, m2.ganti, m2.rusak], backgroundColor: hexA(cfg.color, 0.9), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 }
+                {
+                  label: 'Periode 1',
+                  data: [m1.pakai, m1.ganti, m1.rusak],
+                  backgroundColor: 'rgba(56, 189, 248, 0.4)',
+                  borderColor: '#38bdf8',
+                  borderWidth: 2,
+                  borderRadius: 8
+                },
+                {
+                  label: 'Periode 2',
+                  data: [m2.pakai, m2.ganti, m2.rusak],
+                  backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                  borderColor: '#a855f7',
+                  borderWidth: 2,
+                  borderRadius: 8
+                }
               ]
             }}
-            options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }}
+            options={{
+              maintainAspectRatio: false,
+              scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+              },
+              plugins: {
+                legend: { labels: { color: '#e2e8f0' } }
+              }
+            }}
           />
         </div>
       </div>
