@@ -3,98 +3,92 @@
 @tailwind utilities;
 
 @layer base {
-  /* DARK MODE: Cosmic Deep Space (Kontras Tinggi) */
-  html.dark body {
-    @apply bg-[#030712] text-slate-100 antialiased selection:bg-cyan-400 selection:text-black;
-    background-image: 
-      radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.16) 0px, transparent 40%),
-      radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.18) 0px, transparent 40%),
-      radial-gradient(circle at 50% 90%, rgba(14, 165, 233, 0.12) 0px, transparent 50%),
-      radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.1) 0px, transparent 40%);
-    background-attachment: fixed;
-  }
-
-  /* LIGHT MODE: Bright Aurora Glass */
-  html.light body {
-    @apply bg-[#f1f5f9] text-slate-800 antialiased selection:bg-cyan-500 selection:text-white;
-    background-image: 
-      radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.2) 0px, transparent 50%),
-      radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.18) 0px, transparent 50%),
-      radial-gradient(circle at 50% 90%, rgba(244, 114, 182, 0.15) 0px, transparent 50%);
+  body {
+    @apply antialiased text-slate-100 selection:bg-cyan-400 selection:text-black min-h-screen;
+    background: radial-gradient(circle at 50% 10%, #1e1b4b 0%, #0c1228 35%, #050714 85%),
+                radial-gradient(circle at 90% 80%, rgba(147, 51, 234, 0.25) 0%, transparent 50%),
+                radial-gradient(circle at 10% 85%, rgba(6, 182, 212, 0.2) 0%, transparent 50%),
+                #050714;
     background-attachment: fixed;
   }
 }
 
-/* Glassmorphism Cards with Crisp High-Contrast Borders */
+/* Glassmorphism Panel Sesuai PDF */
 .card {
-  @apply rounded-2xl shadow-xl transition-all duration-300;
+  @apply rounded-3xl backdrop-blur-2xl transition-all duration-300;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(13, 22, 48, 0.65) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-html.dark .card {
-  @apply bg-[#0b1329]/80 backdrop-blur-xl border border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)];
+.card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.55), 0 0 20px rgba(6, 182, 212, 0.2);
 }
 
-html.light .card {
-  @apply bg-white/85 backdrop-blur-xl border border-slate-200/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)];
+.card-title {
+  @apply font-display font-extrabold text-sm text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-200;
 }
 
-/* Card Titles */
-html.dark .card-title {
-  @apply font-display font-extrabold text-sm text-cyan-300;
-}
-
-html.light .card-title {
-  @apply font-display font-extrabold text-sm text-slate-900;
-}
-
-/* Crisp Input Controls */
+/* Pill Shaped Inputs & Selects */
 .inp {
-  @apply rounded-xl text-xs px-3 py-2 outline-none transition-all duration-200 font-medium;
+  @apply rounded-full border border-cyan-500/40 bg-slate-950/60 backdrop-blur-md text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all duration-200 px-4 py-2.5 text-xs;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-html.dark .inp {
-  @apply bg-[#070d1e] border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400;
+/* Cosmic Neon Action Button */
+.btn-primary {
+  @apply rounded-full font-bold transition-all duration-300 text-white shadow-lg;
+  background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
-html.light .inp {
-  @apply bg-white border border-slate-300 text-slate-800 placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600;
+.btn-primary:hover {
+  background: linear-gradient(90deg, #22d3ee 0%, #60a5fa 50%, #a78bfa 100%);
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.65);
+  transform: translateY(-1px);
 }
 
-/* Tables Styling */
+/* Cosmic Pill Badge */
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold border border-white/20 shadow-sm backdrop-blur-md;
+}
+
+/* Tabel Sesuai Tema */
 .tbl {
   @apply w-full text-left text-xs border-collapse;
 }
 
-html.dark .tbl thead th {
-  @apply py-3 px-3.5 bg-slate-900/90 border-b border-slate-700/80 text-cyan-400 font-bold uppercase tracking-wider text-[10px];
+.tbl thead th {
+  @apply py-3 px-3.5 bg-slate-900/80 border-b border-white/10 text-cyan-300 font-bold uppercase tracking-wider text-[10px];
 }
 
-html.light .tbl thead th {
-  @apply py-3 px-3.5 bg-slate-100/90 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px];
+.tbl tbody tr {
+  @apply border-b border-white/5 hover:bg-cyan-500/10 transition-colors text-slate-200 cursor-pointer;
 }
 
-html.dark .tbl tbody tr {
-  @apply border-b border-slate-800/80 hover:bg-cyan-500/10 transition-colors text-slate-200;
+/* Scrollbar Kosmik */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(5, 7, 20, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
 }
 
-html.light .tbl tbody tr {
-  @apply border-b border-slate-100 hover:bg-slate-50 transition-colors text-slate-700;
-}
-
-.btn-primary {
-  @apply bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.35)] rounded-xl;
-}
-
-.badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold border;
-}
-
-/* Animations */
+/* Animasi */
 .anim-in {
-  animation: cosmicFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: cosmicFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes cosmicFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }

@@ -163,39 +163,6 @@ export default function CountUp({ target = 0, isPct = false, duration = 800 }) {
 }
 </file>
 
-<file path="src/components/ui/StatCard.jsx">
-import React from 'react';
-
-export default function StatCard({ icon: Icon, label, value, sub, color = 'cyan', onClick }) {
-  const colorMap = {
-    cyan: 'from-cyan-500/20 to-cyan-500/5 border-cyan-500/30 text-cyan-400',
-    emerald: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30 text-emerald-400',
-    amber: 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-400',
-    violet: 'from-violet-500/20 to-violet-500/5 border-violet-500/30 text-violet-400',
-    rose: 'from-rose-500/20 to-rose-500/5 border-rose-500/30 text-rose-400',
-    blue: 'from-blue-500/20 to-blue-500/5 border-blue-500/30 text-blue-400'
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className={`p-4 rounded-2xl border bg-gradient-to-br ${colorMap[color] || colorMap.cyan} flex items-center justify-between cursor-pointer transition-all hover:scale-[1.02]`}
-    >
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-        <h3 className="text-2xl font-black text-white mt-0.5">{value}</h3>
-        {sub && <p className="text-[10px] text-slate-400 mt-1">{sub}</p>}
-      </div>
-      {Icon && (
-        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-          <Icon className="w-5 h-5" />
-        </div>
-      )}
-    </div>
-  );
-}
-</file>
-
 <file path="src/components/views/FormsView.jsx">
 import React from 'react';
 import { FORMS, SHEETS } from '../../constants/schema';
@@ -578,6 +545,38 @@ export default defineConfig({
     }
   }
 });
+</file>
+
+<file path="src/components/ui/StatCard.jsx">
+import React from 'react';
+
+export default function StatCard({ icon: Icon, label, value, sub, color = 'cyan', onClick }) {
+  const glowMap = {
+    cyan: 'border-cyan-500/20 hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(6,182,212,0.25)] text-cyan-300',
+    emerald: 'border-emerald-500/20 hover:border-emerald-400/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.25)] text-emerald-300',
+    amber: 'border-amber-500/20 hover:border-amber-400/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.25)] text-amber-300',
+    purple: 'border-purple-500/20 hover:border-purple-400/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] text-purple-300',
+    rose: 'border-rose-500/20 hover:border-rose-400/50 hover:shadow-[0_0_20px_rgba(244,63,94,0.25)] text-rose-300'
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={`p-4 rounded-2xl border bg-slate-900/40 backdrop-blur-xl transition-all duration-300 cursor-pointer flex items-center justify-between hover:scale-[1.02] ${glowMap[color] || glowMap.cyan}`}
+    >
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+        <h3 className="text-2xl font-black text-white mt-1 drop-shadow-md">{value}</h3>
+        {sub && <p className="text-[10px] text-slate-400/80 mt-0.5">{sub}</p>}
+      </div>
+      {Icon && (
+        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <Icon className="w-5 h-5" />
+        </div>
+      )}
+    </div>
+  );
+}
 </file>
 
 <file path="src/components/views/DataTableView.jsx">
@@ -1046,210 +1045,6 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/views/LeaderboardView.jsx">
-import React, { useState, useMemo } from 'react';
-import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
-import { Trophy, Users, Cpu, Clock, Search, Filter } from 'lucide-react';
-
-export default function LeaderboardView({ data, period, onOpenList }) {
-  const [activeTab, setActiveTab] = useState('operator'); // operator | shift | machine
-  const [selectedProcess, setSelectedProcess] = useState('ALL');
-  const [search, setSearch] = useState('');
-
-  const targetKeys = selectedProcess === 'ALL' ? PROD_KEYS : [selectedProcess];
-
-  const aggregatedData = useMemo(() => {
-    const opMap = new Map();
-    const shiftMap = new Map();
-    const machineMap = new Map();
-
-    targetKeys.forEach(k => {
-      const cfg = SHEETS[k];
-      const rows = data[k] || [];
-
-      rows.forEach(r => {
-        const idVal = cell(r, cfg.i.id).trim();
-        if (!idVal) return;
-
-        const d = parseDateVal(r[cfg.i.date]);
-        if (d) {
-          const from = period?.from ? startOfDay(period.from).getTime() : null;
-          const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-          if (from && d.getTime() < from) return;
-          if (to && d.getTime() > to) return;
-        }
-
-        const good = num(r[cfg.i.baik]);
-        const defect = num(r[cfg.i.rusak]);
-        const replace = num(r[cfg.i.ganti]);
-        const op = cell(r, cfg.i.operator).trim() || 'Unassigned';
-        const sh = cell(r, cfg.i.shift).toUpperCase().trim() || 'NON-SHIFT';
-        const mach = (cfg.i.expose_mach !== undefined ? cell(r, cfg.i.expose_mach) : cell(r, 4)).trim() || 'Mesin Utama';
-
-        // Operator
-        const opEntry = opMap.get(op) || { name: op, process: cfg.label, good: 0, defect: 0, replace: 0, rows: [] };
-        opEntry.good += good; opEntry.defect += defect; opEntry.replace += replace; opEntry.rows.push(r);
-        opMap.set(op, opEntry);
-
-        // Shift
-        const shEntry = shiftMap.get(sh) || { name: sh, good: 0, defect: 0, replace: 0, rows: [] };
-        shEntry.good += good; shEntry.defect += defect; shEntry.replace += replace; shEntry.rows.push(r);
-        shiftMap.set(sh, shEntry);
-
-        // Machine
-        const mEntry = machineMap.get(mach) || { name: mach, process: cfg.label, good: 0, defect: 0, replace: 0, rows: [] };
-        mEntry.good += good; mEntry.defect += defect; mEntry.replace += replace; mEntry.rows.push(r);
-        machineMap.set(mach, mEntry);
-      });
-    });
-
-    const calcRank = (map) => {
-      return [...map.values()].map(item => {
-        const total = item.good + item.defect;
-        const defectRate = total > 0 ? (item.defect / total) * 100 : 0;
-        const qualityScore = Math.max(0, 100 - (defectRate * 10));
-        // Formula skor gabungan: 60% Output + 40% Kualitas
-        const score = Math.round((Math.min(100, (item.good / 500) * 100) * 0.6) + (qualityScore * 0.4));
-        return { ...item, total, defectRate, qualityScore, score };
-      }).sort((a, b) => b.score - a.score || b.good - a.good);
-    };
-
-    return {
-      operators: calcRank(opMap),
-      shifts: calcRank(shiftMap),
-      machines: calcRank(machineMap)
-    };
-  }, [data, targetKeys, period]);
-
-  const currentList = useMemo(() => {
-    let list = aggregatedData.operators;
-    if (activeTab === 'shift') list = aggregatedData.shifts;
-    if (activeTab === 'machine') list = aggregatedData.machines;
-
-    if (!search.trim()) return list;
-    return list.filter(x => x.name.toLowerCase().includes(search.toLowerCase()));
-  }, [activeTab, aggregatedData, search]);
-
-  return (
-    <div className="space-y-4 anim-in">
-      <div className="card p-5 bg-gradient-to-r from-amber-950 via-slate-900 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="badge bg-amber-500/20 text-amber-300 font-bold">PERFORMANCE INDEX</span>
-            <span className="text-xs text-slate-400">· KPI Ranking & Rating</span>
-          </div>
-          <h2 className="font-display font-extrabold text-2xl mt-1.5 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-amber-400" /> KPI Leaderboard
-          </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            Peringkat performa operator, shift, dan utilisasi mesin berdasarkan output bersih dan efisiensi mutu (Defect Rate).
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Periode</div>
-          <div className="font-bold text-sm text-amber-400 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
-        </div>
-      </div>
-
-      <div className="card p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          <button
-            onClick={() => { setActiveTab('operator'); setSearch(''); }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'operator' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500'}`}
-          >
-            <Users className="w-4 h-4" /> Ranking Operator
-          </button>
-          <button
-            onClick={() => { setActiveTab('shift'); setSearch(''); }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'shift' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500'}`}
-          >
-            <Clock className="w-4 h-4" /> Ranking Shift
-          </button>
-          <button
-            onClick={() => { setActiveTab('machine'); setSearch(''); }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'machine' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500'}`}
-          >
-            <Cpu className="w-4 h-4" /> Ranking Mesin
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <select
-            value={selectedProcess}
-            onChange={e => setSelectedProcess(e.target.value)}
-            className="inp text-xs font-semibold"
-          >
-            <option value="ALL">Semua Lini Proses</option>
-            {PROD_KEYS.map(k => <option key={k} value={k}>{SHEETS[k].label}</option>)}
-          </select>
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Cari nama..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="inp !pl-8 text-xs w-44"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="py-3 px-4">Rank</th>
-                <th className="py-3 px-4">Nama / Entitas</th>
-                {activeTab !== 'shift' && <th className="py-3 px-4">Lini</th>}
-                <th className="py-3 px-4">Output Good</th>
-                <th className="py-3 px-4">Defect</th>
-                <th className="py-3 px-4">Defect Rate</th>
-                <th className="py-3 px-4">Total Score</th>
-                <th className="py-3 px-4">Badge</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {currentList.map((item, idx) => (
-                <tr 
-                  key={item.name} 
-                  onClick={() => onOpenList?.(`Detail Leaderboard: ${item.name}`, 'rec_ctcp', item.rows)}
-                  className="hover:bg-amber-500/5 transition cursor-pointer"
-                >
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs ${idx === 0 ? 'bg-amber-400 text-slate-900 font-extrabold shadow' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-amber-700 text-white' : 'text-slate-400'}`}>
-                      {idx + 1}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">{item.name}</td>
-                  {activeTab !== 'shift' && <td className="py-3 px-4 text-slate-400">{item.process || '-'}</td>}
-                  <td className="py-3 px-4 font-semibold text-emerald-600">{item.good.toLocaleString('id-ID')}</td>
-                  <td className="py-3 px-4 font-semibold text-rose-600">{item.defect.toLocaleString('id-ID')}</td>
-                  <td className="py-3 px-4 font-bold">{item.defectRate.toFixed(1)}%</td>
-                  <td className="py-3 px-4 font-extrabold text-amber-500">{item.score} / 100</td>
-                  <td className="py-3 px-4">
-                    {idx === 0 && <span className="badge bg-amber-100 text-amber-800 border border-amber-300">★ Top Performer</span>}
-                    {idx > 0 && item.defectRate <= 1.0 && <span className="badge bg-emerald-100 text-emerald-800">Quality Star</span>}
-                  </td>
-                </tr>
-              ))}
-              {currentList.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">Tidak ada data untuk filter yang dipilih.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -1892,182 +1687,175 @@ export default function CompareView({ data, onToast }) {
 }
 </file>
 
-<file path="src/components/views/PersonalKpiView.jsx">
-import React, { useState, useMemo } from 'react';
+<file path="src/components/views/LeaderboardView.jsx">
+import React, { useMemo, useState } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
-import { UserCheck, Filter } from 'lucide-react';
+import { parseDateVal, num, cell, startOfDay, fmtPeriodRange } from '../../utils/formatters';
+import { Trophy, Medal, Flame, Search, Crown } from 'lucide-react';
 
-export default function PersonalKpiView({ data, period, user }) {
-  const currentUsername = String(user?.USER || user?.username || 'guest').trim();
-  const userRole = String(user?.ROLE || user?.role || 'operator').toLowerCase().trim();
-  const isManagerOrAdmin = ['admin', 'manager', 'manajemen', 'supervisor'].includes(userRole);
+export default function LeaderboardView({ data, period }) {
+  const [search, setSearch] = useState('');
+  const [selectedProcess, setSelectedProcess] = useState('ALL');
 
-  // Ambil seluruh daftar nama operator yang ada di database
-  const operatorList = useMemo(() => {
-    const set = new Set();
-    PROD_KEYS.forEach(k => {
-      const cfg = SHEETS[k];
-      const rows = data[k] || [];
-      rows.forEach(r => {
-        const op = cell(r, cfg.i.operator).trim();
-        if (op && op !== '-' && op.toLowerCase() !== 'unassigned') set.add(op);
-      });
-    });
-    return Array.from(set).sort();
-  }, [data]);
+  const targetKeys = selectedProcess === 'ALL' ? PROD_KEYS : [selectedProcess];
 
-  const [selectedOperator, setSelectedOperator] = useState(() => {
-    if (isManagerOrAdmin && operatorList.length > 0) return operatorList[0];
-    return currentUsername;
-  });
+  const rankings = useMemo(() => {
+    const map = new Map();
 
-  const activeOpName = (isManagerOrAdmin && selectedOperator) ? selectedOperator : currentUsername;
+    targetKeys.forEach((key) => {
+      const cfg = SHEETS[key];
+      const rows = data[key] || [];
 
-  // Filter transaksi khusus operator yang dipilih
-  const personalRecords = useMemo(() => {
-    const list = [];
-    PROD_KEYS.forEach(k => {
-      const cfg = SHEETS[k];
-      const rows = data[k] || [];
-
-      rows.forEach(r => {
-        const op = cell(r, cfg.i.operator).trim().toLowerCase();
-        const targetOp = activeOpName.trim().toLowerCase();
-
-        if (targetOp !== 'guest' && !op.includes(targetOp)) return;
+      rows.forEach((r) => {
+        const idVal = cell(r, cfg.i.id).trim();
+        if (!idVal) return;
 
         const d = parseDateVal(r[cfg.i.date]);
-        if (d) {
-          const from = period?.from ? startOfDay(period.from).getTime() : null;
-          const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-          if (from && d.getTime() < from) return;
-          if (to && d.getTime() > to) return;
+        if (d && period?.from && period?.to) {
+          const from = startOfDay(period.from).getTime();
+          const to = new Date(period.to).setHours(23, 59, 59, 999);
+          if (d.getTime() < from || d.getTime() > to) return;
         }
 
-        list.push({
-          process: cfg.label,
-          job: cell(r, cfg.i.jop),
-          noJop: cell(r, cfg.i.nojop),
-          date: r[cfg.i.date],
-          good: num(r[cfg.i.baik]),
-          defect: num(r[cfg.i.rusak]),
-          replace: num(r[cfg.i.ganti]),
-          defectReason: cell(r, cfg.i.defect_reason)
-        });
+        const op = cell(r, cfg.i.op).trim() || 'Unassigned';
+        const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0 };
+        e.good += num(r[cfg.i.baik]);
+        e.reject += num(r[cfg.i.rusak]);
+        e.replace += num(r[cfg.i.ganti]);
+        map.set(op, e);
       });
     });
-    return list;
-  }, [data, activeOpName, period]);
 
-  const kpi = useMemo(() => {
-    let good = 0, defect = 0, replace = 0;
-    personalRecords.forEach(r => {
-      good += r.good;
-      defect += r.defect;
-      replace += r.replace;
-    });
-    const total = good + defect;
-    const defectRate = total > 0 ? (defect / total) * 100 : 0;
-    return { good, defect, replace, total, defectRate, jobCount: personalRecords.length };
-  }, [personalRecords]);
+    return [...map.values()]
+      .map((item) => {
+        const total = item.good + item.reject;
+        const lossRate = total > 0 ? (item.reject / total) * 100 : 0;
+        const score = total > 0 ? Math.max(0, Math.round(100 - lossRate * 8 + item.good * 0.05)) : 0;
+        return { ...item, total, lossRate, score };
+      })
+      .sort((a, b) => b.score - a.score);
+  }, [data, targetKeys, period]);
+
+  const filtered = rankings.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
+  const topThree = filtered.slice(0, 3);
 
   return (
-    <div className="space-y-4 anim-in">
-      {/* Header Card */}
-      <div className="card p-5 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 grid place-items-center font-bold text-lg">
-            <UserCheck className="w-6 h-6" />
+    <div className="space-y-6 anim-in">
+      {/* Header Panel */}
+      <div className="card p-6 bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900/60 border-purple-500/20 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="badge bg-purple-500/20 text-purple-300 border-purple-400/30">STAR RANKING</span>
+            <span className="text-xs text-slate-400">Periode: {fmtPeriodRange(period?.from, period?.to)}</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="badge bg-cyan-500/20 text-cyan-300 font-bold">OPERATOR SELF-SERVICE</span>
-              <span className="text-xs text-slate-400">· Operator: <b>{activeOpName}</b></span>
-            </div>
-            <h2 className="font-display font-extrabold text-2xl mt-1">Dashboard KPI Personal</h2>
-            <p className="text-xs text-slate-300">Pantau produktivitas, rasio mutu kerja, dan riwayat tugas operator.</p>
-          </div>
+          <h2 className="font-display font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-200 to-cyan-300 mt-1">
+            Cosmic KPI Leaderboard
+          </h2>
+          <p className="text-xs text-slate-300">Peringkat performa operator berdasarkan efisiensi output dan rasio reject terendah</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {isManagerOrAdmin && operatorList.length > 0 && (
-            <div className="flex items-center gap-2 bg-slate-800/90 p-2 rounded-xl border border-slate-700">
-              <Filter className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-semibold text-slate-300">Pilih Operator:</span>
-              <select
-                value={selectedOperator}
-                onChange={(e) => setSelectedOperator(e.target.value)}
-                className="bg-slate-900 text-cyan-300 text-xs font-bold px-2 py-1 rounded-lg border border-slate-700 outline-none"
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedProcess}
+            onChange={(e) => setSelectedProcess(e.target.value)}
+            className="inp text-xs"
+          >
+            <option value="ALL">Semua Lini Proses</option>
+            {PROD_KEYS.map((k) => (
+              <option key={k} value={k}>{SHEETS[k].label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Podium Top 3 */}
+      {topThree.length > 0 && (
+        <div className="grid md:grid-cols-3 gap-4">
+          {topThree.map((item, idx) => {
+            const podiumStyles = [
+              'from-amber-500/20 via-yellow-500/5 to-transparent border-amber-400/40 shadow-[0_0_25px_rgba(245,158,11,0.15)] order-1 md:order-2 md:-translate-y-2',
+              'from-slate-400/20 via-slate-500/5 to-transparent border-slate-400/40 shadow-[0_0_20px_rgba(148,163,184,0.1)] order-2 md:order-1',
+              'from-amber-700/20 via-amber-800/5 to-transparent border-amber-600/40 shadow-[0_0_20px_rgba(180,83,9,0.1)] order-3'
+            ];
+            const badges = ['Champion #1', 'Runner Up #2', 'Third Place #3'];
+
+            return (
+              <div
+                key={item.name}
+                className={`card p-5 bg-gradient-to-b ${podiumStyles[idx]} relative flex flex-col items-center text-center`}
               >
-                {operatorList.map(op => (
-                  <option key={op} value={op}>{op}</option>
-                ))}
-              </select>
-            </div>
-          )}
-          <div className="text-right">
-            <div className="text-[11px] text-slate-400 uppercase font-semibold">Rentang Periode</div>
-            <div className="font-bold text-sm text-cyan-400 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+                <div className="w-12 h-12 rounded-full bg-slate-900/80 border border-white/20 flex items-center justify-center mb-2 shadow-inner">
+                  {idx === 0 ? <Crown className="w-6 h-6 text-amber-400" /> : <Medal className="w-6 h-6 text-cyan-400" />}
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{badges[idx]}</span>
+                <h3 className="font-display font-black text-lg text-white mt-0.5 truncate max-w-full">{item.name}</h3>
+                <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-200 mt-2">
+                  {item.score} <span className="text-xs text-slate-400 font-normal">pts</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 w-full mt-4 pt-3 border-t border-white/10 text-xs">
+                  <div>
+                    <span className="text-slate-400 text-[10px]">Good Output</span>
+                    <p className="font-bold text-emerald-400">{item.good.toLocaleString('id-ID')}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px]">Loss Rate</span>
+                    <p className={`font-bold ${item.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-400'}`}>{item.lossRate.toFixed(1)}%</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Full Leaderboard Table */}
+      <div className="card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="card-title flex items-center gap-2">
+            <Flame className="w-4 h-4 text-orange-400" /> Seluruh Peringkat Operator
+          </h3>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Cari Operator..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="inp !pl-9 text-xs w-56"
+            />
           </div>
         </div>
-      </div>
 
-      {/* Scorecards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-blue-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">JOB DIKERJAKAN</span>
-          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">{kpi.jobCount}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Total lembar tugas SPK</div>
-        </div>
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">OUTPUT GOOD</span>
-          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">{kpi.good.toLocaleString('id-ID')}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Produk lolos QC</div>
-        </div>
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-rose-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">TOTAL DEFECT</span>
-          <div className="mt-2 font-display font-extrabold text-2xl text-rose-600">{kpi.defect.toLocaleString('id-ID')}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Cacat / Rusak</div>
-        </div>
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-purple-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">DEFECT RATE PRIBADI</span>
-          <div className={`mt-2 font-display font-extrabold text-2xl ${kpi.defectRate > 1.0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-            {kpi.defectRate.toFixed(1)}%
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Target mutu: &le; 1.0%</div>
-        </div>
-      </div>
-
-      {/* Tabel Riwayat Pekerjaan */}
-      <div className="card p-5">
-        <h3 className="card-title mb-3">Riwayat Pekerjaan: <span className="text-cyan-600 dark:text-cyan-400">{activeOpName}</span></h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="py-2.5 px-3">Lini</th>
-                <th className="py-2.5 px-3">Nama Job</th>
-                <th className="py-2.5 px-3">No JOP</th>
-                <th className="py-2.5 px-3">Good</th>
-                <th className="py-2.5 px-3">Defect</th>
-                <th className="py-2.5 px-3">Alasan Cacat</th>
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase text-[10px]">
+                <th className="py-3 px-3">Rank</th>
+                <th className="py-3 px-3">Operator</th>
+                <th className="py-3 px-3">Good</th>
+                <th className="py-3 px-3">Reject</th>
+                <th className="py-3 px-3">Loss Rate</th>
+                <th className="py-3 px-3 text-right">Skor Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {personalRecords.slice(0, 20).map((r, i) => (
-                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <td className="py-2.5 px-3 font-semibold text-slate-500">{r.process}</td>
-                  <td className="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">{r.job}</td>
-                  <td className="py-2.5 px-3 text-slate-500">{r.noJop}</td>
-                  <td className="py-2.5 px-3 text-emerald-600 font-bold">{r.good}</td>
-                  <td className="py-2.5 px-3 text-rose-600 font-bold">{r.defect}</td>
-                  <td className="py-2.5 px-3 text-slate-400">{r.defectReason || '-'}</td>
+            <tbody className="divide-y divide-white/5">
+              {filtered.map((item, idx) => (
+                <tr key={item.name} className="hover:bg-slate-800/30 transition">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-400">#{idx + 1}</td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-200">{item.name}</td>
+                  <td className="py-2.5 px-3 text-emerald-400 font-medium">{item.good.toLocaleString('id-ID')}</td>
+                  <td className="py-2.5 px-3 text-rose-400 font-medium">{item.reject.toLocaleString('id-ID')}</td>
+                  <td className="py-2.5 px-3">
+                    <span className={`badge ${item.lossRate > 1.0 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'}`}>
+                      {item.lossRate.toFixed(1)}%
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-black text-cyan-300">{item.score}</td>
                 </tr>
               ))}
-              {personalRecords.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">Tidak ada riwayat pekerjaan untuk operator ini pada periode terpilih.</td>
+                  <td colSpan={6} className="text-center py-8 text-slate-500">Tidak ada data peringkat ditemukan.</td>
                 </tr>
               )}
             </tbody>
@@ -2677,177 +2465,131 @@ export default function OperatorShiftView({ data, period }) {
 }
 </file>
 
-<file path="src/index.css">
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+<file path="src/components/views/PersonalKpiView.jsx">
+import React, { useMemo } from 'react';
+import { SHEETS, PROD_KEYS } from '../../constants/schema';
+import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
+import { UserCheck, CheckCircle2, AlertTriangle, Sparkles, Award } from 'lucide-react';
+import StatCard from '../ui/StatCard';
 
-/* Custom Helper Class PRISM */
-.card {
-  @apply bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-sm transition-all;
-}
+export default function PersonalKpiView({ data, user, period }) {
+  const currentUsername = String(user?.USER || user?.username || 'guest').trim().toLowerCase();
 
-.card-title {
-  @apply font-display font-extrabold text-sm text-slate-800 dark:text-slate-100;
-}
+  const userStats = useMemo(() => {
+    let good = 0, reject = 0, replace = 0, totalJob = 0;
+    const records = [];
 
-.inp {
-  @apply rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition px-3 py-2 text-xs;
-}
+    PROD_KEYS.forEach((key) => {
+      const cfg = SHEETS[key];
+      const rows = data[key] || [];
 
-.btn-primary {
-  @apply bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition rounded-xl;
-}
+      rows.forEach((r) => {
+        const idVal = cell(r, cfg.i.id).trim();
+        const opVal = cell(r, cfg.i.op).trim().toLowerCase();
+        if (!idVal || (currentUsername !== 'guest' && !opVal.includes(currentUsername))) return;
 
-.badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold;
-}
+        const d = parseDateVal(r[cfg.i.date]);
+        if (d && period?.from && period?.to) {
+          const from = startOfDay(period.from).getTime();
+          const to = new Date(period.to).setHours(23, 59, 59, 999);
+          if (d.getTime() < from || d.getTime() > to) return;
+        }
 
-/* Animasi Halus */
-.anim-in {
-  animation: fadeIn 0.25s ease-in-out;
-}
+        const g = num(r[cfg.i.baik]);
+        const rj = num(r[cfg.i.rusak]);
+        const rp = num(r[cfg.i.ganti]);
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+        good += g;
+        reject += rj;
+        replace += rp;
+        totalJob += 1;
 
-/* Toast Notifications */
-.toast {
-  @apply px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold text-white transition-all transform;
-}
-.toast.ok { @apply bg-emerald-600; }
-.toast.err { @apply bg-rose-600; }
-.toast.warn { @apply bg-amber-600; }
-.toast.info { @apply bg-slate-800 dark:bg-slate-700; }
+        records.push({
+          key,
+          process: cfg.label,
+          job: cell(r, cfg.i.jop) || cell(r, cfg.i.nojop),
+          date: r[cfg.i.date],
+          good: g,
+          reject: rj
+        });
+      });
+    });
 
-/* Aturan Cetak / Print PDF */
-@media print {
-  aside,
-  header,
-  #toasts,
-  .no-print,
-  button {
-    display: none !important;
-  }
+    const output = good + reject;
+    const lossRate = output > 0 ? (reject / output) * 100 : 0;
+    const score = output > 0 ? Math.max(0, Math.round(100 - lossRate * 10)) : 100;
 
-  #mainWrap {
-    padding-left: 0 !important;
-  }
-
-  body, html {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  .card {
-    box-shadow: none !important;
-    border: 1px solid #e2e8f0 !important;
-    page-break-inside: avoid;
-  }
-
-  .print-footer {
-    display: block !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 10px;
-    color: #64748b;
-    border-top: 1px solid #cbd5e1;
-    padding-top: 6px;
-    background: #ffffff;
-  }
-}
-
-.print-footer {
-  display: none;
-}
-</file>
-
-<file path="src/components/layout/Header.jsx">
-import React from 'react';
-import { Menu, RotateCcw, Printer, Calendar } from 'lucide-react';
-import { iso, parseDateVal } from '../../utils/formatters';
-
-export default function Header({
-  period,
-  onPeriodChange,
-  onReset,
-  onOpenPrint,
-  onToggleSidebar
-}) {
-  const fromStr = period?.from ? iso(period.from) : '';
-  const toStr = period?.to ? iso(period.to) : '';
-
-  const handleDateChange = (type, valStr) => {
-    if (!onPeriodChange) return;
-    const parsed = parseDateVal(valStr);
-    onPeriodChange((prev) => ({
-      ...prev,
-      [type]: parsed
-    }));
-  };
+    return { good, reject, replace, output, lossRate, score, totalJob, records };
+  }, [data, currentUsername, period]);
 
   return (
-    <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 no-print">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
-            title="Menu Sidebar"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+    <div className="space-y-5 anim-in">
+      {/* Profile Card Header */}
+      <div className="card p-6 bg-gradient-to-r from-indigo-950/40 via-purple-950/40 to-slate-900/60 border-cyan-500/20 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 border border-cyan-400/40 flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+            {currentUsername.charAt(0).toUpperCase()}
+          </div>
           <div>
-            <h1 className="font-display font-extrabold text-base lg:text-lg text-slate-900 dark:text-white leading-tight">
-              PRISM
-            </h1>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              Integrated System & Monitoring
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/30">OPERATOR DASHBOARD</span>
+              <span className="text-xs text-slate-400">{fmtPeriodRange(period?.from, period?.to)}</span>
+            </div>
+            <h2 className="font-display font-black text-2xl text-white mt-1 capitalize">{currentUsername}</h2>
+            <p className="text-xs text-slate-300">Ringkasan produktivitas personal & kontrol kualitas Anda</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-            <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-            <input
-              type="date"
-              value={fromStr}
-              onChange={(e) => handleDateChange('from', e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none w-28"
-            />
-            <span className="text-slate-400 text-xs">s/d</span>
-            <input
-              type="date"
-              value={toStr}
-              onChange={(e) => handleDateChange('to', e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none w-28"
-            />
+        <div className="text-right">
+          <span className="text-[10px] text-slate-400 uppercase font-mono">Performance Index</span>
+          <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-emerald-300">
+            {userStats.score} <span className="text-xs text-slate-400 font-normal">/ 100</span>
           </div>
-
-          <button
-            onClick={onReset}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700 cursor-pointer"
-            title="Muat Ulang Data"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={onOpenPrint}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 px-3 font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print / PDF</span>
-          </button>
         </div>
       </div>
-    </header>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="Total Good Output" value={userStats.good.toLocaleString('id-ID')} icon={CheckCircle2} color="emerald" />
+        <StatCard label="Total Reject" value={userStats.reject.toLocaleString('id-ID')} icon={AlertTriangle} color="rose" />
+        <StatCard label="Personal Loss Rate" value={`${userStats.lossRate.toFixed(1)}%`} sub="Target: ≤ 1.0%" icon={Award} color="cyan" />
+        <StatCard label="Total Transaksi" value={userStats.totalJob.toLocaleString('id-ID')} icon={UserCheck} color="purple" />
+      </div>
+
+      {/* Riwayat Pekerjaan Terakhir */}
+      <div className="card p-5 space-y-3">
+        <h3 className="card-title flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-cyan-400" /> Riwayat Kontribusi Pekerjaan Anda
+        </h3>
+        <div className="overflow-x-auto max-h-80">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase text-[10px]">
+                <th className="py-2.5 px-3">Lini</th>
+                <th className="py-2.5 px-3">JOP / Pekerjaan</th>
+                <th className="py-2.5 px-3">Good</th>
+                <th className="py-2.5 px-3">Reject</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {userStats.records.map((r, i) => (
+                <tr key={i} className="hover:bg-white/5 transition">
+                  <td className="py-2 px-3 text-cyan-300 font-semibold">{r.process}</td>
+                  <td className="py-2 px-3 text-slate-200">{r.job || '-'}</td>
+                  <td className="py-2 px-3 text-emerald-400">{r.good}</td>
+                  <td className="py-2 px-3 text-rose-400">{r.reject}</td>
+                </tr>
+              ))}
+              {userStats.records.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center py-8 text-slate-500">Tidak ada riwayat pekerjaan tercatat pada periode ini.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 </file>
@@ -3384,6 +3126,108 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
 }
 </file>
 
+<file path="src/components/layout/Header.jsx">
+import React from 'react';
+import { Menu, RotateCcw, Printer, Calendar, Moon, Sun } from 'lucide-react';
+import { iso, parseDateVal } from '../../utils/formatters';
+
+export default function Header({
+  period,
+  onPeriodChange,
+  onReset,
+  onOpenPrint,
+  onToggleSidebar,
+  theme,
+  onToggleTheme
+}) {
+  const fromStr = period?.from ? iso(period.from) : '';
+  const toStr = period?.to ? iso(period.to) : '';
+
+  const handleDateChange = (type, valStr) => {
+    if (!onPeriodChange) return;
+    const parsed = parseDateVal(valStr);
+    onPeriodChange((prev) => ({
+      ...prev,
+      [type]: parsed
+    }));
+  };
+
+  return (
+    <header className="sticky top-0 z-30 bg-[#070c1e]/70 dark:bg-[#070c1e]/70 light:bg-white/80 backdrop-blur-xl border-b border-slate-700/60 light:border-slate-200 px-4 lg:px-6 py-3 no-print transition-colors">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        
+        {/* Left Side Branding */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 rounded-xl text-slate-300 dark:text-slate-300 light:text-slate-700 hover:bg-white/10 light:hover:bg-slate-100 transition border border-slate-700 light:border-slate-300"
+            title="Menu Sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="font-display font-black text-base lg:text-lg text-white dark:text-white light:text-slate-900 leading-tight">
+              PRISM
+            </h1>
+            <p className="text-[11px] text-cyan-400 dark:text-cyan-400 light:text-indigo-600 font-semibold">
+              Prepress Integrated System & Monitoring
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Date Picker Range */}
+          <div className="flex items-center gap-1.5 bg-[#0b1329] dark:bg-[#0b1329] light:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-700 light:border-slate-300">
+            <Calendar className="w-4 h-4 text-cyan-400 light:text-indigo-600 shrink-0" />
+            <input
+              type="date"
+              value={fromStr}
+              onChange={(e) => handleDateChange('from', e.target.value)}
+              className="bg-transparent text-xs font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800 outline-none w-28"
+            />
+            <span className="text-slate-500 text-xs font-bold">s/d</span>
+            <input
+              type="date"
+              value={toStr}
+              onChange={(e) => handleDateChange('to', e.target.value)}
+              className="bg-transparent text-xs font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800 outline-none w-28"
+            />
+          </div>
+
+          {/* Theme Toggle Button */}
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-xl bg-[#0b1329] dark:bg-[#0b1329] light:bg-slate-100 text-amber-400 dark:text-amber-400 light:text-slate-700 hover:scale-105 transition border border-slate-700 light:border-slate-300"
+            title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+          </button>
+
+          {/* Reload Data */}
+          <button
+            onClick={onReset}
+            className="p-2 rounded-xl bg-[#0b1329] dark:bg-[#0b1329] light:bg-slate-100 text-slate-300 light:text-slate-700 hover:text-cyan-400 transition border border-slate-700 light:border-slate-300"
+            title="Muat Ulang Data"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+
+          {/* Print Button */}
+          <button
+            onClick={onOpenPrint}
+            className="btn-primary text-xs py-2 px-3 font-semibold flex items-center gap-1.5"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+</file>
+
 <file path="src/services/supabase.js">
 import { createClient } from '@supabase/supabase-js';
 
@@ -3428,92 +3272,6 @@ export async function fetchAllRows(tableName) {
     console.error(`Exception pada ${tableName}:`, err);
     return [];
   }
-}
-</file>
-
-<file path="src/components/layout/Sidebar.jsx">
-import React from 'react';
-import { MENUS } from '../../constants/navigation';
-import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
-
-export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, collapsed, onToggle }) {
-  const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
-
-  const availableMenus = MENUS.filter((m) => {
-    if (!m.roles || m.roles.length === 0) return true;
-    if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
-    return m.roles.includes(userRole);
-  });
-
-  return (
-    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#080d1a] border-r border-slate-800/80 transition-all flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header Branding */}
-        <div className="p-4 border-b border-slate-800/80 flex items-center justify-between shrink-0">
-          {!collapsed && (
-            <div>
-              <h2 className="font-black text-lg tracking-wider text-white">PRISM</h2>
-              <p className="text-[10px] font-mono text-cyan-400">V 1.0 &bull; Integrated System & Monitoring</p>
-            </div>
-          )}
-          <button 
-            type="button"
-            onClick={onToggle} 
-            className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white mx-auto cursor-pointer"
-          >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Menu Items Container */}
-        <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
-          {availableMenus.map((m) => {
-            const Icon = m.icon;
-            const active = currentMenu === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => onMenuChange(m.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                  active
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
-                title={collapsed ? m.label : ''}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span className="truncate">{m.label}</span>}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* User Footer Profile */}
-      <div className="p-4 border-t border-slate-800/80 flex items-center justify-between shrink-0 bg-[#060a14]">
-        {!collapsed ? (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0">
-              {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
-            </div>
-            <div className="truncate">
-              <p className="text-xs font-bold text-white truncate leading-tight">{user?.USER || user?.username || 'agung'}</p>
-              <p className="text-[10px] font-mono text-cyan-400 uppercase font-semibold">{user?.ROLE || user?.role || 'MANAGER'}</p>
-            </div>
-          </div>
-        ) : null}
-        <button 
-          type="button"
-          onClick={onLogout} 
-          title="Keluar / Logout" 
-          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer shrink-0"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
-      </div>
-    </aside>
-  );
 }
 </file>
 
@@ -4093,6 +3851,224 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 }
 </file>
 
+<file path="src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* DARK MODE: Cosmic Deep Space (Kontras Tinggi) */
+  html.dark body {
+    @apply bg-[#030712] text-slate-100 antialiased selection:bg-cyan-400 selection:text-black;
+    background-image: 
+      radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.16) 0px, transparent 40%),
+      radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.18) 0px, transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(14, 165, 233, 0.12) 0px, transparent 50%),
+      radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.1) 0px, transparent 40%);
+    background-attachment: fixed;
+  }
+
+  /* LIGHT MODE: Bright Aurora Glass */
+  html.light body {
+    @apply bg-[#f1f5f9] text-slate-800 antialiased selection:bg-cyan-500 selection:text-white;
+    background-image: 
+      radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.2) 0px, transparent 50%),
+      radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.18) 0px, transparent 50%),
+      radial-gradient(circle at 50% 90%, rgba(244, 114, 182, 0.15) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+/* Glassmorphism Cards with Crisp High-Contrast Borders */
+.card {
+  @apply rounded-2xl shadow-xl transition-all duration-300;
+}
+
+html.dark .card {
+  @apply bg-[#0b1329]/80 backdrop-blur-xl border border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)];
+}
+
+html.light .card {
+  @apply bg-white/85 backdrop-blur-xl border border-slate-200/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)];
+}
+
+/* Card Titles */
+html.dark .card-title {
+  @apply font-display font-extrabold text-sm text-cyan-300;
+}
+
+html.light .card-title {
+  @apply font-display font-extrabold text-sm text-slate-900;
+}
+
+/* Crisp Input Controls */
+.inp {
+  @apply rounded-xl text-xs px-3 py-2 outline-none transition-all duration-200 font-medium;
+}
+
+html.dark .inp {
+  @apply bg-[#070d1e] border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400;
+}
+
+html.light .inp {
+  @apply bg-white border border-slate-300 text-slate-800 placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600;
+}
+
+/* Tables Styling */
+.tbl {
+  @apply w-full text-left text-xs border-collapse;
+}
+
+html.dark .tbl thead th {
+  @apply py-3 px-3.5 bg-slate-900/90 border-b border-slate-700/80 text-cyan-400 font-bold uppercase tracking-wider text-[10px];
+}
+
+html.light .tbl thead th {
+  @apply py-3 px-3.5 bg-slate-100/90 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px];
+}
+
+html.dark .tbl tbody tr {
+  @apply border-b border-slate-800/80 hover:bg-cyan-500/10 transition-colors text-slate-200;
+}
+
+html.light .tbl tbody tr {
+  @apply border-b border-slate-100 hover:bg-slate-50 transition-colors text-slate-700;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.35)] rounded-xl;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold border;
+}
+
+/* Animations */
+.anim-in {
+  animation: cosmicFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cosmicFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</file>
+
+<file path="src/components/layout/Sidebar.jsx">
+import React from 'react';
+import { MENUS } from '../../constants/navigation';
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+
+export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, collapsed, onToggle }) {
+  const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
+
+  // Direct Thumbnail URL dari Google Drive
+  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
+
+  const availableMenus = MENUS.filter((m) => {
+    if (!m.roles || m.roles.length === 0) return true;
+    if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
+    return m.roles.includes(userRole);
+  });
+
+  return (
+    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#070b19]/80 backdrop-blur-2xl border-r border-cyan-500/15 transition-all duration-300 flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* Header Branding */}
+        <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+          {!collapsed ? (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-700/80 p-1 flex items-center justify-center shadow-lg shadow-black/40 shrink-0 overflow-hidden">
+                <img 
+                  src={LOGO_URL} 
+                  alt="PRISM Logo" 
+                  className="w-full h-full object-contain" 
+                  referrerPolicy="no-referrer" 
+                />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-black text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
+                  PRISM
+                </h2>
+                <p className="text-[9px] font-mono text-cyan-400 font-medium truncate">
+                  Integrated System & Monitoring
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="w-8 h-8 mx-auto rounded-xl bg-slate-900/90 border border-slate-700/80 p-1 flex items-center justify-center overflow-hidden">
+              <img 
+                src={LOGO_URL} 
+                alt="PRISM" 
+                className="w-full h-full object-contain" 
+                referrerPolicy="no-referrer" 
+              />
+            </div>
+          )}
+          
+          <button 
+            type="button"
+            onClick={onToggle} 
+            className="p-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition ml-auto"
+            title={collapsed ? "Buka Sidebar" : "Tutup Sidebar"}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* Menu Navigation */}
+        <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
+          {availableMenus.map((m) => {
+            const Icon = m.icon;
+            const active = currentMenu === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => onMenuChange(m.id)}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  active
+                    ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/15 text-cyan-300 border border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+                title={collapsed ? m.label : ''}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]' : ''}`} />
+                {!collapsed && <span className="truncate">{m.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* User Footer Profile */}
+      <div className="p-3.5 border-t border-white/5 flex items-center justify-between shrink-0 bg-slate-950/40">
+        {!collapsed && (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+              {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-200 truncate">{user?.USER || user?.username || 'User'}</p>
+              <p className="text-[10px] font-mono text-cyan-400/70 uppercase">{user?.ROLE || user?.role || 'OPERATOR'}</p>
+            </div>
+          </div>
+        )}
+        <button 
+          type="button"
+          onClick={onLogout} 
+          title="Keluar / Logout" 
+          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition shrink-0"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
+    </aside>
+  );
+}
+</file>
+
 <file path="src/hooks/useProductionData.js">
 import { useState, useEffect, useCallback } from 'react';
 import { fetchAllRows } from '../services/supabase';
@@ -4177,22 +4153,6 @@ export function useProductionData() {
 
   return { data, loading, serverStatus, reload: loadAllData };
 }
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>prism-ac</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
 </file>
 
 <file path="src/components/views/AuthView.jsx">
@@ -4481,223 +4441,20 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
 }
 </file>
 
-<file path="src/App.jsx">
-import React, { useState } from 'react';
-import { useProductionData } from './hooks/useProductionData';
-import Sidebar from './components/layout/Sidebar';
-import Header from './components/layout/Header';
-import Modal from './components/common/Modal';
-
-import AuthView from './components/views/AuthView';
-import OverviewView from './components/views/OverviewView';
-import ProductionView from './components/views/ProductionView';
-import CompareView from './components/views/CompareView';
-import DataTableView from './components/views/DataTableView';
-import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
-import OperatorShiftView from './components/views/OperatorShiftView';
-import LeaderboardView from './components/views/LeaderboardView';
-import ExecutiveOverallView from './components/views/ExecutiveOverallView';
-import PersonalKpiView from './components/views/PersonalKpiView';
-
-const PROCESS_TABS = [
-  { key: 'rec_ctcp', label: 'CTCP' },
-  { key: 'rec_ctp', label: 'CTP' },
-  { key: 'rec_screen', label: 'SCREEN' },
-  { key: 'rec_flexo', label: 'FLEXO' },
-  { key: 'rec_etching', label: 'ETCHING' }
-];
-
-export default function App() {
-  const { data, loading, serverStatus, reload } = useProductionData();
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const s = sessionStorage.getItem('pf_session');
-      return s ? JSON.parse(s) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [currentMenu, setCurrentMenu] = useState('overview');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTabKey, setActiveTabKey] = useState('rec_ctcp');
-  const [modalState, setModalState] = useState(null);
-
-  // Filter Tanggal Default: 30 Hari Terakhir
-  const [period, setPeriod] = useState(() => {
-    const to = new Date();
-    const from = new Date();
-    from.setDate(from.getDate() - 30);
-    return { from, to };
-  });
-
-  const handleLogin = (u) => {
-    setCurrentUser(u);
-    sessionStorage.setItem('pf_session', JSON.stringify(u));
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('pf_session');
-    setCurrentUser(null);
-  };
-
-  const handleSelectRow = (key, row) => {
-    setModalState({
-      title: 'Detail Catatan Produksi',
-      type: 'detail',
-      key: key || activeTabKey,
-      row
-    });
-  };
-
-  const handleOpenList = (title, key, rows) => {
-    setModalState({
-      title,
-      type: 'list',
-      key: key || activeTabKey,
-      rows: rows || []
-    });
-  };
-
-  if (!currentUser) {
-    return (
-      <AuthView
-        usersData={data.master_user}
-        data={data}
-        serverStatus={serverStatus}
-        onLoginSuccess={handleLogin}
-        onToast={(msg) => alert(msg)}
-      />
-    );
-  }
-
-  const renderProcessTabBar = () => (
-    <div className="flex gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl w-fit mb-4">
-      {PROCESS_TABS.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          onClick={() => setActiveTabKey(t.key)}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-            activeTabKey === t.key
-              ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800'
-          }`}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
-  );
-
-  const renderView = () => {
-    switch (currentMenu) {
-      case 'overview':
-        return (
-          <OverviewView 
-            data={data} 
-            period={period} 
-            onOpenList={handleOpenList} 
-            onSelectRow={handleSelectRow} 
-            onMenuChange={setCurrentMenu} 
-          />
-        );
-      case 'production':
-        return (
-          <div className="space-y-4">
-            {renderProcessTabBar()}
-            <ProductionView
-              tabKey={activeTabKey}
-              data={data}
-              period={period}
-              onSelectRow={handleSelectRow}
-              onOpenList={handleOpenList}
-              onOpenMetric={(k, m, r) => handleOpenList(`Metrik ${m}`, k, r)}
-              onOpenDayModal={(k, d) => handleOpenList(`Data Tanggal ${d}`, k, data[k])}
-              onGoToData={() => setCurrentMenu('data')}
-            />
-          </div>
-        );
-      case 'comparison':
-        return <CompareView data={data} onToast={(msg) => alert(msg)} />;
-      case 'data':
-        return (
-          <div className="space-y-4">
-            {renderProcessTabBar()}
-            <DataTableView tabKey={activeTabKey} data={data} period={period} onSelectRow={handleSelectRow} />
-          </div>
-        );
-      case 'analytics':
-        return (
-          <div className="space-y-4">
-            {renderProcessTabBar()}
-            <ProcessAnalyticsView tabKey={activeTabKey} data={data} period={period} onOpenList={handleOpenList} />
-          </div>
-        );
-      case 'team':
-        return <OperatorShiftView data={data} period={period} />;
-      case 'leaderboard':
-        return <LeaderboardView data={data} period={period} onOpenList={handleOpenList} />;
-      case 'executive':
-        return <ExecutiveOverallView data={data} period={period} onOpenList={handleOpenList} />;
-      case 'personal':
-        return <PersonalKpiView data={data} period={period} user={currentUser} />;
-      default:
-        return (
-          <OverviewView 
-            data={data} 
-            period={period} 
-            onOpenList={handleOpenList} 
-            onSelectRow={handleSelectRow} 
-            onMenuChange={setCurrentMenu} 
-          />
-        );
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[#060a12] text-slate-100 flex font-sans">
-      <Sidebar
-        currentMenu={currentMenu}
-        onMenuChange={setCurrentMenu}
-        user={currentUser}
-        onLogout={handleLogout}
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-
-      <div className={`flex-1 transition-all flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
-        <Header
-          period={period}
-          onPeriodChange={setPeriod}
-          onReset={reload}
-          onOpenPrint={() => window.print()}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-
-        <main className="p-6 flex-1 space-y-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-32 text-slate-400 text-sm font-semibold">
-              Sinkronisasi data sistem...
-            </div>
-          ) : (
-            renderView()
-          )}
-        </main>
-
-        <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; Aether Code 2026 PRISM Integrated System & Monitoring
-        </footer>
-      </div>
-
-      <Modal 
-        modalState={modalState} 
-        onClose={() => setModalState(null)} 
-        onSelectRow={handleSelectRow} 
-      />
-    </div>
-  );
-}
+<file path="index.html">
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRISM - Prepress Integrated System & Monitoring</title>
+  </head>
+  <body class="bg-[#050714]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
 </file>
 
 <file path="src/constants/schema.js">
@@ -5078,6 +4835,137 @@ export const fmtPeriodRange = (start, end) => {
 };
 
 export const fmtDateRange = fmtPeriodRange;
+</file>
+
+<file path="src/App.jsx">
+import React, { useState, useEffect } from 'react';
+import { useProductionData } from './hooks/useProductionData';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
+import AuthView from './components/views/AuthView';
+import OverviewView from './components/views/OverviewView';
+import ProductionView from './components/views/ProductionView';
+import CompareView from './components/views/CompareView';
+import DataTableView from './components/views/DataTableView';
+import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
+import OperatorShiftView from './components/views/OperatorShiftView';
+import LeaderboardView from './components/views/LeaderboardView';
+import ExecutiveOverallView from './components/views/ExecutiveOverallView';
+import PersonalKpiView from './components/views/PersonalKpiView';
+
+export default function App() {
+  const { data, loading, serverStatus, reload } = useProductionData();
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const s = sessionStorage.getItem('pf_session');
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [currentMenu, setCurrentMenu] = useState('overview');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
+  
+  // Theme State: 'dark' (default) atau 'light'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('prism_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark', 'light');
+    root.classList.add(theme);
+    localStorage.setItem('prism_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const [period, setPeriod] = useState({
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    to: new Date()
+  });
+
+  const handleLogin = (u) => {
+    setCurrentUser(u);
+    sessionStorage.setItem('pf_session', JSON.stringify(u));
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('pf_session');
+    setCurrentUser(null);
+  };
+
+  if (!currentUser) {
+    return (
+      <AuthView
+        usersData={data.master_user}
+        data={data}
+        serverStatus={serverStatus}
+        onLoginSuccess={handleLogin}
+        onToast={(msg) => alert(msg)}
+      />
+    );
+  }
+
+  const renderView = () => {
+    switch (currentMenu) {
+      case 'overview': return <OverviewView data={data} period={period} onMenuChange={setCurrentMenu} />;
+      case 'production': return <ProductionView tabKey={selectedProcessKey} data={data} period={period} onGoToData={() => setCurrentMenu('data')} />;
+      case 'comparison': return <CompareView data={data} />;
+      case 'data': return <DataTableView tabKey={selectedProcessKey} data={data} period={period} user={currentUser} />;
+      case 'analytics': return <ProcessAnalyticsView tabKey={selectedProcessKey} data={data} period={period} />;
+      case 'team': return <OperatorShiftView data={data} period={period} />;
+      case 'leaderboard': return <LeaderboardView data={data} period={period} />;
+      case 'executive': return <ExecutiveOverallView data={data} period={period} />;
+      case 'personal': return <PersonalKpiView data={data} user={currentUser} period={period} />;
+      default: return <OverviewView data={data} period={period} onMenuChange={setCurrentMenu} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex relative overflow-x-hidden">
+      <Sidebar
+        currentMenu={currentMenu}
+        onMenuChange={setCurrentMenu}
+        user={currentUser}
+        onLogout={handleLogout}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+
+      <div className={`flex-1 transition-all duration-300 flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
+        <Header
+          period={period}
+          onPeriodChange={setPeriod}
+          onReset={reload}
+          onOpenPrint={() => window.print()}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+
+        <main className="p-6 flex-1 space-y-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-32 space-y-3">
+              <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+              <p className="text-cyan-400 text-xs font-mono uppercase tracking-widest">Sinkronisasi Data...</p>
+            </div>
+          ) : (
+            renderView()
+          )}
+        </main>
+
+        <footer className="p-4 border-t border-slate-700/60 light:border-slate-200 text-center text-xs text-slate-400 font-mono bg-slate-950/20 backdrop-blur-md">
+          &copy; 2026 PRISM &bull; Prepress Integrated System & Monitoring
+        </footer>
+      </div>
+    </div>
+  );
+}
 </file>
 
 </files>
