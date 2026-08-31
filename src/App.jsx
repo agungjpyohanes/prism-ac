@@ -15,6 +15,14 @@ import LeaderboardView from './components/views/LeaderboardView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
 import PersonalKpiView from './components/views/PersonalKpiView';
 
+const PROCESS_TABS = [
+  { key: 'rec_ctcp', label: 'CTCP' },
+  { key: 'rec_ctp', label: 'CTP' },
+  { key: 'rec_screen', label: 'SCREEN' },
+  { key: 'rec_flexo', label: 'FLEXO' },
+  { key: 'rec_etching', label: 'ETCHING' }
+];
+
 export default function App() {
   const { data, loading, serverStatus, reload } = useProductionData();
   const [currentUser, setCurrentUser] = useState(() => {
@@ -28,10 +36,9 @@ export default function App() {
 
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTabKey, setActiveTabKey] = useState('rec_ctcp');
+  const [activeTabKey, setActiveTabKey] = useState('rec_ctp'); // Default ke CTP yang memiliki data
   const [modalState, setModalState] = useState(null);
 
-  // Filter Tanggal Default: 30 Hari Terakhir
   const [period, setPeriod] = useState(() => {
     const to = new Date();
     const from = new Date();
@@ -79,6 +86,25 @@ export default function App() {
     );
   }
 
+  const renderProcessTabBar = () => (
+    <div className="flex gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl w-fit mb-4">
+      {PROCESS_TABS.map((t) => (
+        <button
+          key={t.key}
+          type="button"
+          onClick={() => setActiveTabKey(t.key)}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
+            activeTabKey === t.key
+              ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+
   const renderView = () => {
     switch (currentMenu) {
       case 'overview':
@@ -94,17 +120,7 @@ export default function App() {
       case 'production':
         return (
           <div className="space-y-4">
-            <div className="flex gap-2 p-1 bg-slate-800/80 rounded-xl w-fit">
-              {['rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'].map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setActiveTabKey(k)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${activeTabKey === k ? 'bg-cyan-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}
-                >
-                  {k.replace('rec_', '').toUpperCase()}
-                </button>
-              ))}
-            </div>
+            {renderProcessTabBar()}
             <ProductionView
               tabKey={activeTabKey}
               data={data}
@@ -122,34 +138,14 @@ export default function App() {
       case 'data':
         return (
           <div className="space-y-4">
-            <div className="flex gap-2 p-1 bg-slate-800/80 rounded-xl w-fit">
-              {['rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'].map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setActiveTabKey(k)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${activeTabKey === k ? 'bg-cyan-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}
-                >
-                  {k.replace('rec_', '').toUpperCase()}
-                </button>
-              ))}
-            </div>
+            {renderProcessTabBar()}
             <DataTableView tabKey={activeTabKey} data={data} period={period} onSelectRow={handleSelectRow} />
           </div>
         );
       case 'analytics':
         return (
           <div className="space-y-4">
-            <div className="flex gap-2 p-1 bg-slate-800/80 rounded-xl w-fit">
-              {['rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'].map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setActiveTabKey(k)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${activeTabKey === k ? 'bg-cyan-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}
-                >
-                  {k.replace('rec_', '').toUpperCase()}
-                </button>
-              ))}
-            </div>
+            {renderProcessTabBar()}
             <ProcessAnalyticsView tabKey={activeTabKey} data={data} period={period} onOpenList={handleOpenList} />
           </div>
         );
@@ -175,7 +171,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060a12] text-slate-100 flex">
+    <div className="min-h-screen bg-[#060a12] text-slate-100 flex font-sans">
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -205,7 +201,7 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; 2026 PRISM Integrated System & Monitoring &bull; PT Solo Murni
+          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; PT Solo Murni
         </footer>
       </div>
 

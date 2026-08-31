@@ -1,11 +1,35 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
 import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, Filter } from 'lucide-react';
 
 export default function PersonalKpiView({ data, period, user }) {
-  const currentUsername = String(user?.USER || user?.username || 'guest').toLowerCase().trim();
+  const currentUsername = String(user?.USER || user?.username || 'guest').trim();
+  const userRole = String(user?.ROLE || user?.role || 'operator').toLowerCase().trim();
+  const isManagerOrAdmin = ['admin', 'manager', 'manajemen', 'supervisor'].includes(userRole);
 
+  // Ambil seluruh daftar nama operator yang ada di database
+  const operatorList = useMemo(() => {
+    const set = new Set();
+    PROD_KEYS.forEach(k => {
+      const cfg = SHEETS[k];
+      const rows = data[k] || [];
+      rows.forEach(r => {
+        const op = cell(r, cfg.i.operator).trim();
+        if (op && op !== '-' && op.toLowerCase() !== 'unassigned') set.add(op);
+      });
+    });
+    return Array.from(set).sort();
+  }, [data]);
+
+  const [selectedOperator, setSelectedOperator] = useState(() => {
+    if (isManagerOrAdmin && operatorList.length > 0) return operatorList[0];
+    return currentUsername;
+  });
+
+  const activeOpName = (isManagerOrAdmin && selectedOperator) ? selectedOperator : currentUsername;
+
+  // Filter transaksi khusus operator yang dipilih
   const personalRecords = useMemo(() => {
     const list = [];
     PROD_KEYS.forEach(k => {
@@ -13,8 +37,10 @@ export default function PersonalKpiView({ data, period, user }) {
       const rows = data[k] || [];
 
       rows.forEach(r => {
-        const op = cell(r, cfg.i.operator).toLowerCase().trim();
-        if (currentUsername !== 'guest' && currentUsername !== 'admin' && !op.includes(currentUsername)) return;
+        const op = cell(r, cfg.i.operator).trim().toLowerCase();
+        const targetOp = activeOpName.trim().toLowerCase();
+
+        if (targetOp !== 'guest' && !op.includes(targetOp)) return;
 
         const d = parseDateVal(r[cfg.i.date]);
         if (d) {
@@ -37,7 +63,7 @@ export default function PersonalKpiView({ data, period, user }) {
       });
     });
     return list;
-  }, [data, currentUsername, period]);
+  }, [data, activeOpName, period]);
 
   const kpi = useMemo(() => {
     let good = 0, defect = 0, replace = 0;
@@ -53,6 +79,7 @@ export default function PersonalKpiView({ data, period, user }) {
 
   return (
     <div className="space-y-4 anim-in">
+      {/* Header Card */}
       <div className="card p-5 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 grid place-items-center font-bold text-lg">
@@ -61,18 +88,37 @@ export default function PersonalKpiView({ data, period, user }) {
           <div>
             <div className="flex items-center gap-2">
               <span className="badge bg-cyan-500/20 text-cyan-300 font-bold">OPERATOR SELF-SERVICE</span>
-              <span className="text-xs text-slate-400">· Akun: {user?.USER || 'Guest'}</span>
+              <span className="text-xs text-slate-400">· Operator: <b>{activeOpName}</b></span>
             </div>
             <h2 className="font-display font-extrabold text-2xl mt-1">Dashboard KPI Personal</h2>
-            <p className="text-xs text-slate-300">Pantau produktivitas, rasio kualitas pekerjaan, dan riwayat tugas Anda.</p>
+            <p className="text-xs text-slate-300">Pantau produktivitas, rasio mutu kerja, dan riwayat tugas operator.</p>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Rentang Periode</div>
-          <div className="font-bold text-sm text-cyan-400 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+
+        <div className="flex items-center gap-3">
+          {isManagerOrAdmin && operatorList.length > 0 && (
+            <div className="flex items-center gap-2 bg-slate-800/90 p-2 rounded-xl border border-slate-700">
+              <Filter className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs font-semibold text-slate-300">Pilih Operator:</span>
+              <select
+                value={selectedOperator}
+                onChange={(e) => setSelectedOperator(e.target.value)}
+                className="bg-slate-900 text-cyan-300 text-xs font-bold px-2 py-1 rounded-lg border border-slate-700 outline-none"
+              >
+                {operatorList.map(op => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="text-right">
+            <div className="text-[11px] text-slate-400 uppercase font-semibold">Rentang Periode</div>
+            <div className="font-bold text-sm text-cyan-400 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+          </div>
         </div>
       </div>
 
+      {/* Scorecards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-blue-500">
           <span className="text-[11px] font-bold text-slate-400 uppercase">JOB DIKERJAKAN</span>
@@ -98,8 +144,9 @@ export default function PersonalKpiView({ data, period, user }) {
         </div>
       </div>
 
+      {/* Tabel Riwayat Pekerjaan */}
       <div className="card p-5">
-        <h3 className="card-title mb-3">Riwayat Pekerjaan Terbaru Anda</h3>
+        <h3 className="card-title mb-3">Riwayat Pekerjaan: <span className="text-cyan-600 dark:text-cyan-400">{activeOpName}</span></h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200 dark:border-slate-700">
