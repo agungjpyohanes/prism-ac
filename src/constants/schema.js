@@ -220,6 +220,34 @@ export const SHEETS = {
   }
 };
 
+export const FORMS = [
+  {
+    key: 'rec_ctcp',
+    label: 'CTCP Offset',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-ctcp-example/viewform'
+  },
+  {
+    key: 'rec_ctp',
+    label: 'CTP Thermal',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-ctp-example/viewform'
+  },
+  {
+    key: 'rec_screen',
+    label: 'Screen Printing',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-screen-example/viewform'
+  },
+  {
+    key: 'rec_flexo',
+    label: 'Flexography',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-flexo-example/viewform'
+  },
+  {
+    key: 'rec_etching',
+    label: 'Etching Plate',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-etching-example/viewform'
+  }
+];
+
 export const JOP_CATS = [
   ['O', 'Offset'],
   ['FLEXO', 'Flexo'],

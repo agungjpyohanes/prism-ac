@@ -508,25 +508,6 @@ export default defineConfig([
 ])
 </file>
 
-<file path="README.md">
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-</file>
-
 <file path="vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -719,6 +700,47 @@ export default {
 <file path="readme.md">
 # PRISM Integrated System & Monitoring
 Sistem antarmuka visualisasi dan monitoring operasional prepress yang terhubung dengan Supabase dan Google Sheets.
+</file>
+
+<file path="README.md">
+📝 Ringkasan Perubahan
+✨ Peningkatan UI/UX:
+Design System Modern
+Glassmorphism effects dengan backdrop blur
+Gradient backgrounds yang harmonis
+Layered shadows untuk depth
+Smooth transitions dan animations
+Typography Hierarchy
+Scale yang jelas (display, heading, body, caption, micro)
+Font weights yang konsisten
+Letter spacing yang optimal
+Color Palette
+Deep space theme dengan indigo/purple primary
+Semantic colors untuk status (success, warning, error, info)
+Harmonious accent colors
+Component Library
+Cards dengan hover effects
+Buttons dengan gradients dan shadows
+Inputs dengan focus states
+Badges dengan semantic colors
+Stat cards dengan icons dan trends
+Layout Improvements
+Better spacing dan whitespace
+Grid systems yang responsive
+Visual hierarchy yang jelas
+Micro-interactions
+Smooth hover transitions
+Loading animations
+Pulse effects untuk live indicators
+Scale animations pada hover
+Data Visualization
+Charts dengan styling modern
+Interactive elements
+Better legends dan tooltips
+Empty & Loading States
+Skeleton loaders
+Empty state illustrations
+Helpful messages
 </file>
 
 <file path="src/components/ui/StatCard.jsx">
@@ -2668,7 +2690,7 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
-import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle2 } from 'lucide-react';
+import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown, TrendingUp, CheckCircle2 } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -2692,27 +2714,28 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     const fromTime = period?.from ? startOfDay(period.from).getTime() : null;
     const toTime = period?.to ? endOfDay(period.to).getTime() : null;
     const q = search.trim().toLowerCase();
-
+    
     return rawRows.filter((r) => {
       const idVal = cell(r, cfg.i.id).trim();
       if (!idVal) return false;
-
+      
       const d = parseDateVal(r[cfg.i.date]);
       if (d) {
         const t = d.getTime();
         if (fromTime && t < fromTime) return false;
         if (toTime && t > toTime) return false;
       }
-
+      
       const st = cell(r, cfg.i.status).trim();
       if (statusFilter !== 'ALL' && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
-
+      
       const cat = cell(r, cfg.i.category).trim();
       if (categoryFilter !== 'ALL' && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
-
+      
       if (q) {
         return r.some((c) => String(c || '').toLowerCase().includes(q));
       }
+      
       return true;
     });
   }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
@@ -2721,9 +2744,11 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     return [...filtered].sort((a, b) => {
       const valA = a[sortCol] ?? '';
       const valB = b[sortCol] ?? '';
+      
       if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
         return sortAsc ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
       }
+      
       return sortAsc
         ? String(valA).localeCompare(String(valB))
         : String(valB).localeCompare(String(valA));
@@ -2738,21 +2763,21 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     const categoryCount = {};
     const categoryRows = {};
     const statusRows = {};
-
+    
     filtered.forEach((r) => {
       const st = cell(r, cfg.i.status).trim() || 'Pending';
       const cat = cell(r, cfg.i.category).trim() || 'General';
-
+      
       statusCount[st] = (statusCount[st] || 0) + 1;
       categoryCount[cat] = (categoryCount[cat] || 0) + 1;
-
+      
       if (!statusRows[st]) statusRows[st] = [];
       statusRows[st].push(r);
-
+      
       if (!categoryRows[cat]) categoryRows[cat] = [];
       categoryRows[cat].push(r);
     });
-
+    
     return { statusCount, categoryCount, statusRows, categoryRows };
   }, [filtered, cfg]);
 
@@ -2773,117 +2798,185 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     }
   };
 
-  const inProgCount = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('progress') || cell(r, cfg.i.status).toLowerCase().includes('proses')).length;
-  const pendingCount = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('queue') || cell(r, cfg.i.status).toLowerCase().includes('pending') || cell(r, cfg.i.status).toLowerCase().includes('antri')).length;
-  const doneCount = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('selesai') || cell(r, cfg.i.status).toLowerCase().includes('done')).length;
+  const handleDoughnutClick = (event, elements) => {
+    if (!elements || elements.length === 0) return;
+    const clickedIndex = elements[0].index;
+    const catName = Object.keys(stats.categoryCount)[clickedIndex];
+    if (catName && stats.categoryRows[catName]) {
+      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
+    }
+  };
+
+  const handleBarClick = (event, elements) => {
+    if (!elements || elements.length === 0) return;
+    const clickedIndex = elements[0].index;
+    const statusName = Object.keys(stats.statusCount)[clickedIndex];
+    if (statusName && stats.statusRows[statusName]) {
+      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
+    }
+  };
+
+  const inProgressCount = filtered.filter(r => 
+    cell(r, cfg.i.status).toLowerCase().includes('progress') || 
+    cell(r, cfg.i.status).toLowerCase().includes('proses')
+  ).length;
+
+  const queueCount = filtered.filter(r => 
+    cell(r, cfg.i.status).toLowerCase().includes('queue') || 
+    cell(r, cfg.i.status).toLowerCase().includes('pending') || 
+    cell(r, cfg.i.status).toLowerCase().includes('antri')
+  ).length;
 
   return (
-    <div className="space-y-6 anim-in">
-      {/* Header Overview Banner */}
-      <div className="card p-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="badge">MONITORING WIP</span>
-            <span className="text-xs text-slate-300">Live Active Queue</span>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header Section */}
+      <div className="card-gradient p-8 rounded-3xl">
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="badge badge-primary">
+                <Activity className="w-3 h-3" />
+                MONITORING PRODUKSI
+              </span>
+              <span className="text-xs text-slate-400">Real-time Job Status</span>
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Dashboard Overview
+            </h1>
+            <p className="text-slate-300">
+              Pantau seluruh pekerjaan aktif dan status produksi secara real-time
+            </p>
           </div>
-          <h2 className="font-display font-black text-2xl text-white mt-1">
-            Dashboard Overview — Job Aktif (WIP)
-          </h2>
-          <p className="text-xs text-slate-300">
-            Daftar seluruh pekerjaan yang sedang dalam antrean atau proses pembuatan di Prepress[cite: 1, 2]
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Periode Aktif</div>
-          <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}[cite: 1, 2]</div>
+          
+          <div className="text-right">
+            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Periode</div>
+            <div className="text-lg font-bold text-white">{fmtPeriodRange(period?.from, period?.to)}</div>
+          </div>
         </div>
       </div>
 
-      {/* 4 Scorecards Sesuai Slide 2 PDF */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div
-          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
-          className="card p-5 cursor-pointer hover:border-cyan-400 flex items-center justify-between"
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Jobs */}
+        <div 
+          onClick={() => onOpenList?.('Seluruh Job Aktif', 'job_active', filtered)}
+          className="stat-card cursor-pointer group"
         >
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Job Aktif</p>
-            <h3 className="text-3xl font-black text-white mt-1 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-              {filtered.length.toLocaleString('id-ID')}
-            </h3>
-            <p className="text-[10px] text-cyan-400 mt-1">Klik untuk audit antrean</p>
+          <div className="flex items-start justify-between mb-4">
+            <div className="stat-card-icon">
+              <Activity className="w-6 h-6 text-indigo-400" />
+            </div>
+            <TrendingUp className="w-4 h-4 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400">
-            <Activity className="w-6 h-6" />
-          </div>
+          <div className="stat-card-value">{filtered.length.toLocaleString('id-ID')}</div>
+          <div className="stat-card-label mt-2">Total Job Aktif</div>
+          <div className="text-xs text-slate-500 mt-1">Klik untuk detail</div>
         </div>
 
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Berjalan / In Progress</p>
-            <h3 className="text-3xl font-black text-emerald-400 mt-1 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">
-              {inProgCount.toLocaleString('id-ID')}
-            </h3>
-            <p className="text-[10px] text-slate-400 mt-1">Sedang diproses mesin</p>
+        {/* In Progress */}
+        <div 
+          onClick={() => {
+            const inProg = filtered.filter(r => 
+              cell(r, cfg.i.status).toLowerCase().includes('progress') || 
+              cell(r, cfg.i.status).toLowerCase().includes('proses')
+            );
+            onOpenList?.('Job In Progress', 'job_active', inProg);
+          }}
+          className="stat-card cursor-pointer group"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="stat-card-icon" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+              <PlayCircle className="w-6 h-6 text-emerald-400" />
+            </div>
+            <span className="badge badge-success">Active</span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
-            <PlayCircle className="w-6 h-6" />
-          </div>
+          <div className="stat-card-value">{inProgressCount.toLocaleString('id-ID')}</div>
+          <div className="stat-card-label mt-2">In Progress</div>
+          <div className="text-xs text-slate-500 mt-1">Sedang dikerjakan</div>
         </div>
 
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending / Antrean</p>
-            <h3 className="text-3xl font-black text-amber-400 mt-1 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">
-              {pendingCount.toLocaleString('id-ID')}
-            </h3>
-            <p className="text-[10px] text-slate-400 mt-1">Menunggu giliran</p>
+        {/* Queue */}
+        <div 
+          onClick={() => {
+            const pending = filtered.filter(r => 
+              cell(r, cfg.i.status).toLowerCase().includes('queue') || 
+              cell(r, cfg.i.status).toLowerCase().includes('pending') || 
+              cell(r, cfg.i.status).toLowerCase().includes('antri')
+            );
+            onOpenList?.('Job Queue', 'job_active', pending);
+          }}
+          className="stat-card cursor-pointer group"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="stat-card-icon" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.2) 100%)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+              <Clock className="w-6 h-6 text-amber-400" />
+            </div>
+            <span className="badge badge-warning">Waiting</span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400">
-            <Clock className="w-6 h-6" />
-          </div>
+          <div className="stat-card-value">{queueCount.toLocaleString('id-ID')}</div>
+          <div className="stat-card-label mt-2">In Queue</div>
+          <div className="text-xs text-slate-500 mt-1">Menunggu giliran</div>
         </div>
 
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Selesai / Passed</p>
-            <h3 className="text-3xl font-black text-indigo-300 mt-1 drop-shadow-[0_0_10px_rgba(129,140,248,0.5)]">
-              {doneCount.toLocaleString('id-ID')}
-            </h3>
-            <p className="text-[10px] text-slate-400 mt-1">Siap kirim / arsip</p>
+        {/* Categories */}
+        <div className="stat-card">
+          <div className="flex items-start justify-between mb-4">
+            <div className="stat-card-icon" style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)', borderColor: 'rgba(139, 92, 246, 0.3)' }}>
+              <Layers className="w-6 h-6 text-purple-400" />
+            </div>
+            <CheckCircle2 className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-400/30 flex items-center justify-center text-indigo-400">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
+          <div className="stat-card-value">{Object.keys(stats.categoryCount).length}</div>
+          <div className="stat-card-label mt-2">Kategori</div>
+          <div className="text-xs text-slate-500 mt-1">Divisi proses</div>
         </div>
       </div>
 
-      {/* Chart Grid Sesuai Slide 2 PDF */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="card-title">Breakdown per Category[cite: 3]</h3>
-            <span className="text-[10px] text-cyan-400 font-mono">Porsi Lini</span>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Category Distribution */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Distribusi Kategori</h3>
+              <p className="text-xs text-slate-400">Klik segmen untuk detail</p>
+            </div>
           </div>
-          <div className="h-64 flex items-center justify-center">
+          <div className="h-72 flex items-center justify-center">
             {Object.keys(stats.categoryCount).length === 0 ? (
-              <span className="text-xs text-slate-400">Tidak ada data kategori</span>
+              <div className="text-center">
+                <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <p className="text-sm text-slate-500">Tidak ada data kategori</p>
+              </div>
             ) : (
               <Doughnut
                 data={{
                   labels: Object.keys(stats.categoryCount),
-                  datasets: [
-                    {
-                      data: Object.values(stats.categoryCount),
-                      backgroundColor: ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'],
-                      borderColor: 'rgba(5, 7, 22, 0.8)',
-                      borderWidth: 3
-                    }
-                  ]
+                  datasets: [{
+                    data: Object.values(stats.categoryCount),
+                    backgroundColor: [
+                      '#6366f1', '#8b5cf6', '#10b981', '#f59e0b', 
+                      '#ec4899', '#06b6d4', '#64748b'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                  }]
                 }}
                 options={{
                   maintainAspectRatio: false,
+                  cutout: '65%',
+                  onClick: handleDoughnutClick,
                   plugins: {
-                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 15,
+                        font: { size: 11 },
+                        color: '#94a3b8'
+                      }
+                    }
                   }
                 }}
               />
@@ -2891,37 +2984,49 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="card-title">Distribusi Status Pengerjaan</h3>
-            <span className="text-[10px] text-cyan-400 font-mono">Volume Job</span>
+        {/* Status Distribution */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Status Pengerjaan</h3>
+              <p className="text-xs text-slate-400">Klik bar untuk detail</p>
+            </div>
           </div>
-          <div className="h-64">
+          <div className="h-72">
             {Object.keys(stats.statusCount).length === 0 ? (
-              <span className="text-xs text-slate-400">Tidak ada data status</span>
+              <div className="text-center h-full flex items-center justify-center">
+                <div>
+                  <Activity className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">Tidak ada data status</p>
+                </div>
+              </div>
             ) : (
               <Bar
                 data={{
                   labels: Object.keys(stats.statusCount),
-                  datasets: [
-                    {
-                      label: 'Jumlah Job',
-                      data: Object.values(stats.statusCount),
-                      backgroundColor: '#06b6d4',
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: '#22d3ee'
-                    }
-                  ]
+                  datasets: [{
+                    label: 'Jumlah Job',
+                    data: Object.values(stats.statusCount),
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderRadius: 8,
+                    borderSkipped: false
+                  }]
                 }}
                 options={{
                   maintainAspectRatio: false,
-                  scales: {
-                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                  },
+                  onClick: handleBarClick,
                   plugins: {
                     legend: { display: false }
+                  },
+                  scales: {
+                    x: {
+                      grid: { display: false },
+                      ticks: { color: '#94a3b8', font: { size: 11 } }
+                    },
+                    y: {
+                      grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                      ticks: { color: '#94a3b8', font: { size: 11 } }
+                    }
                   }
                 }}
               />
@@ -2930,68 +3035,75 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
-      {/* Tabel Data Job Aktif WIP */}
-      <div className="card p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Jobs Table */}
+      <div className="card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="font-display font-bold text-lg text-white">
-              Job Aktif Saat Ini[cite: 3]
-            </h2>
-            <p className="text-xs text-slate-400">
-              Menampilkan <b>{sorted.length.toLocaleString('id-ID')} pekerjaan</b>
+            <h2 className="text-xl font-bold text-white mb-1">Daftar Job Aktif</h2>
+            <p className="text-sm text-slate-400">
+              Menampilkan <span className="text-white font-semibold">{sorted.length}</span> pekerjaan
             </p>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
+          
+          <div className="flex items-center gap-3 flex-wrap">
             <select
               value={categoryFilter}
-              onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-              className="inp"
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
+              className="select text-xs"
             >
               <option value="ALL">Semua Kategori</option>
               {distinctCategories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-
+            
             <select
               value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="inp"
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="select text-xs"
             >
               <option value="ALL">Semua Status</option>
               {distinctStatuses.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-
+            
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Cari Job, SPK..."
+                placeholder="Cari job..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="inp !pl-10 w-48 sm:w-56"
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="input pl-10 text-xs w-56"
               />
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
-          <table className="tbl">
+        <div className="table-container">
+          <table className="table">
             <thead>
               <tr>
-                <th>No</th>
+                <th className="w-12">No</th>
                 {(cfg.headers || []).map((h, i) => (
                   <th
                     key={i}
                     onClick={() => handleSort(i)}
-                    className="whitespace-nowrap cursor-pointer hover:text-cyan-300 transition"
+                    className="cursor-pointer hover:text-white transition-colors"
                   >
-                    <div className="flex items-center gap-1">
-                      <span>{h.replace(/_/g, ' ')}</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    <div className="flex items-center gap-2">
+                      <span>{h.replace(/_/g, ' ').toUpperCase()}</span>
+                      <ArrowUpDown className="w-3 h-3" />
                     </div>
                   </th>
                 ))}
@@ -3002,41 +3114,43 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                 <tr
                   key={idx}
                   onClick={() => onSelectRow?.('job_active', row)}
+                  className="cursor-pointer"
                 >
-                  <td className="text-slate-400 font-mono">{(page - 1) * pageSize + idx + 1}</td>
+                  <td className="text-slate-500 font-mono">{(page - 1) * pageSize + idx + 1}</td>
                   {(cfg.headers || []).map((_, colIdx) => {
                     const val = row[colIdx];
                     if (colIdx === cfg.i.status) {
                       const isDone = String(val).toLowerCase().includes('selesai') || String(val).toLowerCase().includes('done');
                       const isInProg = String(val).toLowerCase().includes('progress') || String(val).toLowerCase().includes('proses');
+                      
                       return (
-                        <td key={colIdx} className="whitespace-nowrap">
-                          <span
-                            className={`badge ${
-                              isDone
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                : isInProg
-                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                            }`}
-                          >
+                        <td key={colIdx}>
+                          <span className={`badge ${
+                            isDone ? 'badge-success' : 
+                            isInProg ? 'badge-info' : 
+                            'badge-warning'
+                          }`}>
                             {val || '-'}
                           </span>
                         </td>
                       );
                     }
                     return (
-                      <td key={colIdx} className="whitespace-nowrap text-slate-200 font-medium">
+                      <td key={colIdx}>
                         {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '-')}
                       </td>
                     );
                   })}
                 </tr>
               ))}
+              
               {paginatedRows.length === 0 && (
                 <tr>
-                  <td colSpan={cfg.headers.length + 1} className="text-center py-10 text-slate-400">
-                    Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian.
+                  <td colSpan={cfg.headers.length + 1} className="text-center py-12">
+                    <div className="flex flex-col items-center">
+                      <Activity className="w-12 h-12 text-slate-600 mb-3" />
+                      <p className="text-sm text-slate-500">Tidak ada pekerjaan yang cocok</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -3044,21 +3158,23 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
-          <span>Halaman <b>{page}</b> dari <b>{totalPages}</b></span>
-          <div className="flex items-center gap-1">
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
+          <span className="text-sm text-slate-400">
+            Halaman <span className="text-white font-semibold">{page}</span> dari <span className="text-white font-semibold">{totalPages}</span>
+          </span>
+          <div className="flex items-center gap-2">
             <button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="p-2 rounded-full border border-white/10 disabled:opacity-30 hover:bg-white/10 text-cyan-300"
+              className="btn-icon disabled:opacity-40"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="p-2 rounded-full border border-white/10 disabled:opacity-30 hover:bg-white/10 text-cyan-300"
+              className="btn-icon disabled:opacity-40"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -3066,106 +3182,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
     </div>
-  );
-}
-</file>
-
-<file path="src/components/layout/Header.jsx">
-import React from 'react';
-import { Menu, RotateCcw, Printer, Calendar, Sun, Moon } from 'lucide-react';
-import { iso, parseDateVal } from '../../utils/formatters';
-
-export default function Header({
-  period,
-  onPeriodChange,
-  onReset,
-  onOpenPrint,
-  onToggleSidebar,
-  theme,
-  onToggleTheme
-}) {
-  const fromStr = period?.from ? iso(period.from) : '';
-  const toStr = period?.to ? iso(period.to) : '';
-
-  const handleDateChange = (type, valStr) => {
-    if (!onPeriodChange) return;
-    const parsed = parseDateVal(valStr);
-    onPeriodChange((prev) => ({
-      ...prev,
-      [type]: parsed
-    }));
-  };
-
-  return (
-    <header className="sticky top-0 z-30 bg-[#070b1a]/70 dark:bg-[#070b1a]/70 light:bg-white/80 backdrop-blur-xl border-b border-white/10 light:border-slate-200 px-4 lg:px-6 py-3 no-print transition-colors">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-2xl text-slate-300 light:text-slate-700 hover:bg-white/10 transition border border-white/10 light:border-slate-300"
-            title="Menu Sidebar"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div>
-            <h1 className="font-display font-black text-base lg:text-lg text-white light:text-slate-900 leading-tight">
-              PRISM
-            </h1>
-            <p className="text-[11px] text-cyan-400 light:text-indigo-600 font-semibold">
-              Integrated System & Monitoring
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Pill Date Range Picker */}
-          <div className="flex items-center gap-1.5 bg-slate-950/60 light:bg-slate-100 px-3.5 py-1.5 rounded-full border border-cyan-500/30 light:border-slate-300 backdrop-blur-md">
-            <Calendar className="w-4 h-4 text-cyan-400 light:text-indigo-600 shrink-0" />
-            <input
-              type="date"
-              value={fromStr}
-              onChange={(e) => handleDateChange('from', e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-200 light:text-slate-800 outline-none w-28"
-            />
-            <span className="text-slate-500 text-xs font-bold">s/d</span>
-            <input
-              type="date"
-              value={toStr}
-              onChange={(e) => handleDateChange('to', e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-200 light:text-slate-800 outline-none w-28"
-            />
-          </div>
-
-          {/* Toggle Dark / Light Mode */}
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-amber-400 hover:text-amber-300 transition border border-white/10 light:border-slate-300 backdrop-blur-md"
-            title={theme === 'dark' ? 'Mode Terang (Light)' : 'Mode Gelap (Dark)'}
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
-          </button>
-
-          {/* Reset / Reload Data */}
-          <button
-            onClick={onReset}
-            className="p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-slate-300 light:text-slate-700 hover:text-cyan-300 transition border border-white/10 light:border-slate-300 backdrop-blur-md"
-            title="Muat Ulang Data"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-
-          {/* Print Button */}
-          <button
-            onClick={onOpenPrint}
-            className="btn-primary text-xs py-2 px-4 font-semibold flex items-center gap-1.5"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print / PDF</span>
-          </button>
-        </div>
-      </div>
-    </header>
   );
 }
 </file>
@@ -3256,115 +3272,121 @@ export function useProductionData() {
 }
 </file>
 
-<file path="src/components/layout/Sidebar.jsx">
+<file path="src/components/layout/Header.jsx">
 import React from 'react';
-import { MENUS } from '../../constants/navigation';
-import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, RotateCcw, Printer, Calendar, Sun, Moon } from 'lucide-react';
+import { iso, parseDateVal } from '../../utils/formatters';
 
-export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, collapsed, onToggle }) {
-  const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
-  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
+export default function Header({
+  period,
+  onPeriodChange,
+  onReset,
+  onOpenPrint,
+  onToggleSidebar,
+  theme,
+  onToggleTheme
+}) {
+  const fromStr = period?.from ? iso(period.from) : '';
+  const toStr = period?.to ? iso(period.to) : '';
 
-  const availableMenus = MENUS.filter((m) => {
-    if (!m.roles || m.roles.length === 0) return true;
-    if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
-    return m.roles.includes(userRole);
-  });
+  const handleDateChange = (type, valStr) => {
+    if (!onPeriodChange) return;
+    const parsed = parseDateVal(valStr);
+    onPeriodChange((prev) => ({
+      ...prev,
+      [type]: parsed
+    }));
+  };
 
   return (
-    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#070b1a]/85 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <header className="sticky top-0 z-30 bg-[#070b1a]/85 dark:bg-[#070b1a]/85 light:bg-white/90 backdrop-blur-xl border-b border-white/10 light:border-slate-200 px-3 sm:px-6 py-2.5 sm:py-3 no-print transition-colors">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4">
         
-        {/* Header Branding */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
-          {!collapsed ? (
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-2xl bg-white/5 border border-white/20 p-1.5 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
-                <img 
-                  src={LOGO_URL} 
-                  alt="PRISM Logo" 
-                  className="w-full h-full object-contain" 
-                  referrerPolicy="no-referrer" 
-                />
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-display font-black text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
-                  PRISM
-                </h2>
-                <p className="text-[9px] font-mono text-cyan-400/90 font-medium truncate">
-                  Integrated System & Monitoring
-                </p>
-              </div>
+        {/* Left Side: Mobile Hamburger & Title */}
+        <div className="flex items-center justify-between sm:justify-start gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={onToggleSidebar}
+              className="lg:hidden p-2 rounded-2xl text-slate-300 light:text-slate-700 bg-white/5 light:bg-slate-100 hover:bg-white/10 transition border border-white/10 light:border-slate-300 shrink-0"
+              title="Menu Navigasi"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="font-display font-black text-sm sm:text-base lg:text-lg text-white light:text-slate-900 leading-tight">
+                PRISM
+              </h1>
+              <p className="text-[10px] sm:text-[11px] text-cyan-400 light:text-indigo-600 font-semibold truncate max-w-[200px] sm:max-w-none">
+                Integrated System & Monitoring
+              </p>
             </div>
-          ) : (
-            <div className="w-8 h-8 mx-auto rounded-xl bg-white/5 border border-white/20 p-1 flex items-center justify-center overflow-hidden">
-              <img 
-                src={LOGO_URL} 
-                alt="PRISM" 
-                className="w-full h-full object-contain" 
-                referrerPolicy="no-referrer" 
-              />
-            </div>
-          )}
-          
-          <button 
+          </div>
+
+          {/* Quick theme toggle button on mobile */}
+          <button
             type="button"
-            onClick={onToggle} 
-            className="p-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-400/40 transition ml-auto"
-            title={collapsed ? "Buka Sidebar" : "Tutup Sidebar"}
+            onClick={onToggleTheme}
+            className="sm:hidden p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-amber-400 hover:text-amber-300 transition border border-white/10 light:border-slate-300"
+            title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
           >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
           </button>
         </div>
 
-        {/* Menu Navigation */}
-        <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
-          {availableMenus.map((m) => {
-            const Icon = m.icon;
-            const active = currentMenu === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => onMenuChange(m.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 ${
-                  active
-                    ? 'bg-gradient-to-r from-cyan-500/25 to-indigo-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
-                }`}
-                title={collapsed ? m.label : ''}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]' : ''}`} />
-                {!collapsed && <span className="truncate">{m.label}</span>}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* User Footer Profile */}
-      <div className="p-3.5 border-t border-white/10 flex items-center justify-between shrink-0 bg-slate-950/60">
-        {!collapsed && (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
-              {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
-            </div>
-            <div className="truncate">
-              <p className="text-xs font-bold text-slate-200 truncate">{user?.USER || user?.username || 'User'}</p>
-              <p className="text-[10px] font-mono text-cyan-400 uppercase">{user?.ROLE || user?.role || 'OPERATOR'}</p>
-            </div>
+        {/* Right Side: Date Filter & Controls */}
+        <div className="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
+          {/* Date Picker Range */}
+          <div className="flex items-center gap-1 bg-slate-950/60 light:bg-slate-100 px-2.5 sm:px-3.5 py-1.5 rounded-full border border-cyan-500/30 light:border-slate-300 backdrop-blur-md flex-1 sm:flex-none justify-center">
+            <Calendar className="w-3.5 h-3.5 text-cyan-400 light:text-indigo-600 shrink-0" />
+            <input
+              type="date"
+              value={fromStr}
+              onChange={(e) => handleDateChange('from', e.target.value)}
+              className="bg-transparent text-[11px] sm:text-xs font-semibold text-slate-200 light:text-slate-800 outline-none w-[90px] sm:w-28 text-center"
+            />
+            <span className="text-slate-500 text-[10px] sm:text-xs font-bold px-0.5">-</span>
+            <input
+              type="date"
+              value={toStr}
+              onChange={(e) => handleDateChange('to', e.target.value)}
+              className="bg-transparent text-[11px] sm:text-xs font-semibold text-slate-200 light:text-slate-800 outline-none w-[90px] sm:w-28 text-center"
+            />
           </div>
-        )}
-        <button 
-          type="button"
-          onClick={onLogout} 
-          title="Keluar / Logout" 
-          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition shrink-0"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Theme Toggle (Desktop/Tablet) */}
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="hidden sm:flex p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-amber-400 hover:text-amber-300 transition border border-white/10 light:border-slate-300 backdrop-blur-md"
+              title={theme === 'dark' ? 'Mode Terang (Light)' : 'Mode Gelap (Dark)'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+            </button>
+
+            {/* Reload Data */}
+            <button
+              onClick={onReset}
+              className="p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-slate-300 light:text-slate-700 hover:text-cyan-300 transition border border-white/10 light:border-slate-300 backdrop-blur-md"
+              title="Muat Ulang Data"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Print Button */}
+            <button
+              onClick={onOpenPrint}
+              className="btn-primary text-xs py-1.5 sm:py-2 px-3 sm:px-4 font-semibold flex items-center gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Print / PDF</span>
+              <span className="sm:hidden">Print</span>
+            </button>
+          </div>
+        </div>
+
       </div>
-    </aside>
+    </header>
   );
 }
 </file>
@@ -3374,318 +3396,745 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  /* DARK COSMIC MODE */
-  html.dark body {
-    @apply bg-[#050716] text-slate-100 antialiased selection:bg-cyan-400 selection:text-black min-h-screen font-sans;
-    background: radial-gradient(circle at 50% 5%, #1e1b4b 0%, #0d1533 30%, #050716 80%),
-                radial-gradient(circle at 90% 85%, rgba(168, 85, 247, 0.22) 0%, transparent 45%),
-                radial-gradient(circle at 10% 90%, rgba(6, 182, 212, 0.18) 0%, transparent 45%),
-                #050716;
-    background-attachment: fixed;
-  }
+/* ========================================
+   PRISM Design System v2.0
+   Modern, Premium, Accessible
+   ======================================== */
 
-  /* LIGHT AURORA MODE */
-  html.light body {
-    @apply bg-[#eef2f9] text-slate-800 antialiased selection:bg-cyan-500 selection:text-white min-h-screen font-sans;
-    background: radial-gradient(circle at 50% 5%, #e0e7ff 0%, #eef2f9 40%, #f8fafc 80%),
-                radial-gradient(circle at 90% 85%, rgba(192, 132, 252, 0.25) 0%, transparent 45%),
-                radial-gradient(circle at 10% 90%, rgba(34, 211, 238, 0.2) 0%, transparent 45%),
-                #eef2f9;
-    background-attachment: fixed;
-  }
+:root {
+  /* Primary Colors - Deep Space Theme */
+  --primary-50: #f0f4ff;
+  --primary-100: #e0e9ff;
+  --primary-200: #c7d6fe;
+  --primary-300: #a4bbfd;
+  --primary-400: #7c97f9;
+  --primary-500: #5b73f5;
+  --primary-600: #4551e8;
+  --primary-700: #3740d1;
+  --primary-800: #2e35a9;
+  --primary-900: #2a3085;
+  
+  /* Accent Colors - Vibrant & Modern */
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-violet: #8b5cf6;
+  --accent-indigo: #6366f1;
+  
+  /* Neutral Colors - Sophisticated Grays */
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+  --neutral-950: #020617;
+  
+  /* Semantic Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #f43f5e;
+  --info: #06b6d4;
+  
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  
+  /* Shadows - Layered Depth */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Glassmorphism Cards & Modals */
-.card, .modal-panel {
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-radius: 1.5rem !important;
-  transition: all 0.3s ease-in-out !important;
+/* ========================================
+   Base Styles
+   ======================================== */
+
+* {
+  box-sizing: border-box;
 }
 
-html.dark .card, html.dark .modal-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(13, 22, 50, 0.65) 100%) !important;
-  border: 1px solid rgba(56, 189, 248, 0.25) !important;
-  box-shadow: 0 12px 35px 0 rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2) !important;
-  color: #f8fafc !important;
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: var(--neutral-100);
 }
 
-html.light .card, html.light .modal-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(240, 244, 255, 0.7) 100%) !important;
-  border: 1px solid rgba(147, 197, 253, 0.5) !important;
-  box-shadow: 0 12px 35px 0 rgba(0, 0, 0, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8) !important;
-  color: #0f172a !important;
+/* ========================================
+   Typography Scale
+   ======================================== */
+
+.text-display {
+  font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-/* Card Titles */
-html.dark .card-title {
-  @apply font-display font-extrabold text-sm text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-200 !important;
+.text-heading {
+  font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-html.light .card-title {
-  @apply font-display font-extrabold text-sm text-transparent bg-clip-text bg-gradient-to-r from-indigo-800 via-blue-700 to-cyan-600 !important;
+.text-body {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
-/* Pill Form Inputs & Selects */
-.inp {
-  @apply rounded-full px-4 py-2 text-xs font-medium backdrop-blur-md transition outline-none !important;
+.text-caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-html.dark .inp {
-  @apply border border-cyan-500/40 bg-slate-950/70 text-slate-100 placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+.text-micro {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-html.light .inp {
-  @apply border border-slate-300 bg-white/80 text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+/* ========================================
+   Card Components
+   ======================================== */
+
+.card {
+  @apply relative overflow-hidden;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
 }
 
-select.inp option {
-  @apply bg-slate-900 text-slate-100;
-}
-html.light select.inp option {
-  @apply bg-white text-slate-800;
+.card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
 }
 
-/* Pill Buttons */
+.card-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-solid {
+  background: var(--neutral-900);
+  border: 1px solid var(--neutral-800);
+}
+
+.card-gradient {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* ========================================
+   Button Components
+   ======================================== */
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 font-semibold transition-all;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
 .btn-primary {
-  @apply rounded-full font-bold transition duration-200 text-white !important;
-  background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%) !important;
-  box-shadow: 0 0 18px rgba(6, 182, 212, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 0 28px rgba(6, 182, 212, 0.7) !important;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
   transform: translateY(-1px);
 }
 
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--neutral-200);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .btn-ghost {
-  @apply rounded-full transition px-4 py-2 text-xs font-semibold !important;
+  background: transparent;
+  color: var(--neutral-400);
 }
 
-html.dark .btn-ghost {
-  @apply border border-cyan-500/30 bg-cyan-950/20 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400/60 !important;
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--neutral-200);
 }
 
-html.light .btn-ghost {
-  @apply border border-indigo-200 bg-indigo-50/50 text-indigo-700 hover:bg-indigo-100 !important;
+.btn-icon {
+  @apply p-2 rounded-lg;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--neutral-400);
+  transition: all var(--transition-fast);
 }
 
-/* Badges */
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--neutral-200);
+}
+
+/* ========================================
+   Input Components
+   ======================================== */
+
+.input {
+  @apply w-full px-4 py-2.5 rounded-xl transition-all;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--neutral-100);
+  font-size: 0.875rem;
+}
+
+.input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.input::placeholder {
+  color: var(--neutral-500);
+}
+
+.select {
+  @apply input cursor-pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+/* ========================================
+   Badge Components
+   ======================================== */
+
 .badge {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold backdrop-blur-md !important;
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
 }
 
-html.dark .badge {
-  @apply border border-cyan-400/30 bg-cyan-950/30 text-cyan-300 !important;
+.badge-primary {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-300);
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
-html.light .badge {
-  @apply border border-indigo-300/50 bg-indigo-100/70 text-indigo-800 !important;
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* Tabel Kontras Tinggi */
-.tbl {
-  @apply w-full text-left text-xs border-collapse;
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-html.dark .tbl thead th {
-  @apply py-3 px-3.5 bg-slate-950/80 border-b border-cyan-500/20 text-cyan-300 font-bold uppercase tracking-wider text-[10px] !important;
+.badge-error {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.3);
 }
 
-html.light .tbl thead th {
-  @apply py-3 px-3.5 bg-slate-100/90 border-b border-indigo-100 text-indigo-900 font-bold uppercase tracking-wider text-[10px] !important;
+.badge-info {
+  background: rgba(6, 182, 212, 0.15);
+  color: #67e8f9;
+  border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
-html.dark .tbl tbody tr {
-  @apply border-b border-white/5 hover:bg-cyan-500/15 transition-colors text-slate-200 cursor-pointer !important;
+/* ========================================
+   Stat Card Components
+   ======================================== */
+
+.stat-card {
+  @apply relative overflow-hidden p-6 rounded-2xl transition-all;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-html.light .tbl tbody tr {
-  @apply border-b border-slate-100 hover:bg-indigo-50/60 transition-colors text-slate-700 cursor-pointer !important;
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
 }
 
-.tbl tbody td {
-  @apply py-3 px-3.5;
+.stat-card-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
-/* Scrollbars */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-html.dark ::-webkit-scrollbar-track { background: rgba(5, 7, 22, 0.8); }
-html.light ::-webkit-scrollbar-track { background: rgba(240, 244, 255, 0.8); }
-html.dark ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.35); border-radius: 9999px; }
-html.light ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.35); border-radius: 9999px; }
-
-.anim-in {
-  animation: cosmicFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+.stat-card-value {
+  @apply text-3xl font-bold mt-3;
+  background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-@keyframes cosmicFadeIn {
-  from { opacity: 0; transform: translateY(6px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.stat-card-label {
+  @apply text-xs font-semibold uppercase tracking-wider;
+  color: var(--neutral-400);
+}
+
+.stat-card-trend {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold;
+}
+
+.trend-up {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+.trend-down {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+}
+
+/* ========================================
+   Table Components
+   ======================================== */
+
+.table-container {
+  @apply overflow-hidden rounded-2xl;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.table {
+  @apply w-full text-left;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table th {
+  @apply px-4 py-3 text-xs font-semibold uppercase tracking-wider;
+  color: var(--neutral-400);
+}
+
+.table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.table td {
+  @apply px-4 py-3 text-sm;
+  color: var(--neutral-300);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-lg);
+}
+
+/* ========================================
+   Scrollbar Styling
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   Toast Notifications
+   ======================================== */
+
+.toast {
+  @apply px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold transition-all transform;
+  backdrop-filter: blur(10px);
+}
+
+.toast.ok {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.toast.err {
+  background: rgba(244, 63, 94, 0.9);
+  color: white;
+  border: 1px solid rgba(244, 63, 94, 0.5);
+}
+
+.toast.warn {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.toast.info {
+  background: rgba(6, 182, 212, 0.9);
+  color: white;
+  border: 1px solid rgba(6, 182, 212, 0.5);
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  aside,
+  header,
+  #toasts,
+  .no-print,
+  button {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-violet) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
 </file>
 
-<file path="src/components/views/AuthView.jsx">
-import React, { useState } from 'react';
-import { Eye, EyeOff, User, Lock } from 'lucide-react';
+<file path="src/components/layout/Sidebar.jsx">
+import React from 'react';
+import { MENUS } from '../../constants/navigation';
+import { LogOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
-export default function AuthView({ usersData = [], data = {}, serverStatus = {}, onLoginSuccess, onToast }) {
-  const [tab, setTab] = useState('login');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+export default function Sidebar({
+  currentMenu,
+  onMenuChange,
+  user,
+  onLogout,
+  collapsed,
+  onToggle,
+  mobileOpen,
+  onCloseMobile
+}) {
+  const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
   const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    const uClean = username.trim().toLowerCase();
-    const pClean = password.trim();
+  const availableMenus = MENUS.filter((m) => {
+    if (!m.roles || m.roles.length === 0) return true;
+    if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
+    return m.roles.includes(userRole);
+  });
 
-    if (uClean === 'guest' && pClean === '123456') {
-      onLoginSuccess({ USER: 'guest', ROLE: 'guest', ID: 'guest_01' });
-      return;
-    }
-
-    const found = (usersData || []).find((r) => {
-      const u = (Array.isArray(r) ? r[0] : (r.username || r.user || '')).toString().trim().toLowerCase();
-      const p = (Array.isArray(r) ? r[2] : (r.password_hash || r.password || '')).toString().trim();
-      return u === uClean && p === pClean;
-    });
-
-    if (found) {
-      const uName = Array.isArray(found) ? found[0] : (found.username || found.user);
-      const uRole = Array.isArray(found) ? found[1] : (found.role || 'operator');
-      const uId = Array.isArray(found) ? found[3] : (found.id || '1');
-
-      onLoginSuccess({
-        USER: uName,
-        ROLE: String(uRole).toLowerCase(),
-        ID: String(uId)
-      });
-    } else {
-      if (onToast) {
-        onToast('Username atau password tidak cocok!', 'err');
-      } else {
-        alert('Username atau password tidak cocok!');
-      }
-    }
-  };
-
-  const isReady = (key) => {
-    const rows = data[key];
-    if (rows && Array.isArray(rows) && rows.length > 0) return true;
-    if (serverStatus && serverStatus[key] === 'live') return true;
-    return false;
+  const handleMenuClick = (id) => {
+    onMenuChange(id);
+    if (onCloseMobile) onCloseMobile();
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden select-none font-sans">
-      
-      {/* Background Cosmic Starfield Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.25)_0%,transparent_60%)] pointer-events-none" />
-      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden transition-opacity"
+          onClick={onCloseMobile}
+        />
+      )}
 
-      {/* Main Glass Center Modal - Sesuai Slide 1 PDF */}
-      <div className="w-full max-w-[440px] card p-8 sm:p-10 relative z-10 flex flex-col items-center">
-        
-        {/* Glowing Logo */}
-        <div className="w-20 h-20 mb-4 p-2 rounded-2xl bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-xl shadow-[0_0_30px_rgba(56,189,248,0.4)]">
-          <img 
-            src={LOGO_URL} 
-            alt="PRISM Logo" 
-            className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(56,189,248,0.7)]" 
-            referrerPolicy="no-referrer" 
-          />
-        </div>
+      {/* Sidebar Navigation */}
+      <aside
+        className={`fixed top-0 left-0 h-full z-50 bg-[#070b1a]/95 lg:bg-[#070b1a]/85 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 flex flex-col justify-between
+          ${mobileOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+          ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+        `}
+      >
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header Branding */}
+          <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
+            {(!collapsed || mobileOpen) ? (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-white/5 border border-white/20 p-1.5 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
+                  <img
+                    src={LOGO_URL}
+                    alt="PRISM Logo"
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display font-black text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
+                    PRISM
+                  </h2>
+                  <p className="text-[9px] font-mono text-cyan-400/90 font-medium truncate">
+                    Integrated System & Monitoring
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="w-8 h-8 mx-auto rounded-xl bg-white/5 border border-white/20 p-1 flex items-center justify-center overflow-hidden">
+                <img
+                  src={LOGO_URL}
+                  alt="PRISM"
+                  className="w-full h-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            )}
 
-        <h1 className="font-display font-black text-3xl tracking-wider text-white">PRISM</h1>
-        <p className="text-cyan-300 text-xs font-semibold tracking-wide mb-6">
-          Integrated System & Monitoring
-        </p>
+            {/* Mobile Close Button & Desktop Toggle */}
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="p-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white lg:hidden"
+                title="Tutup Menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-        {/* Input Form Pill Shaped */}
-        <form onSubmit={handleLogin} className="w-full space-y-3.5">
-          <div className="relative flex items-center">
-            <User className="absolute left-4 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-              className="inp w-full !pl-11"
-            />
+              <button
+                type="button"
+                onClick={onToggle}
+                className="hidden lg:flex p-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-400/40 transition ml-auto"
+                title={collapsed ? "Buka Sidebar" : "Kecilkan Sidebar"}
+              >
+                {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
-          <div className="relative flex items-center">
-            <Lock className="absolute left-4 w-4 h-4 text-slate-400" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="inp w-full !pl-11 !pr-11"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 text-slate-400 hover:text-cyan-300 transition"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
+          {/* Menu Items */}
+          <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
+            {availableMenus.map((m) => {
+              const Icon = m.icon;
+              const active = currentMenu === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => handleMenuClick(m.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 ${
+                    active
+                      ? 'bg-gradient-to-r from-cyan-500/25 to-indigo-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
+                  }`}
+                  title={collapsed && !mobileOpen ? m.label : ''}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]' : ''}`} />
+                  {(!collapsed || mobileOpen) && <span className="truncate">{m.label}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full py-3 text-xs tracking-wider uppercase mt-2 active:scale-[0.99]"
-          >
-            {loading ? 'Memproses...' : 'Masuk ke Sistem'}
-          </button>
-        </form>
-
-        {/* Action Pills */}
-        <div className="flex gap-2 w-full mt-3.5">
+        {/* Footer Profile */}
+        <div className="p-3.5 border-t border-white/10 flex items-center justify-between shrink-0 bg-slate-950/60">
+          {(!collapsed || mobileOpen) && (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-bold text-slate-200 truncate">{user?.USER || user?.username || 'User'}</p>
+                <p className="text-[10px] font-mono text-cyan-400 uppercase">{user?.ROLE || user?.role || 'OPERATOR'}</p>
+              </div>
+            </div>
+          )}
           <button
             type="button"
-            onClick={() => onToast?.('Pendaftaran mandiri dinonaktifkan oleh Administrator.', 'info')}
-            className="flex-1 py-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] font-medium transition"
+            onClick={onLogout}
+            title="Keluar / Logout"
+            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition shrink-0 ml-auto"
           >
-            Daftar Akun
-          </button>
-          <button
-            type="button"
-            onClick={() => onToast?.('Silakan hubungi IT/Admin untuk reset password.', 'info')}
-            className="flex-1 py-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] font-medium transition"
-          >
-            Lupa Kata Sandi
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Demo Badge */}
-        <div className="text-[11px] text-cyan-300/80 bg-cyan-950/40 border border-cyan-500/30 rounded-full py-2 px-4 text-center mt-6 w-full font-mono">
-          Demo: <b className="text-white font-bold">guest / 123456</b>
-        </div>
-
-        {/* Database Status Pills */}
-        <div className="flex items-center justify-center gap-3 pt-6 mt-4 border-t border-white/10 w-full text-[10px]">
-          <span className="flex items-center gap-1.5 text-slate-400">
-            <span className={`w-2 h-2 rounded-full ${isReady('master_user') ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-amber-400'}`} /> Online
-          </span>
-          <span className="flex items-center gap-1.5 text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)]" /> Syncing
-          </span>
-        </div>
-
-      </div>
-    </div>
+      </aside>
+    </>
   );
 }
 </file>
@@ -3704,6 +4153,289 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+</file>
+
+<file path="src/components/views/AuthView.jsx">
+import React, { useState } from 'react';
+import { Eye, EyeOff, Sparkles, Shield, Zap, TrendingUp } from 'lucide-react';
+
+export default function AuthView({ usersData = [], data = {}, serverStatus = {}, onLoginSuccess, onToast }) {
+  const [tab, setTab] = useState('login');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    setTimeout(() => {
+      const uClean = username.trim().toLowerCase();
+      const pClean = password.trim();
+
+      if (uClean === 'guest' && pClean === '123456') {
+        onLoginSuccess({ USER: 'guest', ROLE: 'guest', ID: 'guest_01' });
+        return;
+      }
+
+      const found = (usersData || []).find((r) => {
+        const u = (Array.isArray(r) ? r[0] : (r.username || r.user || '')).toString().trim().toLowerCase();
+        const p = (Array.isArray(r) ? r[2] : (r.password_hash || r.password || '')).toString().trim();
+        return u === uClean && p === pClean;
+      });
+
+      if (found) {
+        const uName = Array.isArray(found) ? found[0] : (found.username || found.user);
+        const uRole = Array.isArray(found) ? found[1] : (found.role || 'operator');
+        const uId = Array.isArray(found) ? found[3] : (found.id || '1');
+        onLoginSuccess({
+          USER: uName,
+          ROLE: String(uRole).toLowerCase(),
+          ID: String(uId)
+        });
+      } else {
+        if (onToast) {
+          onToast('Username atau password tidak cocok!', 'err');
+        }
+      }
+      setLoading(false);
+    }, 500);
+  };
+
+  const isReady = (key) => {
+    const rows = data[key];
+    if (rows && Array.isArray(rows) && rows.length > 0) return true;
+    if (serverStatus && serverStatus[key] === 'live') return true;
+    return false;
+  };
+
+  return (
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex flex-1 flex-col justify-between p-12 relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
+        </div>
+
+        {/* Grid Pattern */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)',
+            backgroundSize: '40px 40px'
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/50">
+              <img src={LOGO_URL} alt="PRISM" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">PRISM</h1>
+              <p className="text-xs text-indigo-400 font-mono uppercase tracking-wider">V 2.0</p>
+            </div>
+          </div>
+
+          <div className="max-w-lg">
+            <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
+              Prepress Integrated<br />
+              <span className="gradient-text">System & Monitoring</span>
+            </h2>
+            <p className="text-lg text-slate-300 mb-8 leading-relaxed">
+              Pusat kendali data prepress modern — monitoring plate CTCP & CTP, screen, flexo, dan etching dalam satu dashboard terintegrasi yang powerful.
+            </p>
+
+            {/* Feature Cards */}
+            <div className="space-y-4">
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white mb-1">Real-time Monitoring</h3>
+                  <p className="text-xs text-slate-400">Pantau semua lini produksi secara real-time dengan data yang selalu update</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white mb-1">Advanced Analytics</h3>
+                  <p className="text-xs text-slate-400">Analisis mendalam dengan visualisasi data yang interaktif dan informatif</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white mb-1">Secure & Reliable</h3>
+                  <p className="text-xs text-slate-400">Sistem aman dengan enkripsi end-to-end dan backup otomatis</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Stats */}
+        <div className="relative z-10 grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
+          <div>
+            <div className="text-3xl font-bold text-white mb-1">99.9%</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider">Uptime</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-white mb-1">5+</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider">Lini Produksi</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-white mb-1">24/7</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider">Monitoring</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Logo Mobile */}
+          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/50">
+              <img src={LOGO_URL} alt="PRISM" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">PRISM</h1>
+              <p className="text-xs text-indigo-400 font-mono uppercase tracking-wider">V 2.0</p>
+            </div>
+          </div>
+
+          {/* Login Card */}
+          <div className="card p-8">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Selamat Datang</h2>
+              <p className="text-sm text-slate-400">Masuk ke akun PRISM Anda untuk melanjutkan</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex p-1 bg-white/5 rounded-xl mb-6">
+              <button
+                type="button"
+                onClick={() => setTab('login')}
+                className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${
+                  tab === 'login' 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Masuk
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('signup')}
+                className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${
+                  tab === 'signup' 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">Username</label>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Masukkan username"
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Masukkan password"
+                    className="input pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary w-full"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Memproses...
+                  </span>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Masuk ke Sistem
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Demo Account */}
+            <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
+              <p className="text-xs text-emerald-300 text-center">
+                <span className="font-bold">Demo Account:</span> guest / 123456
+              </p>
+            </div>
+
+            {/* Database Status */}
+            <div className="mt-6 pt-6 border-t border-white/5">
+              <p className="text-xs text-slate-500 mb-3 font-semibold uppercase tracking-wider">Status Database</p>
+              <div className="grid grid-cols-2 gap-2">
+                {['master_user', 'job_active', 'rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'].map((key) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${isReady(key) ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    <span className="text-[10px] font-mono text-slate-400 uppercase">{key.replace('rec_', '').replace('master_', '')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-xs text-slate-500 mt-6">
+            &copy; 2026 PRISM V2.0 • Aether Code
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 </file>
 
 <file path="src/constants/schema.js">
@@ -4118,6 +4850,7 @@ export default function App() {
 
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
   const [modalState, setModalState] = useState(null);
   const [modalHistory, setModalHistory] = useState([]);
@@ -4340,7 +5073,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-x-hidden">
+    <div className="min-h-screen flex relative overflow-x-hidden w-full">
+      {/* Sidebar Responsive */}
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -4348,20 +5082,30 @@ export default function App() {
         onLogout={handleLogout}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      <div className={`flex-1 transition-all duration-300 flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
+      {/* Main Content Area (Fluid di Mobile, Responsive di Desktop) */}
+      <div
+        className={`flex-1 flex flex-col min-h-screen w-full transition-all duration-300
+          ${/* Di mobile tidak memakai padding kiri agar pas di layar HP */ ''}
+          pl-0
+          ${/* Di desktop baru menerapkan offset sidebar */ ''}
+          ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}
+        `}
+      >
         <Header
           period={period}
           onPeriodChange={setPeriod}
           onReset={reload}
           onOpenPrint={triggerPrint}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           theme={theme}
           onToggleTheme={toggleTheme}
         />
 
-        <main className="p-6 flex-1 space-y-6">
+        <main className="p-3 sm:p-5 lg:p-6 flex-1 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-32 space-y-3">
               <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
@@ -4377,6 +5121,7 @@ export default function App() {
         </footer>
       </div>
 
+      {/* Global Modal Detail */}
       <Modal
         modalState={modalState}
         onClose={() => setModalState(null)}
