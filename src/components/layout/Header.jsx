@@ -37,7 +37,7 @@ export default function Header({
               PRISM
             </h1>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              Prepress Integrated System & Monitoring
+              Integrated System & Monitoring
             </p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function Header({
 
           <button
             onClick={onReset}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700 cursor-pointer"
             title="Muat Ulang Data"
           >
             <RotateCcw className="w-4 h-4" />
@@ -70,7 +70,7 @@ export default function Header({
 
           <button
             onClick={onOpenPrint}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 px-3 font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 px-3 font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print / PDF</span>

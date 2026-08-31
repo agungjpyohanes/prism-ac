@@ -7,9 +7,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function fetchAllRows(tableName) {
   try {
-    const { data, error } = await supabase.from(tableName).select('*');
+    // Ambil data dengan batas limit besar (hingga 50.000 baris)
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .range(0, 49999);
+
     if (error) {
-      console.error(`Gagal memuat ${tableName}:`, error.message);
+      console.error(`Gagal memuat tabel ${tableName}:`, error.message);
       return [];
     }
     return data || [];

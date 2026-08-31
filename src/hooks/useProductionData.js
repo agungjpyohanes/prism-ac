@@ -6,16 +6,14 @@ function mapRowToMatrix(key, row) {
   if (!row) return [];
   if (Array.isArray(row)) return row;
 
+  // Helper pencari nilai kolom yang fleksibel (case-insensitive & abaikan underscore/spasi)
   const findVal = (field) => {
     if (!field) return '';
     if (row[field] !== undefined && row[field] !== null) return row[field];
     
-    const lower = field.toLowerCase();
-    if (row[lower] !== undefined && row[lower] !== null) return row[lower];
-    
-    const noUnder = lower.replace(/_/g, '');
+    const targetClean = field.toLowerCase().replace(/[^a-z0-9]/g, '');
     for (const k of Object.keys(row)) {
-      if (k.toLowerCase().replace(/_/g, '') === noUnder) {
+      if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean) {
         return row[k];
       }
     }
@@ -31,7 +29,7 @@ function mapRowToMatrix(key, row) {
     ];
   }
 
-  const schema = SHEETS[key] || SHEETS.job_active;
+  const schema = SHEETS[key];
   if (!schema || !schema.headers) {
     return Object.values(row);
   }
@@ -60,31 +58,17 @@ export function useProductionData() {
     await Promise.all(
       ALL_KEYS.map(async (key) => {
         try {
-          let rawRows = await fetchAllRows(key);
-          
-          // Fallback: Jika tabel di database Supabase bernama jop_active
-          if ((!rawRows || rawRows.length === 0) && key === 'job_active') {
-            const fallbackRows = await fetchAllRows('jop_active');
-            if (fallbackRows && fallbackRows.length > 0) {
-              rawRows = fallbackRows;
-            }
-          }
-
+          const rawRows = await fetchAllRows(key);
           const matrix = (rawRows || []).map((r) => mapRowToMatrix(key, r));
           results[key] = matrix;
           statuses[key] = matrix.length > 0 ? 'live' : 'live';
         } catch (err) {
-          console.error(`Gagal memuat tabel ${key}:`, err);
+          console.error(`Gagal load key ${key}:`, err);
           results[key] = [];
           statuses[key] = 'offline';
         }
       })
     );
-
-    // Salin juga ke jop_active agar kompatibel di kedua sisi
-    if (results.job_active) {
-      results.jop_active = results.job_active;
-    }
 
     setData(results);
     setServerStatus(statuses);

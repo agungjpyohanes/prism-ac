@@ -5,7 +5,6 @@ import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, collapsed, onToggle }) {
   const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
 
-  // Filter menu berdasarkan hak akses role pengguna
   const availableMenus = MENUS.filter((m) => {
     if (!m.roles || m.roles.length === 0) return true;
     if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
@@ -20,7 +19,7 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
           {!collapsed && (
             <div>
               <h2 className="font-black text-lg tracking-wider text-white">PRISM</h2>
-              <p className="text-[10px] font-mono text-cyan-400">V 1.0 &bull; Prepress</p>
+              <p className="text-[10px] font-mono text-cyan-400">V 1.0 &bull; Integrated System & Monitoring</p>
             </div>
           )}
           <button 

@@ -16,6 +16,60 @@ import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight,
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
+// Helper Palet Warna Status Job
+const getStatusBadgeClass = (statusStr = '') => {
+  const s = String(statusStr).toUpperCase().trim();
+  if (s.includes('DONE') || s.includes('SELESAI') || s.includes('OK')) {
+    return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+  }
+  if (s.includes('PROGRESS') || s.includes('PROSES') || s.includes('JALAN')) {
+    return 'bg-sky-500/15 text-sky-400 border border-sky-500/30';
+  }
+  if (s.includes('ANTRI') || s.includes('QUEUE') || s.includes('PENDING')) {
+    return 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
+  }
+  if (s.includes('EXPOSE') || s.includes('MAIN EXPOSE')) {
+    return 'bg-purple-500/15 text-purple-400 border border-purple-500/30';
+  }
+  if (s.includes('WASHING') || s.includes('CUCI')) {
+    return 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30';
+  }
+  if (s.includes('DRYING') || s.includes('KERING')) {
+    return 'bg-orange-500/15 text-orange-400 border border-orange-500/30';
+  }
+  if (s.includes('POLES') || s.includes('POLISH')) {
+    return 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30';
+  }
+  if (s.includes('TUNGGU') || s.includes('INFO') || s.includes('FILE')) {
+    return 'bg-rose-500/15 text-rose-400 border border-rose-500/30';
+  }
+  return 'bg-slate-700/40 text-slate-300 border border-slate-600/40';
+};
+
+// Helper Palet Warna Category Job
+const getCategoryBadgeClass = (catStr = '') => {
+  const c = String(catStr).toUpperCase().trim();
+  if (c.includes('OFFSET') || c === 'O') {
+    return 'bg-purple-500/15 text-purple-300 border border-purple-500/40';
+  }
+  if (c.includes('FLEXO')) {
+    return 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/40';
+  }
+  if (c.includes('SCREEN')) {
+    return 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40';
+  }
+  if (c.includes('ETCHING')) {
+    return 'bg-amber-500/15 text-amber-300 border border-amber-500/40';
+  }
+  if (c.includes('SAMPLE')) {
+    return 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
+  }
+  if (c.includes('REPRINT')) {
+    return 'bg-pink-500/15 text-pink-300 border border-pink-500/40';
+  }
+  return 'bg-slate-800 text-slate-300 border border-slate-700';
+};
+
 export default function OverviewView({ data = {}, period, onOpenList, onSelectRow }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -25,16 +79,13 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
   const [page, setPage] = useState(1);
   const pageSize = 15;
 
-  // PERBAIKAN: Gunakan SHEETS.job_active (bukan jop_active)
   const cfg = SHEETS.job_active || {
     headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
-    i: { id: 0, job_name: 1, jop: 1, job_no: 2, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
+    i: { id: 0, jop: 1, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
   };
 
-  // PERBAIKAN: Ambil data dari job_active
   const rawRows = data.job_active || [];
 
-  // Filter baris data Job Aktif
   const filtered = useMemo(() => {
     const fromTime = period?.from ? startOfDay(period.from).getTime() : null;
     const toTime = period?.to ? endOfDay(period.to).getTime() : null;
@@ -64,7 +115,6 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
   }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
 
-  // Sorting
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
       const valA = a[sortCol] ?? '';
@@ -78,11 +128,9 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
   }, [filtered, sortCol, sortAsc]);
 
-  // Pagination
   const totalPages = Math.ceil(sorted.length / pageSize) || 1;
   const paginatedRows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
-  // Agregasi Status & Kategori
   const stats = useMemo(() => {
     const statusCount = {};
     const categoryCount = {};
@@ -143,6 +191,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 
   return (
     <div className="space-y-5 anim-in">
+      {/* Header Banner */}
       <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -153,7 +202,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
             Dashboard Overview — Job Aktif (WIP)
           </h2>
           <p className="text-xs text-slate-300 mt-0.5">
-            Daftar seluruh pekerjaan yang sedang dalam antrean atau proses pembuatan di Prepress
+            Integrated System & Monitoring — Antrean dan status pengerjaan job berjalan
           </p>
         </div>
         <div className="text-right">
@@ -162,10 +211,11 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
+      {/* KPI Cards Ringkasan */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div
-          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:shadow-md transition"
+          onClick={() => onOpenList?.('Semua Job Aktif (WIP)', 'job_active', filtered)}
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:scale-[1.01] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase">TOTAL JOB AKTIF</span>
@@ -174,44 +224,59 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">
             {filtered.length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat seluruh antrean</div>
+          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat seluruh antrean →</div>
         </div>
 
         <div
           onClick={() => {
-            const inProg = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('progress') || cell(r, cfg.i.status).toLowerCase().includes('proses'));
+            const inProg = filtered.filter(r => {
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('progress') || s.includes('proses') || s.includes('expose') || s.includes('washing') || s.includes('drying') || s.includes('poles');
+            });
             onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
           }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:shadow-md transition"
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:scale-[1.01] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase">IN PROGRESS</span>
             <PlayCircle className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">
-            {filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('progress') || cell(r, cfg.i.status).toLowerCase().includes('proses')).length.toLocaleString('id-ID')}
+            {filtered.filter(r => {
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('progress') || s.includes('proses') || s.includes('expose') || s.includes('washing') || s.includes('drying') || s.includes('poles');
+            }).length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Sedang dikerjakan mesin/operator</div>
+          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat job yang sedang berjalan →</div>
         </div>
 
         <div
           onClick={() => {
-            const pending = filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('queue') || cell(r, cfg.i.status).toLowerCase().includes('pending') || cell(r, cfg.i.status).toLowerCase().includes('antri'));
-            onOpenList?.('Job Dalam Antrean (Queue)', 'job_active', pending);
+            const pending = filtered.filter(r => {
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
+            });
+            onOpenList?.('Job Dalam Antrean (Queue / Antri)', 'job_active', pending);
           }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:shadow-md transition"
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:scale-[1.01] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase">IN QUEUE / ANTREAN</span>
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">
-            {filtered.filter(r => cell(r, cfg.i.status).toLowerCase().includes('queue') || cell(r, cfg.i.status).toLowerCase().includes('pending') || cell(r, cfg.i.status).toLowerCase().includes('antri')).length.toLocaleString('id-ID')}
+            {filtered.filter(r => {
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
+            }).length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran mesin</div>
+          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat antrean job →</div>
         </div>
 
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500">
+        <div
+          onClick={() => onOpenList?.('Daftar Kategori Job Aktif', 'job_active', filtered)}
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500 cursor-pointer hover:scale-[1.01] transition"
+        >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase">KATEGORI PROSES</span>
             <Layers className="w-4 h-4 text-indigo-500" />
@@ -219,15 +284,18 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           <div className="mt-2 font-display font-extrabold text-2xl text-indigo-600">
             {Object.keys(stats.categoryCount).length}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan pemohon</div>
+          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan pemohon →</div>
         </div>
       </div>
 
+      {/* Chart Section */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="card-title">Porsi Job Berdasarkan Kategori</h3>
-            <span className="text-[10px] text-slate-400">Klik grafik untuk rincian</span>
+            <div>
+              <h3 className="card-title">Porsi Job Berdasarkan Kategori</h3>
+              <p className="text-[11px] text-slate-400">Klik diagram untuk membuka detail data per divisi</p>
+            </div>
           </div>
           <div className="h-64 flex items-center justify-center">
             {Object.keys(stats.categoryCount).length === 0 ? (
@@ -254,8 +322,10 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
 
         <div className="card p-5 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="card-title">Distribusi Status Pengerjaan</h3>
-            <span className="text-[10px] text-slate-400">Klik bar untuk rincian</span>
+            <div>
+              <h3 className="card-title">Distribusi Status Pengerjaan</h3>
+              <p className="text-[11px] text-slate-400">Klik batang diagram untuk membuka detail status</p>
+            </div>
           </div>
           <div className="h-64">
             {Object.keys(stats.statusCount).length === 0 ? (
@@ -283,6 +353,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
+      {/* Tabel Data Job Aktif dengan Search, Sort, dan Pagination */}
       <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -368,28 +439,32 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                   <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
                   {(cfg.headers || []).map((_, colIdx) => {
                     const val = row[colIdx];
+
+                    // Kolom STATUS dengan warna spesifik per status
                     if (colIdx === cfg.i.status) {
-                      const isDone = String(val).toLowerCase().includes('selesai') || String(val).toLowerCase().includes('done');
-                      const isInProg = String(val).toLowerCase().includes('progress') || String(val).toLowerCase().includes('proses');
                       return (
                         <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isDone
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
-                                : isInProg
-                                ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
-                            }`}
-                          >
-                            {val || '-'}
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(val)}`}>
+                            {val || '—'}
                           </span>
                         </td>
                       );
                     }
+
+                    // Kolom CATEGORY dengan warna spesifik per kategori
+                    if (colIdx === cfg.i.category) {
+                      return (
+                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getCategoryBadgeClass(val)}`}>
+                            {val || '—'}
+                          </span>
+                        </td>
+                      );
+                    }
+
                     return (
                       <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
-                        {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '-')}
+                        {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '—')}
                       </td>
                     );
                   })}
@@ -406,6 +481,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </table>
         </div>
 
+        {/* Pagination Controls */}
         <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
           <span>
             Halaman <b>{page}</b> dari <b>{totalPages}</b>
