@@ -1,10 +1,6 @@
 import React from 'react';
 import { MENUS } from '../../constants/navigation';
-<<<<<<< HEAD
 import { LogOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
-=======
-import { LogOut, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
->>>>>>> versi-3
 
 export default function Sidebar({
   currentMenu,
@@ -17,7 +13,8 @@ export default function Sidebar({
   onCloseMobile
 }) {
   const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
-  
+  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
+
   const availableMenus = MENUS.filter((m) => {
     if (!m.roles || m.roles.length === 0) return true;
     if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
@@ -30,9 +27,8 @@ export default function Sidebar({
   };
 
   return (
-<<<<<<< HEAD
     <>
-      {/* Mobile Backdrop Overlay (Hanya aktif di HP/Tablet saat sidebar dibuka) */}
+      {/* Mobile Backdrop Overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden transition-opacity"
@@ -40,12 +36,10 @@ export default function Sidebar({
         />
       )}
 
-      {/* Sidebar Element */}
+      {/* Sidebar Navigation */}
       <aside
         className={`fixed top-0 left-0 h-full z-50 bg-[#070b1a]/95 lg:bg-[#070b1a]/85 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 flex flex-col justify-between
-          ${/* Mobile Drawer positioning */ ''}
           ${mobileOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
-          ${/* Desktop Collapsible width */ ''}
           ${collapsed ? 'lg:w-20' : 'lg:w-64'}
         `}
       >
@@ -82,9 +76,8 @@ export default function Sidebar({
               </div>
             )}
 
-            {/* Tombol Tutup di Mobile & Toggle di Desktop */}
+            {/* Tombol Tutup Mobile & Toggle Desktop */}
             <div className="flex items-center">
-              {/* Tutup Mobile */}
               <button
                 type="button"
                 onClick={onCloseMobile}
@@ -94,7 +87,6 @@ export default function Sidebar({
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Desktop Collapse Toggle */}
               <button
                 type="button"
                 onClick={onToggle}
@@ -106,7 +98,7 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Menu Navigation */}
+          {/* Menu Items */}
           <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
             {availableMenus.map((m) => {
               const Icon = m.icon;
@@ -131,7 +123,7 @@ export default function Sidebar({
           </nav>
         </div>
 
-        {/* User Profile Footer */}
+        {/* Footer Profile */}
         <div className="p-3.5 border-t border-white/10 flex items-center justify-between shrink-0 bg-slate-950/60">
           {(!collapsed || mobileOpen) && (
             <div className="flex items-center gap-2.5 min-w-0">
@@ -149,113 +141,11 @@ export default function Sidebar({
             onClick={onLogout}
             title="Keluar / Logout"
             className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition shrink-0 ml-auto"
-=======
-    <aside 
-      className={`fixed top-0 left-0 h-full z-40 transition-all duration-300 flex flex-col ${
-        collapsed ? 'w-20' : 'w-72'
-      }`}
-      style={{
-        background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%)',
-        backdropFilter: 'blur(20px)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)'
-      }}
-    >
-      {/* Header Branding */}
-      <div className="p-6 border-b border-white/5">
-        <div className="flex items-center justify-between">
-          {!collapsed && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white tracking-tight">PRISM</h2>
-                <p className="text-[10px] font-mono text-indigo-400 uppercase tracking-wider">V 2.0 • Prepress</p>
-              </div>
-            </div>
-          )}
-          <button 
-            type="button"
-            onClick={onToggle} 
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
-          >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Menu Items */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-        {availableMenus.map((m) => {
-          const Icon = m.icon;
-          const active = currentMenu === m.id;
-          
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => onMenuChange(m.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
-                active
-                  ? 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-white border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`}
-              title={collapsed ? m.label : ''}
-            >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-                active 
-                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/30' 
-                  : 'bg-white/5 group-hover:bg-white/10'
-              }`}>
-                <Icon className="w-4 h-4" />
-              </div>
-              {!collapsed && (
-                <span className="text-sm font-semibold truncate">{m.label}</span>
-              )}
-              {active && !collapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* User Profile Footer */}
-      <div className="p-4 border-t border-white/5">
-        <div className={`flex items-center gap-3 p-3 rounded-xl bg-white/5 ${collapsed ? 'justify-center' : ''}`}>
-          {!collapsed ? (
-            <>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
-                {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{user?.USER || user?.username || 'User'}</p>
-                <p className="text-[10px] font-mono text-indigo-400 uppercase tracking-wider">
-                  {user?.ROLE || user?.role || 'Operator'}
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-              {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
-            </div>
-          )}
-          <button 
-            type="button"
-            onClick={onLogout} 
-            title="Logout" 
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
->>>>>>> versi-3
           >
             <LogOut className="w-4 h-4" />
           </button>
         </div>
-<<<<<<< HEAD
       </aside>
     </>
-=======
-      </div>
-    </aside>
->>>>>>> versi-3
   );
 }
