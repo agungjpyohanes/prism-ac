@@ -51,9 +51,9 @@ export default function App() {
 
   const handleSelectRow = (key, row) => {
     setModalState({
-      title: 'Detail Catatan Data',
+      title: 'Detail Catatan Produksi',
       type: 'detail',
-      key,
+      key: key || activeTabKey,
       row
     });
   };
@@ -62,8 +62,8 @@ export default function App() {
     setModalState({
       title,
       type: 'list',
-      key,
-      rows
+      key: key || activeTabKey,
+      rows: rows || []
     });
   };
 
@@ -82,7 +82,15 @@ export default function App() {
   const renderView = () => {
     switch (currentMenu) {
       case 'overview':
-        return <OverviewView data={data} period={period} onOpenList={handleOpenList} onSelectRow={handleSelectRow} onMenuChange={setCurrentMenu} />;
+        return (
+          <OverviewView 
+            data={data} 
+            period={period} 
+            onOpenList={handleOpenList} 
+            onSelectRow={handleSelectRow} 
+            onMenuChange={setCurrentMenu} 
+          />
+        );
       case 'production':
         return (
           <div className="space-y-4">
@@ -154,7 +162,15 @@ export default function App() {
       case 'personal':
         return <PersonalKpiView data={data} period={period} user={currentUser} />;
       default:
-        return <OverviewView data={data} period={period} onOpenList={handleOpenList} onSelectRow={handleSelectRow} onMenuChange={setCurrentMenu} />;
+        return (
+          <OverviewView 
+            data={data} 
+            period={period} 
+            onOpenList={handleOpenList} 
+            onSelectRow={handleSelectRow} 
+            onMenuChange={setCurrentMenu} 
+          />
+        );
     }
   };
 
@@ -189,11 +205,15 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; PT Solo Murni
+          &copy; 2026 PRISM Integrated System & Monitoring &bull; PT Solo Murni
         </footer>
       </div>
 
-      <Modal modalState={modalState} onClose={() => setModalState(null)} onSelectRow={handleSelectRow} />
+      <Modal 
+        modalState={modalState} 
+        onClose={() => setModalState(null)} 
+        onSelectRow={handleSelectRow} 
+      />
     </div>
   );
 }
