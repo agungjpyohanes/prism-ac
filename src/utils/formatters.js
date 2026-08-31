@@ -74,6 +74,17 @@ export const parseDateVal = (val) => {
   return isNaN(parsed) ? null : parsed;
 };
 
+// Format Date ke String ISO (YYYY-MM-DD)
+export const iso = (d) => {
+  if (!d) return '';
+  const parsed = parseDateVal(d);
+  if (!parsed) return '';
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export const startOfDay = (d) => {
   if (!d) return null;
   const date = new Date(d);
