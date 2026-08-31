@@ -29,6 +29,7 @@ export default function App() {
 
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
   const [modalState, setModalState] = useState(null);
   const [modalHistory, setModalHistory] = useState([]);
@@ -251,7 +252,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-x-hidden">
+    <div className="min-h-screen flex relative overflow-x-hidden w-full">
+      {/* Sidebar Responsive */}
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -259,20 +261,30 @@ export default function App() {
         onLogout={handleLogout}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      <div className={`flex-1 transition-all duration-300 flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
+      {/* Main Content Area (Fluid di Mobile, Responsive di Desktop) */}
+      <div
+        className={`flex-1 flex flex-col min-h-screen w-full transition-all duration-300
+          ${/* Di mobile tidak memakai padding kiri agar pas di layar HP */ ''}
+          pl-0
+          ${/* Di desktop baru menerapkan offset sidebar */ ''}
+          ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}
+        `}
+      >
         <Header
           period={period}
           onPeriodChange={setPeriod}
           onReset={reload}
           onOpenPrint={triggerPrint}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           theme={theme}
           onToggleTheme={toggleTheme}
         />
 
-        <main className="p-6 flex-1 space-y-6">
+        <main className="p-3 sm:p-5 lg:p-6 flex-1 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-32 space-y-3">
               <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
@@ -288,6 +300,7 @@ export default function App() {
         </footer>
       </div>
 
+      {/* Global Modal Detail */}
       <Modal
         modalState={modalState}
         onClose={() => setModalState(null)}
