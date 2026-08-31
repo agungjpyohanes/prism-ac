@@ -1,178 +1,120 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
 import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
-import { UserCheck, Filter } from 'lucide-react';
+import { UserCheck, CheckCircle2, AlertTriangle, Sparkles, Award } from 'lucide-react';
+import StatCard from '../ui/StatCard';
 
-export default function PersonalKpiView({ data, period, user }) {
-  const currentUsername = String(user?.USER || user?.username || 'guest').trim();
-  const userRole = String(user?.ROLE || user?.role || 'operator').toLowerCase().trim();
-  const isManagerOrAdmin = ['admin', 'manager', 'manajemen', 'supervisor'].includes(userRole);
+export default function PersonalKpiView({ data, user, period }) {
+  const currentUsername = String(user?.USER || user?.username || 'guest').trim().toLowerCase();
 
-  // Ambil seluruh daftar nama operator yang ada di database
-  const operatorList = useMemo(() => {
-    const set = new Set();
-    PROD_KEYS.forEach(k => {
-      const cfg = SHEETS[k];
-      const rows = data[k] || [];
-      rows.forEach(r => {
-        const op = cell(r, cfg.i.operator).trim();
-        if (op && op !== '-' && op.toLowerCase() !== 'unassigned') set.add(op);
-      });
-    });
-    return Array.from(set).sort();
-  }, [data]);
+  const userStats = useMemo(() => {
+    let good = 0, reject = 0, replace = 0, totalJob = 0;
+    const records = [];
 
-  const [selectedOperator, setSelectedOperator] = useState(() => {
-    if (isManagerOrAdmin && operatorList.length > 0) return operatorList[0];
-    return currentUsername;
-  });
+    PROD_KEYS.forEach((key) => {
+      const cfg = SHEETS[key];
+      const rows = data[key] || [];
 
-  const activeOpName = (isManagerOrAdmin && selectedOperator) ? selectedOperator : currentUsername;
-
-  // Filter transaksi khusus operator yang dipilih
-  const personalRecords = useMemo(() => {
-    const list = [];
-    PROD_KEYS.forEach(k => {
-      const cfg = SHEETS[k];
-      const rows = data[k] || [];
-
-      rows.forEach(r => {
-        const op = cell(r, cfg.i.operator).trim().toLowerCase();
-        const targetOp = activeOpName.trim().toLowerCase();
-
-        if (targetOp !== 'guest' && !op.includes(targetOp)) return;
+      rows.forEach((r) => {
+        const idVal = cell(r, cfg.i.id).trim();
+        const opVal = cell(r, cfg.i.op).trim().toLowerCase();
+        if (!idVal || (currentUsername !== 'guest' && !opVal.includes(currentUsername))) return;
 
         const d = parseDateVal(r[cfg.i.date]);
-        if (d) {
-          const from = period?.from ? startOfDay(period.from).getTime() : null;
-          const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-          if (from && d.getTime() < from) return;
-          if (to && d.getTime() > to) return;
+        if (d && period?.from && period?.to) {
+          const from = startOfDay(period.from).getTime();
+          const to = new Date(period.to).setHours(23, 59, 59, 999);
+          if (d.getTime() < from || d.getTime() > to) return;
         }
 
-        list.push({
+        const g = num(r[cfg.i.baik]);
+        const rj = num(r[cfg.i.rusak]);
+        const rp = num(r[cfg.i.ganti]);
+
+        good += g;
+        reject += rj;
+        replace += rp;
+        totalJob += 1;
+
+        records.push({
+          key,
           process: cfg.label,
-          job: cell(r, cfg.i.jop),
-          noJop: cell(r, cfg.i.nojop),
+          job: cell(r, cfg.i.jop) || cell(r, cfg.i.nojop),
           date: r[cfg.i.date],
-          good: num(r[cfg.i.baik]),
-          defect: num(r[cfg.i.rusak]),
-          replace: num(r[cfg.i.ganti]),
-          defectReason: cell(r, cfg.i.defect_reason)
+          good: g,
+          reject: rj
         });
       });
     });
-    return list;
-  }, [data, activeOpName, period]);
 
-  const kpi = useMemo(() => {
-    let good = 0, defect = 0, replace = 0;
-    personalRecords.forEach(r => {
-      good += r.good;
-      defect += r.defect;
-      replace += r.replace;
-    });
-    const total = good + defect;
-    const defectRate = total > 0 ? (defect / total) * 100 : 0;
-    return { good, defect, replace, total, defectRate, jobCount: personalRecords.length };
-  }, [personalRecords]);
+    const output = good + reject;
+    const lossRate = output > 0 ? (reject / output) * 100 : 0;
+    const score = output > 0 ? Math.max(0, Math.round(100 - lossRate * 10)) : 100;
+
+    return { good, reject, replace, output, lossRate, score, totalJob, records };
+  }, [data, currentUsername, period]);
 
   return (
-    <div className="space-y-4 anim-in">
-      {/* Header Card */}
-      <div className="card p-5 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 grid place-items-center font-bold text-lg">
-            <UserCheck className="w-6 h-6" />
+    <div className="space-y-5 anim-in">
+      {/* Profile Card Header */}
+      <div className="card p-6 bg-gradient-to-r from-indigo-950/40 via-purple-950/40 to-slate-900/60 border-cyan-500/20 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 border border-cyan-400/40 flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+            {currentUsername.charAt(0).toUpperCase()}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="badge bg-cyan-500/20 text-cyan-300 font-bold">OPERATOR SELF-SERVICE</span>
-              <span className="text-xs text-slate-400">· Operator: <b>{activeOpName}</b></span>
+              <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/30">OPERATOR DASHBOARD</span>
+              <span className="text-xs text-slate-400">{fmtPeriodRange(period?.from, period?.to)}</span>
             </div>
-            <h2 className="font-display font-extrabold text-2xl mt-1">Dashboard KPI Personal</h2>
-            <p className="text-xs text-slate-300">Pantau produktivitas, rasio mutu kerja, dan riwayat tugas operator.</p>
+            <h2 className="font-display font-black text-2xl text-white mt-1 capitalize">{currentUsername}</h2>
+            <p className="text-xs text-slate-300">Ringkasan produktivitas personal & kontrol kualitas Anda</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {isManagerOrAdmin && operatorList.length > 0 && (
-            <div className="flex items-center gap-2 bg-slate-800/90 p-2 rounded-xl border border-slate-700">
-              <Filter className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-semibold text-slate-300">Pilih Operator:</span>
-              <select
-                value={selectedOperator}
-                onChange={(e) => setSelectedOperator(e.target.value)}
-                className="bg-slate-900 text-cyan-300 text-xs font-bold px-2 py-1 rounded-lg border border-slate-700 outline-none"
-              >
-                {operatorList.map(op => (
-                  <option key={op} value={op}>{op}</option>
-                ))}
-              </select>
-            </div>
-          )}
-          <div className="text-right">
-            <div className="text-[11px] text-slate-400 uppercase font-semibold">Rentang Periode</div>
-            <div className="font-bold text-sm text-cyan-400 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+        <div className="text-right">
+          <span className="text-[10px] text-slate-400 uppercase font-mono">Performance Index</span>
+          <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-emerald-300">
+            {userStats.score} <span className="text-xs text-slate-400 font-normal">/ 100</span>
           </div>
         </div>
       </div>
 
-      {/* Scorecards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-blue-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">JOB DIKERJAKAN</span>
-          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">{kpi.jobCount}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Total lembar tugas SPK</div>
-        </div>
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">OUTPUT GOOD</span>
-          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">{kpi.good.toLocaleString('id-ID')}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Produk lolos QC</div>
-        </div>
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-rose-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">TOTAL DEFECT</span>
-          <div className="mt-2 font-display font-extrabold text-2xl text-rose-600">{kpi.defect.toLocaleString('id-ID')}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Cacat / Rusak</div>
-        </div>
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-purple-500">
-          <span className="text-[11px] font-bold text-slate-400 uppercase">DEFECT RATE PRIBADI</span>
-          <div className={`mt-2 font-display font-extrabold text-2xl ${kpi.defectRate > 1.0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-            {kpi.defectRate.toFixed(1)}%
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Target mutu: &le; 1.0%</div>
-        </div>
+        <StatCard label="Total Good Output" value={userStats.good.toLocaleString('id-ID')} icon={CheckCircle2} color="emerald" />
+        <StatCard label="Total Reject" value={userStats.reject.toLocaleString('id-ID')} icon={AlertTriangle} color="rose" />
+        <StatCard label="Personal Loss Rate" value={`${userStats.lossRate.toFixed(1)}%`} sub="Target: ≤ 1.0%" icon={Award} color="cyan" />
+        <StatCard label="Total Transaksi" value={userStats.totalJob.toLocaleString('id-ID')} icon={UserCheck} color="purple" />
       </div>
 
-      {/* Tabel Riwayat Pekerjaan */}
-      <div className="card p-5">
-        <h3 className="card-title mb-3">Riwayat Pekerjaan: <span className="text-cyan-600 dark:text-cyan-400">{activeOpName}</span></h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200 dark:border-slate-700">
-              <tr>
+      {/* Riwayat Pekerjaan Terakhir */}
+      <div className="card p-5 space-y-3">
+        <h3 className="card-title flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-cyan-400" /> Riwayat Kontribusi Pekerjaan Anda
+        </h3>
+        <div className="overflow-x-auto max-h-80">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase text-[10px]">
                 <th className="py-2.5 px-3">Lini</th>
-                <th className="py-2.5 px-3">Nama Job</th>
-                <th className="py-2.5 px-3">No JOP</th>
+                <th className="py-2.5 px-3">JOP / Pekerjaan</th>
                 <th className="py-2.5 px-3">Good</th>
-                <th className="py-2.5 px-3">Defect</th>
-                <th className="py-2.5 px-3">Alasan Cacat</th>
+                <th className="py-2.5 px-3">Reject</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {personalRecords.slice(0, 20).map((r, i) => (
-                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <td className="py-2.5 px-3 font-semibold text-slate-500">{r.process}</td>
-                  <td className="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">{r.job}</td>
-                  <td className="py-2.5 px-3 text-slate-500">{r.noJop}</td>
-                  <td className="py-2.5 px-3 text-emerald-600 font-bold">{r.good}</td>
-                  <td className="py-2.5 px-3 text-rose-600 font-bold">{r.defect}</td>
-                  <td className="py-2.5 px-3 text-slate-400">{r.defectReason || '-'}</td>
+            <tbody className="divide-y divide-white/5">
+              {userStats.records.map((r, i) => (
+                <tr key={i} className="hover:bg-white/5 transition">
+                  <td className="py-2 px-3 text-cyan-300 font-semibold">{r.process}</td>
+                  <td className="py-2 px-3 text-slate-200">{r.job || '-'}</td>
+                  <td className="py-2 px-3 text-emerald-400">{r.good}</td>
+                  <td className="py-2 px-3 text-rose-400">{r.reject}</td>
                 </tr>
               ))}
-              {personalRecords.length === 0 && (
+              {userStats.records.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">Tidak ada riwayat pekerjaan untuk operator ini pada periode terpilih.</td>
+                  <td colSpan={4} className="text-center py-8 text-slate-500">Tidak ada riwayat pekerjaan tercatat pada periode ini.</td>
                 </tr>
               )}
             </tbody>

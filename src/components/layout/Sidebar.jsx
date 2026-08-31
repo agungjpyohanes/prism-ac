@@ -1,6 +1,6 @@
 import React from 'react';
 import { MENUS } from '../../constants/navigation';
-import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, collapsed, onToggle }) {
   const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
@@ -12,26 +12,31 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
   });
 
   return (
-    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#080d1a] border-r border-slate-800/80 transition-all flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#070b19]/60 backdrop-blur-2xl border-r border-cyan-500/10 transition-all duration-300 flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header Branding */}
-        <div className="p-4 border-b border-slate-800/80 flex items-center justify-between shrink-0">
+        {/* Header Cosmic Branding */}
+        <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
           {!collapsed && (
-            <div>
-              <h2 className="font-black text-lg tracking-wider text-white">PRISM</h2>
-              <p className="text-[10px] font-mono text-cyan-400">V 1.0 &bull; Integrated System & Monitoring</p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="font-black text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">PRISM</h2>
+                <p className="text-[9px] font-mono text-cyan-400/80">COSMIC &bull; SYSTEM</p>
+              </div>
             </div>
           )}
           <button 
             type="button"
             onClick={onToggle} 
-            className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white mx-auto cursor-pointer"
+            className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition mx-auto"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        {/* Menu Items Container */}
+        {/* Menu Navigation */}
         <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
           {availableMenus.map((m) => {
             const Icon = m.icon;
@@ -41,14 +46,14 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
                 key={m.id}
                 type="button"
                 onClick={() => onMenuChange(m.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   active
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/15 text-cyan-300 border border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
                 title={collapsed ? m.label : ''}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]' : ''}`} />
                 {!collapsed && <span className="truncate">{m.label}</span>}
               </button>
             );
@@ -56,24 +61,24 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
         </nav>
       </div>
 
-      {/* User Footer Profile */}
-      <div className="p-4 border-t border-slate-800/80 flex items-center justify-between shrink-0 bg-[#060a14]">
-        {!collapsed ? (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0">
+      {/* User Footer Profile Glass */}
+      <div className="p-3.5 border-t border-white/5 flex items-center justify-between shrink-0 bg-slate-950/40">
+        {!collapsed && (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
               {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="truncate">
-              <p className="text-xs font-bold text-white truncate leading-tight">{user?.USER || user?.username || 'agung'}</p>
-              <p className="text-[10px] font-mono text-cyan-400 uppercase font-semibold">{user?.ROLE || user?.role || 'MANAGER'}</p>
+              <p className="text-xs font-bold text-slate-200 truncate">{user?.USER || user?.username || 'User'}</p>
+              <p className="text-[10px] font-mono text-cyan-400/70 uppercase">{user?.ROLE || user?.role || 'OPERATOR'}</p>
             </div>
           </div>
-        ) : null}
+        )}
         <button 
           type="button"
           onClick={onLogout} 
           title="Keluar / Logout" 
-          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer shrink-0"
+          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition shrink-0"
         >
           <LogOut className="w-4 h-4" />
         </button>

@@ -1,195 +1,171 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
-import { Trophy, Users, Cpu, Clock, Search, Filter } from 'lucide-react';
+import { parseDateVal, num, cell, startOfDay, fmtPeriodRange } from '../../utils/formatters';
+import { Trophy, Medal, Flame, Search, Crown } from 'lucide-react';
 
-export default function LeaderboardView({ data, period, onOpenList }) {
-  const [activeTab, setActiveTab] = useState('operator'); // operator | shift | machine
-  const [selectedProcess, setSelectedProcess] = useState('ALL');
+export default function LeaderboardView({ data, period }) {
   const [search, setSearch] = useState('');
+  const [selectedProcess, setSelectedProcess] = useState('ALL');
 
   const targetKeys = selectedProcess === 'ALL' ? PROD_KEYS : [selectedProcess];
 
-  const aggregatedData = useMemo(() => {
-    const opMap = new Map();
-    const shiftMap = new Map();
-    const machineMap = new Map();
+  const rankings = useMemo(() => {
+    const map = new Map();
 
-    targetKeys.forEach(k => {
-      const cfg = SHEETS[k];
-      const rows = data[k] || [];
+    targetKeys.forEach((key) => {
+      const cfg = SHEETS[key];
+      const rows = data[key] || [];
 
-      rows.forEach(r => {
+      rows.forEach((r) => {
         const idVal = cell(r, cfg.i.id).trim();
         if (!idVal) return;
 
         const d = parseDateVal(r[cfg.i.date]);
-        if (d) {
-          const from = period?.from ? startOfDay(period.from).getTime() : null;
-          const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-          if (from && d.getTime() < from) return;
-          if (to && d.getTime() > to) return;
+        if (d && period?.from && period?.to) {
+          const from = startOfDay(period.from).getTime();
+          const to = new Date(period.to).setHours(23, 59, 59, 999);
+          if (d.getTime() < from || d.getTime() > to) return;
         }
 
-        const good = num(r[cfg.i.baik]);
-        const defect = num(r[cfg.i.rusak]);
-        const replace = num(r[cfg.i.ganti]);
-        const op = cell(r, cfg.i.operator).trim() || 'Unassigned';
-        const sh = cell(r, cfg.i.shift).toUpperCase().trim() || 'NON-SHIFT';
-        const mach = (cfg.i.expose_mach !== undefined ? cell(r, cfg.i.expose_mach) : cell(r, 4)).trim() || 'Mesin Utama';
-
-        // Operator
-        const opEntry = opMap.get(op) || { name: op, process: cfg.label, good: 0, defect: 0, replace: 0, rows: [] };
-        opEntry.good += good; opEntry.defect += defect; opEntry.replace += replace; opEntry.rows.push(r);
-        opMap.set(op, opEntry);
-
-        // Shift
-        const shEntry = shiftMap.get(sh) || { name: sh, good: 0, defect: 0, replace: 0, rows: [] };
-        shEntry.good += good; shEntry.defect += defect; shEntry.replace += replace; shEntry.rows.push(r);
-        shiftMap.set(sh, shEntry);
-
-        // Machine
-        const mEntry = machineMap.get(mach) || { name: mach, process: cfg.label, good: 0, defect: 0, replace: 0, rows: [] };
-        mEntry.good += good; mEntry.defect += defect; mEntry.replace += replace; mEntry.rows.push(r);
-        machineMap.set(mach, mEntry);
+        const op = cell(r, cfg.i.op).trim() || 'Unassigned';
+        const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0 };
+        e.good += num(r[cfg.i.baik]);
+        e.reject += num(r[cfg.i.rusak]);
+        e.replace += num(r[cfg.i.ganti]);
+        map.set(op, e);
       });
     });
 
-    const calcRank = (map) => {
-      return [...map.values()].map(item => {
-        const total = item.good + item.defect;
-        const defectRate = total > 0 ? (item.defect / total) * 100 : 0;
-        const qualityScore = Math.max(0, 100 - (defectRate * 10));
-        // Formula skor gabungan: 60% Output + 40% Kualitas
-        const score = Math.round((Math.min(100, (item.good / 500) * 100) * 0.6) + (qualityScore * 0.4));
-        return { ...item, total, defectRate, qualityScore, score };
-      }).sort((a, b) => b.score - a.score || b.good - a.good);
-    };
-
-    return {
-      operators: calcRank(opMap),
-      shifts: calcRank(shiftMap),
-      machines: calcRank(machineMap)
-    };
+    return [...map.values()]
+      .map((item) => {
+        const total = item.good + item.reject;
+        const lossRate = total > 0 ? (item.reject / total) * 100 : 0;
+        const score = total > 0 ? Math.max(0, Math.round(100 - lossRate * 8 + item.good * 0.05)) : 0;
+        return { ...item, total, lossRate, score };
+      })
+      .sort((a, b) => b.score - a.score);
   }, [data, targetKeys, period]);
 
-  const currentList = useMemo(() => {
-    let list = aggregatedData.operators;
-    if (activeTab === 'shift') list = aggregatedData.shifts;
-    if (activeTab === 'machine') list = aggregatedData.machines;
-
-    if (!search.trim()) return list;
-    return list.filter(x => x.name.toLowerCase().includes(search.toLowerCase()));
-  }, [activeTab, aggregatedData, search]);
+  const filtered = rankings.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
+  const topThree = filtered.slice(0, 3);
 
   return (
-    <div className="space-y-4 anim-in">
-      <div className="card p-5 bg-gradient-to-r from-amber-950 via-slate-900 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 anim-in">
+      {/* Header Panel */}
+      <div className="card p-6 bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900/60 border-purple-500/20 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-amber-500/20 text-amber-300 font-bold">PERFORMANCE INDEX</span>
-            <span className="text-xs text-slate-400">· KPI Ranking & Rating</span>
+            <span className="badge bg-purple-500/20 text-purple-300 border-purple-400/30">STAR RANKING</span>
+            <span className="text-xs text-slate-400">Periode: {fmtPeriodRange(period?.from, period?.to)}</span>
           </div>
-          <h2 className="font-display font-extrabold text-2xl mt-1.5 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-amber-400" /> KPI Leaderboard
+          <h2 className="font-display font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-200 to-cyan-300 mt-1">
+            Cosmic KPI Leaderboard
           </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            Peringkat performa operator, shift, dan utilisasi mesin berdasarkan output bersih dan efisiensi mutu (Defect Rate).
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Periode</div>
-          <div className="font-bold text-sm text-amber-400 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
-        </div>
-      </div>
-
-      <div className="card p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          <button
-            onClick={() => { setActiveTab('operator'); setSearch(''); }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'operator' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500'}`}
-          >
-            <Users className="w-4 h-4" /> Ranking Operator
-          </button>
-          <button
-            onClick={() => { setActiveTab('shift'); setSearch(''); }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'shift' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500'}`}
-          >
-            <Clock className="w-4 h-4" /> Ranking Shift
-          </button>
-          <button
-            onClick={() => { setActiveTab('machine'); setSearch(''); }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'machine' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500'}`}
-          >
-            <Cpu className="w-4 h-4" /> Ranking Mesin
-          </button>
+          <p className="text-xs text-slate-300">Peringkat performa operator berdasarkan efisiensi output dan rasio reject terendah</p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
           <select
             value={selectedProcess}
-            onChange={e => setSelectedProcess(e.target.value)}
-            className="inp text-xs font-semibold"
+            onChange={(e) => setSelectedProcess(e.target.value)}
+            className="inp text-xs"
           >
             <option value="ALL">Semua Lini Proses</option>
-            {PROD_KEYS.map(k => <option key={k} value={k}>{SHEETS[k].label}</option>)}
+            {PROD_KEYS.map((k) => (
+              <option key={k} value={k}>{SHEETS[k].label}</option>
+            ))}
           </select>
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Cari nama..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="inp !pl-8 text-xs w-44"
-            />
-          </div>
         </div>
       </div>
 
-      <div className="card overflow-hidden">
+      {/* Podium Top 3 */}
+      {topThree.length > 0 && (
+        <div className="grid md:grid-cols-3 gap-4">
+          {topThree.map((item, idx) => {
+            const podiumStyles = [
+              'from-amber-500/20 via-yellow-500/5 to-transparent border-amber-400/40 shadow-[0_0_25px_rgba(245,158,11,0.15)] order-1 md:order-2 md:-translate-y-2',
+              'from-slate-400/20 via-slate-500/5 to-transparent border-slate-400/40 shadow-[0_0_20px_rgba(148,163,184,0.1)] order-2 md:order-1',
+              'from-amber-700/20 via-amber-800/5 to-transparent border-amber-600/40 shadow-[0_0_20px_rgba(180,83,9,0.1)] order-3'
+            ];
+            const badges = ['Champion #1', 'Runner Up #2', 'Third Place #3'];
+
+            return (
+              <div
+                key={item.name}
+                className={`card p-5 bg-gradient-to-b ${podiumStyles[idx]} relative flex flex-col items-center text-center`}
+              >
+                <div className="w-12 h-12 rounded-full bg-slate-900/80 border border-white/20 flex items-center justify-center mb-2 shadow-inner">
+                  {idx === 0 ? <Crown className="w-6 h-6 text-amber-400" /> : <Medal className="w-6 h-6 text-cyan-400" />}
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{badges[idx]}</span>
+                <h3 className="font-display font-black text-lg text-white mt-0.5 truncate max-w-full">{item.name}</h3>
+                <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-200 mt-2">
+                  {item.score} <span className="text-xs text-slate-400 font-normal">pts</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 w-full mt-4 pt-3 border-t border-white/10 text-xs">
+                  <div>
+                    <span className="text-slate-400 text-[10px]">Good Output</span>
+                    <p className="font-bold text-emerald-400">{item.good.toLocaleString('id-ID')}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px]">Loss Rate</span>
+                    <p className={`font-bold ${item.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-400'}`}>{item.lossRate.toFixed(1)}%</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Full Leaderboard Table */}
+      <div className="card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="card-title flex items-center gap-2">
+            <Flame className="w-4 h-4 text-orange-400" /> Seluruh Peringkat Operator
+          </h3>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Cari Operator..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="inp !pl-9 text-xs w-56"
+            />
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="py-3 px-4">Rank</th>
-                <th className="py-3 px-4">Nama / Entitas</th>
-                {activeTab !== 'shift' && <th className="py-3 px-4">Lini</th>}
-                <th className="py-3 px-4">Output Good</th>
-                <th className="py-3 px-4">Defect</th>
-                <th className="py-3 px-4">Defect Rate</th>
-                <th className="py-3 px-4">Total Score</th>
-                <th className="py-3 px-4">Badge</th>
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase text-[10px]">
+                <th className="py-3 px-3">Rank</th>
+                <th className="py-3 px-3">Operator</th>
+                <th className="py-3 px-3">Good</th>
+                <th className="py-3 px-3">Reject</th>
+                <th className="py-3 px-3">Loss Rate</th>
+                <th className="py-3 px-3 text-right">Skor Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {currentList.map((item, idx) => (
-                <tr 
-                  key={item.name} 
-                  onClick={() => onOpenList?.(`Detail Leaderboard: ${item.name}`, 'rec_ctcp', item.rows)}
-                  className="hover:bg-amber-500/5 transition cursor-pointer"
-                >
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs ${idx === 0 ? 'bg-amber-400 text-slate-900 font-extrabold shadow' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-amber-700 text-white' : 'text-slate-400'}`}>
-                      {idx + 1}
+            <tbody className="divide-y divide-white/5">
+              {filtered.map((item, idx) => (
+                <tr key={item.name} className="hover:bg-slate-800/30 transition">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-400">#{idx + 1}</td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-200">{item.name}</td>
+                  <td className="py-2.5 px-3 text-emerald-400 font-medium">{item.good.toLocaleString('id-ID')}</td>
+                  <td className="py-2.5 px-3 text-rose-400 font-medium">{item.reject.toLocaleString('id-ID')}</td>
+                  <td className="py-2.5 px-3">
+                    <span className={`badge ${item.lossRate > 1.0 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'}`}>
+                      {item.lossRate.toFixed(1)}%
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">{item.name}</td>
-                  {activeTab !== 'shift' && <td className="py-3 px-4 text-slate-400">{item.process || '-'}</td>}
-                  <td className="py-3 px-4 font-semibold text-emerald-600">{item.good.toLocaleString('id-ID')}</td>
-                  <td className="py-3 px-4 font-semibold text-rose-600">{item.defect.toLocaleString('id-ID')}</td>
-                  <td className="py-3 px-4 font-bold">{item.defectRate.toFixed(1)}%</td>
-                  <td className="py-3 px-4 font-extrabold text-amber-500">{item.score} / 100</td>
-                  <td className="py-3 px-4">
-                    {idx === 0 && <span className="badge bg-amber-100 text-amber-800 border border-amber-300">★ Top Performer</span>}
-                    {idx > 0 && item.defectRate <= 1.0 && <span className="badge bg-emerald-100 text-emerald-800">Quality Star</span>}
-                  </td>
+                  <td className="py-2.5 px-3 text-right font-black text-cyan-300">{item.score}</td>
                 </tr>
               ))}
-              {currentList.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">Tidak ada data untuk filter yang dipilih.</td>
+                  <td colSpan={6} className="text-center py-8 text-slate-500">Tidak ada data peringkat ditemukan.</td>
                 </tr>
               )}
             </tbody>
