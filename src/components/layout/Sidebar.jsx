@@ -28,7 +28,7 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden transition-opacity"
@@ -76,7 +76,7 @@ export default function Sidebar({
               </div>
             )}
 
-            {/* Tombol Tutup Mobile & Toggle Desktop */}
+            {/* Mobile Close Button & Desktop Toggle */}
             <div className="flex items-center">
               <button
                 type="button"
@@ -127,7 +127,7 @@ export default function Sidebar({
         <div className="p-3.5 border-t border-white/10 flex items-center justify-between shrink-0 bg-slate-950/60">
           {(!collapsed || mobileOpen) && (
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
                 {String(user?.USER || user?.username || 'A').charAt(0).toUpperCase()}
               </div>
               <div className="truncate">
