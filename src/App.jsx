@@ -4,13 +4,13 @@ import Sidebar from './components/layout/Sidebar';
 import AuthView from './components/views/AuthView';
 import OverviewView from './components/views/OverviewView';
 import ProductionView from './components/views/ProductionView';
-import ComparisonView from './components/views/ComparisonView';
-import DataProductionView from './components/views/DataProductionView';
-import AnalyticsView from './components/views/AnalyticsView';
-import TeamMonitoringView from './components/views/TeamMonitoringView';
+import CompareView from './components/views/CompareView';
+import DataTableView from './components/views/DataTableView';
+import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
+import OperatorShiftView from './components/views/OperatorShiftView';
 import LeaderboardView from './components/views/LeaderboardView';
-import ExecutiveView from './components/views/ExecutiveView';
-import PersonalKPIView from './components/views/PersonalKPIView';
+import ExecutiveOverallView from './components/views/ExecutiveOverallView';
+import PersonalKpiView from './components/views/PersonalKpiView';
 
 export default function App() {
   const { data, loading, serverStatus, reload } = useProductionData();
@@ -52,13 +52,13 @@ export default function App() {
     switch (currentMenu) {
       case 'overview': return <OverviewView data={data} onMenuChange={setCurrentMenu} />;
       case 'production': return <ProductionView data={data} />;
-      case 'comparison': return <ComparisonView data={data} />;
-      case 'data': return <DataProductionView data={data} user={currentUser} />;
-      case 'analytics': return <AnalyticsView data={data} />;
-      case 'team': return <TeamMonitoringView data={data} />;
+      case 'comparison': return <CompareView data={data} />;
+      case 'data': return <DataTableView data={data} user={currentUser} />;
+      case 'analytics': return <ProcessAnalyticsView data={data} />;
+      case 'team': return <OperatorShiftView data={data} />;
       case 'leaderboard': return <LeaderboardView data={data} />;
-      case 'executive': return <ExecutiveView data={data} />;
-      case 'personal': return <PersonalKPIView data={data} user={currentUser} />;
+      case 'executive': return <ExecutiveOverallView data={data} />;
+      case 'personal': return <PersonalKpiView data={data} user={currentUser} />;
       default: return <OverviewView data={data} onMenuChange={setCurrentMenu} />;
     }
   };
@@ -86,7 +86,7 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; Aether Code[cite: 1]
+          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; Aether Code
         </footer>
       </div>
     </div>
