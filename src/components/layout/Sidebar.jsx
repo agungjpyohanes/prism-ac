@@ -1,9 +1,12 @@
 import React from 'react';
 import { MENUS } from '../../constants/navigation';
-import { LogOut, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, collapsed, onToggle }) {
   const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
+
+  // Direct Thumbnail URL dari Google Drive
+  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
 
   const availableMenus = MENUS.filter((m) => {
     if (!m.roles || m.roles.length === 0) return true;
@@ -12,25 +15,46 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
   });
 
   return (
-    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#070b19]/60 backdrop-blur-2xl border-r border-cyan-500/10 transition-all duration-300 flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`fixed top-0 left-0 h-full z-40 bg-[#070b19]/80 backdrop-blur-2xl border-r border-cyan-500/15 transition-all duration-300 flex flex-col justify-between ${collapsed ? 'w-20' : 'w-64'}`}>
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header Cosmic Branding */}
+        
+        {/* Header Branding */}
         <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                <Sparkles className="w-4 h-4 text-white" />
+          {!collapsed ? (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-700/80 p-1 flex items-center justify-center shadow-lg shadow-black/40 shrink-0 overflow-hidden">
+                <img 
+                  src={LOGO_URL} 
+                  alt="PRISM Logo" 
+                  className="w-full h-full object-contain" 
+                  referrerPolicy="no-referrer" 
+                />
               </div>
-              <div>
-                <h2 className="font-black text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">PRISM</h2>
-                <p className="text-[9px] font-mono text-cyan-400/80">COSMIC &bull; SYSTEM</p>
+              <div className="min-w-0">
+                <h2 className="font-black text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
+                  PRISM
+                </h2>
+                <p className="text-[9px] font-mono text-cyan-400 font-medium truncate">
+                  Integrated System & Monitoring
+                </p>
               </div>
             </div>
+          ) : (
+            <div className="w-8 h-8 mx-auto rounded-xl bg-slate-900/90 border border-slate-700/80 p-1 flex items-center justify-center overflow-hidden">
+              <img 
+                src={LOGO_URL} 
+                alt="PRISM" 
+                className="w-full h-full object-contain" 
+                referrerPolicy="no-referrer" 
+              />
+            </div>
           )}
+          
           <button 
             type="button"
             onClick={onToggle} 
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition mx-auto"
+            className="p-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition ml-auto"
+            title={collapsed ? "Buka Sidebar" : "Tutup Sidebar"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -61,7 +85,7 @@ export default function Sidebar({ currentMenu, onMenuChange, user, onLogout, col
         </nav>
       </div>
 
-      {/* User Footer Profile Glass */}
+      {/* User Footer Profile */}
       <div className="p-3.5 border-t border-white/5 flex items-center justify-between shrink-0 bg-slate-950/40">
         {!collapsed && (
           <div className="flex items-center gap-2.5 min-w-0">
