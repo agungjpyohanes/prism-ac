@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProductionData } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -27,6 +27,23 @@ export default function App() {
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
+  
+  // Theme State: 'dark' (default) atau 'light'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('prism_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark', 'light');
+    root.classList.add(theme);
+    localStorage.setItem('prism_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const [period, setPeriod] = useState({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date()
@@ -62,15 +79,15 @@ export default function App() {
       case 'data': return <DataTableView tabKey={selectedProcessKey} data={data} period={period} user={currentUser} />;
       case 'analytics': return <ProcessAnalyticsView tabKey={selectedProcessKey} data={data} period={period} />;
       case 'team': return <OperatorShiftView data={data} period={period} />;
-      case 'leaderboard': return <LeaderboardView data={data} />;
+      case 'leaderboard': return <LeaderboardView data={data} period={period} />;
       case 'executive': return <ExecutiveOverallView data={data} period={period} />;
-      case 'personal': return <PersonalKpiView data={data} user={currentUser} />;
+      case 'personal': return <PersonalKpiView data={data} user={currentUser} period={period} />;
       default: return <OverviewView data={data} period={period} onMenuChange={setCurrentMenu} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#050714] text-slate-100 flex relative overflow-x-hidden">
+    <div className="min-h-screen flex relative overflow-x-hidden">
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -87,21 +104,23 @@ export default function App() {
           onReset={reload}
           onOpenPrint={() => window.print()}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         <main className="p-6 flex-1 space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-32 space-y-3">
-              <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin shadow-[0_0_15px_rgba(6,182,212,0.5)]" />
-              <p className="text-cyan-400/80 text-xs font-mono tracking-widest uppercase">Connecting to Cosmic Data Grid...</p>
+              <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+              <p className="text-cyan-400 text-xs font-mono uppercase tracking-widest">Sinkronisasi Data...</p>
             </div>
           ) : (
             renderView()
           )}
         </main>
 
-        <footer className="p-4 border-t border-white/5 text-center text-xs text-slate-500 font-mono bg-slate-950/30 backdrop-blur-md">
-          &copy; 2026 PRISM Cosmic V1.0 &bull; Prepress Integrated System & Monitoring
+        <footer className="p-4 border-t border-slate-700/60 light:border-slate-200 text-center text-xs text-slate-400 font-mono bg-slate-950/20 backdrop-blur-md">
+          &copy; 2026 PRISM &bull; Prepress Integrated System & Monitoring
         </footer>
       </div>
     </div>
