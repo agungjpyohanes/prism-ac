@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, RotateCcw, Printer, Calendar, Sun, Moon } from 'lucide-react';
+import { Menu, RotateCcw, Printer, Calendar, Bell, Search } from 'lucide-react';
 import { iso, parseDateVal } from '../../utils/formatters';
 
 export default function Header({
@@ -8,8 +8,8 @@ export default function Header({
   onReset,
   onOpenPrint,
   onToggleSidebar,
-  theme,
-  onToggleTheme
+  title,
+  subtitle
 }) {
   const fromStr = period?.from ? iso(period.from) : '';
   const toStr = period?.to ? iso(period.to) : '';
@@ -24,71 +24,71 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#070b1a]/70 dark:bg-[#070b1a]/70 light:bg-white/80 backdrop-blur-xl border-b border-white/10 light:border-slate-200 px-4 lg:px-6 py-3 no-print transition-colors">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 glass border-b border-white/5 px-6 py-4 no-print">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left: Menu Toggle & Title */}
+        <div className="flex items-center gap-4">
           <button
             onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-2xl text-slate-300 light:text-slate-700 hover:bg-white/10 transition border border-white/10 light:border-slate-300"
-            title="Menu Sidebar"
+            className="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+            title="Toggle Menu"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div>
-            <h1 className="font-display font-black text-base lg:text-lg text-white light:text-slate-900 leading-tight">
-              PRISM
-            </h1>
-            <p className="text-[11px] text-cyan-400 light:text-indigo-600 font-semibold">
-              Integrated System & Monitoring
-            </p>
-          </div>
+          
+          {title && (
+            <div>
+              <h1 className="text-xl font-bold text-white">{title}</h1>
+              {subtitle && (
+                <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Pill Date Range Picker */}
-          <div className="flex items-center gap-1.5 bg-slate-950/60 light:bg-slate-100 px-3.5 py-1.5 rounded-full border border-cyan-500/30 light:border-slate-300 backdrop-blur-md">
-            <Calendar className="w-4 h-4 text-cyan-400 light:text-indigo-600 shrink-0" />
+        {/* Right: Actions */}
+        <div className="flex items-center gap-3">
+          {/* Date Range Picker */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+            <Calendar className="w-4 h-4 text-indigo-400" />
             <input
               type="date"
               value={fromStr}
               onChange={(e) => handleDateChange('from', e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-200 light:text-slate-800 outline-none w-28"
+              className="bg-transparent text-xs font-semibold text-white outline-none w-28"
             />
-            <span className="text-slate-500 text-xs font-bold">s/d</span>
+            <span className="text-slate-500 text-xs">→</span>
             <input
               type="date"
               value={toStr}
               onChange={(e) => handleDateChange('to', e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-200 light:text-slate-800 outline-none w-28"
+              className="bg-transparent text-xs font-semibold text-white outline-none w-28"
             />
           </div>
 
-          {/* Toggle Dark / Light Mode */}
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-amber-400 hover:text-amber-300 transition border border-white/10 light:border-slate-300 backdrop-blur-md"
-            title={theme === 'dark' ? 'Mode Terang (Light)' : 'Mode Gelap (Dark)'}
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
-          </button>
-
-          {/* Reset / Reload Data */}
+          {/* Action Buttons */}
           <button
             onClick={onReset}
-            className="p-2 rounded-full bg-slate-950/60 light:bg-slate-100 text-slate-300 light:text-slate-700 hover:text-cyan-300 transition border border-white/10 light:border-slate-300 backdrop-blur-md"
-            title="Muat Ulang Data"
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+            title="Refresh Data"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {/* Print Button */}
+          <button
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all relative"
+            title="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+          </button>
+
           <button
             onClick={onOpenPrint}
-            className="btn-primary text-xs py-2 px-4 font-semibold flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-indigo-500/30 transition-all"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print / PDF</span>
+            <Printer className="w-4 h-4" />
+            <span>Export PDF</span>
           </button>
         </div>
       </div>
