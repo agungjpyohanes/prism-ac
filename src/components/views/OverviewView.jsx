@@ -1,509 +1,91 @@
-import React, { useState, useMemo } from 'react';
-import { SHEETS } from '../../constants/schema';
-import { cell, parseDateVal, startOfDay, endOfDay, fmtDate, fmtPeriodRange } from '../../utils/formatters';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
-import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
-
-// Helper Palet Warna Status Job
-const getStatusBadgeClass = (statusStr = '') => {
-  const s = String(statusStr).toUpperCase().trim();
-  if (s.includes('DONE') || s.includes('SELESAI') || s.includes('OK')) {
-    return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
-  }
-  if (s.includes('PROGRESS') || s.includes('PROSES') || s.includes('JALAN')) {
-    return 'bg-sky-500/15 text-sky-400 border border-sky-500/30';
-  }
-  if (s.includes('ANTRI') || s.includes('QUEUE') || s.includes('PENDING')) {
-    return 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
-  }
-  if (s.includes('EXPOSE') || s.includes('MAIN EXPOSE')) {
-    return 'bg-purple-500/15 text-purple-400 border border-purple-500/30';
-  }
-  if (s.includes('WASHING') || s.includes('CUCI')) {
-    return 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30';
-  }
-  if (s.includes('DRYING') || s.includes('KERING')) {
-    return 'bg-orange-500/15 text-orange-400 border border-orange-500/30';
-  }
-  if (s.includes('POLES') || s.includes('POLISH')) {
-    return 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30';
-  }
-  if (s.includes('TUNGGU') || s.includes('INFO') || s.includes('FILE')) {
-    return 'bg-rose-500/15 text-rose-400 border border-rose-500/30';
-  }
-  return 'bg-slate-700/40 text-slate-300 border border-slate-600/40';
-};
-
-// Helper Palet Warna Category Job
-const getCategoryBadgeClass = (catStr = '') => {
-  const c = String(catStr).toUpperCase().trim();
-  if (c.includes('OFFSET') || c === 'O') {
-    return 'bg-purple-500/15 text-purple-300 border border-purple-500/40';
-  }
-  if (c.includes('FLEXO')) {
-    return 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/40';
-  }
-  if (c.includes('SCREEN')) {
-    return 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40';
-  }
-  if (c.includes('ETCHING')) {
-    return 'bg-amber-500/15 text-amber-300 border border-amber-500/40';
-  }
-  if (c.includes('SAMPLE')) {
-    return 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
-  }
-  if (c.includes('REPRINT')) {
-    return 'bg-pink-500/15 text-pink-300 border border-pink-500/40';
-  }
-  return 'bg-slate-800 text-slate-300 border border-slate-700';
-};
-
-export default function OverviewView({ data = {}, period, onOpenList, onSelectRow }) {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [sortCol, setSortCol] = useState(0);
-  const [sortAsc, setSortAsc] = useState(true);
-  const [page, setPage] = useState(1);
-  const pageSize = 15;
-
-  const cfg = SHEETS.job_active || {
-    headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
-    i: { id: 0, jop: 1, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
-  };
-
-  const rawRows = data.job_active || [];
-
-  const filtered = useMemo(() => {
-    const fromTime = period?.from ? startOfDay(period.from).getTime() : null;
-    const toTime = period?.to ? endOfDay(period.to).getTime() : null;
-    const q = search.trim().toLowerCase();
-
-    return rawRows.filter((r) => {
-      const idVal = cell(r, cfg.i.id).trim();
-      if (!idVal) return false;
-
-      const d = parseDateVal(r[cfg.i.date]);
-      if (d) {
-        const t = d.getTime();
-        if (fromTime && t < fromTime) return false;
-        if (toTime && t > toTime) return false;
-      }
-
-      const st = cell(r, cfg.i.status).trim();
-      if (statusFilter !== 'ALL' && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
-
-      const cat = cell(r, cfg.i.category).trim();
-      if (categoryFilter !== 'ALL' && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
-
-      if (q) {
-        return r.some((c) => String(c || '').toLowerCase().includes(q));
-      }
-      return true;
-    });
-  }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
-
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      const valA = a[sortCol] ?? '';
-      const valB = b[sortCol] ?? '';
-      if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
-        return sortAsc ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
-      }
-      return sortAsc
-        ? String(valA).localeCompare(String(valB))
-        : String(valB).localeCompare(String(valA));
-    });
-  }, [filtered, sortCol, sortAsc]);
-
-  const totalPages = Math.ceil(sorted.length / pageSize) || 1;
-  const paginatedRows = sorted.slice((page - 1) * pageSize, page * pageSize);
-
-  const stats = useMemo(() => {
-    const statusCount = {};
-    const categoryCount = {};
-    const categoryRows = {};
-    const statusRows = {};
-
-    filtered.forEach((r) => {
-      const st = cell(r, cfg.i.status).trim() || 'Pending';
-      const cat = cell(r, cfg.i.category).trim() || 'General';
-
-      statusCount[st] = (statusCount[st] || 0) + 1;
-      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
-
-      if (!statusRows[st]) statusRows[st] = [];
-      statusRows[st].push(r);
-
-      if (!categoryRows[cat]) categoryRows[cat] = [];
-      categoryRows[cat].push(r);
-    });
-
-    return { statusCount, categoryCount, statusRows, categoryRows };
-  }, [filtered, cfg]);
-
-  const distinctCategories = useMemo(() => {
-    return Array.from(new Set(rawRows.map(r => cell(r, cfg.i.category).trim()).filter(Boolean)));
-  }, [rawRows, cfg]);
-
-  const distinctStatuses = useMemo(() => {
-    return Array.from(new Set(rawRows.map(r => cell(r, cfg.i.status).trim()).filter(Boolean)));
-  }, [rawRows, cfg]);
-
-  const handleSort = (idx) => {
-    if (sortCol === idx) {
-      setSortAsc(!sortAsc);
-    } else {
-      setSortCol(idx);
-      setSortAsc(true);
-    }
-  };
-
-  const handleDoughnutClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
-    const clickedIndex = elements[0].index;
-    const catName = Object.keys(stats.categoryCount)[clickedIndex];
-    if (catName && stats.categoryRows[catName]) {
-      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
-    }
-  };
-
-  const handleBarClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
-    const clickedIndex = elements[0].index;
-    const statusName = Object.keys(stats.statusCount)[clickedIndex];
-    if (statusName && stats.statusRows[statusName]) {
-      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
-    }
-  };
-
-  return (
-    <div className="space-y-5 anim-in">
-      {/* Header Banner */}
-      <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="badge bg-sky-400/20 text-sky-300 font-bold">MONITORING PRODUKSI</span>
-            <span className="text-xs text-slate-300">· Real-time Job Status</span>
-          </div>
-          <h2 className="font-display font-extrabold text-2xl mt-1 text-white">
-            Dashboard Overview — Job Aktif (WIP)
-          </h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Integrated System & Monitoring — Antrean dan status pengerjaan job berjalan
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Periode</div>
-          <div className="font-bold text-sm text-sky-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
-        </div>
-      </div>
-
-      {/* KPI Cards Ringkasan */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div
-          onClick={() => onOpenList?.('Semua Job Aktif (WIP)', 'job_active', filtered)}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">TOTAL JOB AKTIF</span>
-            <Activity className="w-4 h-4 text-sky-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">
-            {filtered.length.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat seluruh antrean →</div>
-        </div>
-
-        <div
-          onClick={() => {
-            const inProg = filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('expose') || s.includes('washing') || s.includes('drying') || s.includes('poles');
-            });
-            onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
-          }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN PROGRESS</span>
-            <PlayCircle className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">
-            {filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('expose') || s.includes('washing') || s.includes('drying') || s.includes('poles');
-            }).length.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat job yang sedang berjalan →</div>
-        </div>
-
-        <div
-          onClick={() => {
-            const pending = filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-            });
-            onOpenList?.('Job Dalam Antrean (Queue / Antri)', 'job_active', pending);
-          }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN QUEUE / ANTREAN</span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">
-            {filtered.filter(r => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-            }).length.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat antrean job →</div>
-        </div>
-
-        <div
-          onClick={() => onOpenList?.('Daftar Kategori Job Aktif', 'job_active', filtered)}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500 cursor-pointer hover:scale-[1.01] transition"
-        >
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">KATEGORI PROSES</span>
-            <Layers className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-indigo-600">
-            {Object.keys(stats.categoryCount).length}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan pemohon →</div>
-        </div>
-      </div>
-
-      {/* Chart Section */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="card p-5 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between mb-2">
-            <div>
+<div className="card p-5 bg-white dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
               <h3 className="card-title">Porsi Job Berdasarkan Kategori</h3>
-              <p className="text-[11px] text-slate-400">Klik diagram untuk membuka detail data per divisi</p>
+              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                Total {filtered.length} Job
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mb-3">Klik diagram atau badge untuk membuka detail data per divisi</p>
+
+            {/* Pill Badges Jumlah & Persentase per Kategori */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {Object.entries(stats.categoryCount).map(([cat, count], idx) => {
+                const colors = ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b'];
+                const color = colors[idx % colors.length];
+                const pct = filtered.length > 0 ? ((count / filtered.length) * 100).toFixed(1) : 0;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => onOpenList?.(`Job Aktif Kategori: ${cat}`, 'job_active', stats.categoryRows[cat] || [])}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition hover:scale-105 cursor-pointer"
+                    style={{
+                      backgroundColor: `${color}15`,
+                      borderColor: `${color}40`,
+                      color: color
+                    }}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                    <span>{cat}:</span>
+                    <span className="font-extrabold">{count} Job</span>
+                    <span className="text-[10px] opacity-80">({pct}%)</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <div className="h-64 flex items-center justify-center">
+
+          <div className="h-60 relative flex items-center justify-center">
             {Object.keys(stats.categoryCount).length === 0 ? (
               <span className="text-xs text-slate-400">Tidak ada data kategori</span>
             ) : (
-              <Doughnut
-                data={{
-                  labels: Object.keys(stats.categoryCount),
-                  datasets: [
-                    {
-                      data: Object.values(stats.categoryCount),
-                      backgroundColor: ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b']
-                    }
-                  ]
-                }}
-                options={{
-                  maintainAspectRatio: false,
-                  onClick: handleDoughnutClick
-                }}
-              />
+              <>
+                <Doughnut
+                  data={{
+                    labels: Object.keys(stats.categoryCount).map(
+                      (cat) => `${cat} (${stats.categoryCount[cat]} Job)`
+                    ),
+                    datasets: [
+                      {
+                        data: Object.values(stats.categoryCount),
+                        backgroundColor: ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b'],
+                        borderWidth: 2,
+                        borderColor: '#0f172a'
+                      }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                      legend: {
+                        display: false // Menggunakan Pill Badges kustom di atas agar lebih rapi
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: (context) => {
+                            const val = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                            return ` ${val} Job (${pct}%)`;
+                          }
+                        }
+                      }
+                    },
+                    onClick: handleDoughnutClick
+                  }}
+                />
+                {/* Total Ringkasan di Tengah Lubang Donat */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-black text-slate-800 dark:text-white leading-none">
+                    {filtered.length}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                    Total Job
+                  </span>
+                </div>
+              </>
             )}
           </div>
         </div>
-
-        <div className="card p-5 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h3 className="card-title">Distribusi Status Pengerjaan</h3>
-              <p className="text-[11px] text-slate-400">Klik batang diagram untuk membuka detail status</p>
-            </div>
-          </div>
-          <div className="h-64">
-            {Object.keys(stats.statusCount).length === 0 ? (
-              <span className="text-xs text-slate-400">Tidak ada data status</span>
-            ) : (
-              <Bar
-                data={{
-                  labels: Object.keys(stats.statusCount),
-                  datasets: [
-                    {
-                      label: 'Jumlah Job',
-                      data: Object.values(stats.statusCount),
-                      backgroundColor: '#0284c7',
-                      borderRadius: 4
-                    }
-                  ]
-                }}
-                options={{
-                  maintainAspectRatio: false,
-                  onClick: handleBarClick
-                }}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabel Data Job Aktif dengan Search, Sort, dan Pagination */}
-      <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-display font-extrabold text-lg text-slate-800 dark:text-white">
-              Daftar Antrean & Eksekusi Job Aktif
-            </h2>
-            <p className="text-xs text-slate-500">
-              Menampilkan <b>{sorted.length.toLocaleString('id-ID')} pekerjaan</b> · Klik baris untuk detail lengkap
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
-              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="ALL">Semua Kategori</option>
-              {distinctCategories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="ALL">Semua Status</option>
-              {distinctStatuses.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Cari Job, No SPK, File..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="inp !pl-8 text-xs py-1.5 w-48 sm:w-56 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
-              <tr>
-                <th className="py-2.5 px-3">No</th>
-                {(cfg.headers || []).map((h, i) => (
-                  <th
-                    key={i}
-                    onClick={() => handleSort(i)}
-                    className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>{h.replace(/_/g, ' ')}</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {paginatedRows.map((row, idx) => (
-                <tr
-                  key={idx}
-                  onClick={() => onSelectRow?.('job_active', row)}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
-                >
-                  <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
-                  {(cfg.headers || []).map((_, colIdx) => {
-                    const val = row[colIdx];
-
-                    // Kolom STATUS dengan warna spesifik per status
-                    if (colIdx === cfg.i.status) {
-                      return (
-                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(val)}`}>
-                            {val || '—'}
-                          </span>
-                        </td>
-                      );
-                    }
-
-                    // Kolom CATEGORY dengan warna spesifik per kategori
-                    if (colIdx === cfg.i.category) {
-                      return (
-                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getCategoryBadgeClass(val)}`}>
-                            {val || '—'}
-                          </span>
-                        </td>
-                      );
-                    }
-
-                    return (
-                      <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
-                        {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '—')}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              {paginatedRows.length === 0 && (
-                <tr>
-                  <td colSpan={cfg.headers.length + 1} className="text-center py-8 text-slate-400">
-                    Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian/filter.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Controls */}
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
-          <span>
-            Halaman <b>{page}</b> dari <b>{totalPages}</b>
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
