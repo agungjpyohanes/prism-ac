@@ -157,6 +157,8 @@ export default function App() {
     return r && r[idx] !== undefined && r[idx] !== null ? String(r[idx]) : '-';
   }
 
+  const triggerPrint = () => window.print();
+
   if (!currentUser) {
     return (
       <AuthView
@@ -185,6 +187,7 @@ export default function App() {
         return (
           <ProductionView
             tabKey={selectedProcessKey}
+            onTabChange={setSelectedProcessKey}
             data={data}
             period={period}
             onSelectRow={handleSelectRow}
@@ -192,6 +195,7 @@ export default function App() {
             onOpenMetric={openMetricModal}
             onOpenDayModal={openDayModal}
             onGoToData={() => setCurrentMenu('data')}
+            onOpenPrint={triggerPrint}
           />
         );
       case 'comparison':
@@ -200,19 +204,23 @@ export default function App() {
         return (
           <DataTableView
             tabKey={selectedProcessKey}
+            onTabChange={setSelectedProcessKey}
             data={data}
             period={period}
             onSelectRow={handleSelectRow}
             user={currentUser}
+            onOpenPrint={triggerPrint}
           />
         );
       case 'analytics':
         return (
           <ProcessAnalyticsView
             tabKey={selectedProcessKey}
+            onTabChange={setSelectedProcessKey}
             data={data}
             period={period}
             onOpenList={openListModal}
+            onOpenPrint={triggerPrint}
           />
         );
       case 'team':
@@ -258,7 +266,7 @@ export default function App() {
           period={period}
           onPeriodChange={setPeriod}
           onReset={reload}
-          onOpenPrint={() => window.print()}
+          onOpenPrint={triggerPrint}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           theme={theme}
           onToggleTheme={toggleTheme}
