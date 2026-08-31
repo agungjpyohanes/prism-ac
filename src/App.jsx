@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useProductionData } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
+import MobileNav from './components/layout/MobileNav';
 import Header from './components/layout/Header';
-import Modal from './components/common/Modal';
 import AuthView from './components/views/AuthView';
 import OverviewView from './components/views/OverviewView';
 import ProductionView from './components/views/ProductionView';
@@ -13,8 +13,7 @@ import OperatorShiftView from './components/views/OperatorShiftView';
 import LeaderboardView from './components/views/LeaderboardView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
 import PersonalKpiView from './components/views/PersonalKpiView';
-import { SHEETS } from './constants/schema';
-import { num, startOfDay } from './utils/formatters';
+import { MENUS } from './constants/navigation';
 
 export default function App() {
   const { data, loading, serverStatus, reload } = useProductionData();
@@ -26,33 +25,9 @@ export default function App() {
       return null;
     }
   });
-
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
-  const [modalState, setModalState] = useState(null);
-  const [modalHistory, setModalHistory] = useState([]);
-
-  // Theme State
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('prism_theme') || 'dark';
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('dark', 'light');
-    root.classList.add(theme);
-    localStorage.setItem('prism_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  const [period, setPeriod] = useState({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date()
-  });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogin = (u) => {
     setCurrentUser(u);
@@ -63,101 +38,6 @@ export default function App() {
     sessionStorage.removeItem('pf_session');
     setCurrentUser(null);
   };
-
-  // Modal Handlers Global
-  const openListModal = (title, key, rows, subtitle = '') => {
-    setModalHistory([]);
-    setModalState({ type: 'list', title, key, rows, subtitle });
-  };
-
-  const openMetricModal = (key, metric, rows) => {
-    const cfg = SHEETS[key];
-    if (!cfg) return;
-    setModalHistory([]);
-    let filtered = rows;
-    let valFn = () => 0;
-    let valLabel = 'QTY';
-    let causeIdx = null;
-
-    if (metric === 'baik') {
-      filtered = rows.filter((r) => num(r[cfg.i.baik]) > 0);
-      valFn = (r) => num(r[cfg.i.baik]);
-      valLabel = 'QTY BAIK';
-    } else if (metric === 'rusak') {
-      filtered = rows.filter((r) => num(r[cfg.i.rusak]) > 0);
-      valFn = (r) => num(r[cfg.i.rusak]);
-      valLabel = 'QTY RUSAK';
-      causeIdx = cfg.i.defect_reason ?? cfg.i.penyRusak;
-    } else if (metric === 'ganti') {
-      filtered = rows.filter((r) => num(r[cfg.i.ganti]) > 0);
-      valFn = (r) => num(r[cfg.i.ganti]);
-      valLabel = 'QTY GANTI';
-      causeIdx = cfg.i.replace_reason ?? cfg.i.penyGanti;
-    } else if (metric === 'pakai') {
-      valFn = (r) => num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
-      valLabel = 'TOTAL PAKAI';
-    } else if (metric === 'pct') {
-      filtered = rows.filter((r) => num(r[cfg.i.rusak]) > 0);
-      valFn = (r) => {
-        const p = num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
-        return p > 0 ? (num(r[cfg.i.rusak]) / p) * 100 : 0;
-      };
-      valLabel = 'LOSS %';
-      causeIdx = cfg.i.defect_reason ?? cfg.i.penyRusak;
-    }
-
-    setModalState({
-      type: 'metric',
-      title: `Detail Metrik: ${metric.toUpperCase()} (${cfg.label})`,
-      key,
-      rows: filtered,
-      valFn,
-      valLabel,
-      causeIdx,
-      metric
-    });
-  };
-
-  const openDayModal = (key, timestamp) => {
-    const cfg = SHEETS[key];
-    const dTarget = new Date(timestamp);
-    const dayStart = startOfDay(dTarget).getTime();
-    const rows = (data[key] || []).filter((r) => {
-      const d = r[cfg.i.date] ? new Date(r[cfg.i.date]) : null;
-      return d && startOfDay(d).getTime() === dayStart;
-    });
-
-    openListModal(`Detail Harian: ${dTarget.toLocaleDateString('id-ID')}`, key, rows);
-  };
-
-  const handleSelectRow = (key, row) => {
-    if (modalState && modalState.type !== 'detail') {
-      setModalHistory((prev) => [...prev, modalState]);
-    }
-    setModalState({
-      type: 'detail',
-      title: `Detail Transaksi — ${cell(row, SHEETS[key]?.i?.id || 0)}`,
-      key,
-      row,
-      withBack: modalHistory.length > 0 || (modalState && modalState.type !== 'detail')
-    });
-  };
-
-  const handleModalBack = () => {
-    if (modalHistory.length > 0) {
-      const prev = modalHistory[modalHistory.length - 1];
-      setModalHistory((h) => h.slice(0, -1));
-      setModalState(prev);
-    } else {
-      setModalState(null);
-    }
-  };
-
-  function cell(r, idx) {
-    return r && r[idx] !== undefined && r[idx] !== null ? String(r[idx]) : '-';
-  }
-
-  const triggerPrint = () => window.print();
 
   if (!currentUser) {
     return (
@@ -171,87 +51,29 @@ export default function App() {
     );
   }
 
+  const currentMenuData = MENUS.find(m => m.id === currentMenu);
+
   const renderView = () => {
     switch (currentMenu) {
-      case 'overview':
-        return (
-          <OverviewView
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-            onSelectRow={handleSelectRow}
-            onMenuChange={setCurrentMenu}
-          />
-        );
-      case 'production':
-        return (
-          <ProductionView
-            tabKey={selectedProcessKey}
-            onTabChange={setSelectedProcessKey}
-            data={data}
-            period={period}
-            onSelectRow={handleSelectRow}
-            onOpenList={openListModal}
-            onOpenMetric={openMetricModal}
-            onOpenDayModal={openDayModal}
-            onGoToData={() => setCurrentMenu('data')}
-            onOpenPrint={triggerPrint}
-          />
-        );
-      case 'comparison':
-        return <CompareView data={data} />;
-      case 'data':
-        return (
-          <DataTableView
-            tabKey={selectedProcessKey}
-            onTabChange={setSelectedProcessKey}
-            data={data}
-            period={period}
-            onSelectRow={handleSelectRow}
-            user={currentUser}
-            onOpenPrint={triggerPrint}
-          />
-        );
-      case 'analytics':
-        return (
-          <ProcessAnalyticsView
-            tabKey={selectedProcessKey}
-            onTabChange={setSelectedProcessKey}
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-            onOpenPrint={triggerPrint}
-          />
-        );
-      case 'team':
-        return <OperatorShiftView data={data} period={period} />;
-      case 'leaderboard':
-        return <LeaderboardView data={data} period={period} />;
-      case 'executive':
-        return (
-          <ExecutiveOverallView
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-          />
-        );
-      case 'personal':
-        return <PersonalKpiView data={data} user={currentUser} period={period} />;
-      default:
-        return (
-          <OverviewView
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-            onSelectRow={handleSelectRow}
-            onMenuChange={setCurrentMenu}
-          />
-        );
+      case 'overview': return <OverviewView data={data} period={{}} onOpenList={() => {}} onSelectRow={() => {}} />;
+      case 'production': return <ProductionView tabKey="rec_ctcp" data={data} period={{}} onSelectRow={() => {}} onOpenList={() => {}} onOpenMetric={() => {}} onOpenDayModal={() => {}} onGoToData={() => {}} />;
+      case 'comparison': return <CompareView data={data} onToast={() => {}} />;
+      case 'data': return <DataTableView tabKey="rec_ctcp" data={data} period={{}} onSelectRow={() => {}} />;
+      case 'analytics': return <ProcessAnalyticsView tabKey="rec_ctcp" data={data} period={{}} onOpenList={() => {}} />;
+      case 'team': return <OperatorShiftView data={data} period={{}} />;
+      case 'leaderboard': return <LeaderboardView />;
+      case 'executive': return <ExecutiveOverallView data={data} period={{}} onOpenList={() => {}} />;
+      case 'personal': return <PersonalKpiView />;
+      default: return <OverviewView data={data} period={{}} onOpenList={() => {}} onSelectRow={() => {}} />;
     }
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#050814] text-slate-100 relative">
+      {/* Cosmic Background */}
+      <div className="cosmic-bg" />
+
+      {/* Sidebar - Desktop & Tablet Drawer */}
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -259,40 +81,48 @@ export default function App() {
         onLogout={handleLogout}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      <div className={`flex-1 transition-all duration-300 flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
+      {/* Main Content */}
+      <div className={`relative z-10 flex flex-col min-h-screen transition-all duration-300
+        ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}
+        main-content
+      `}>
         <Header
-          period={period}
-          onPeriodChange={setPeriod}
+          period={{}}
+          onPeriodChange={() => {}}
           onReset={reload}
-          onOpenPrint={triggerPrint}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          theme={theme}
-          onToggleTheme={toggleTheme}
+          onOpenPrint={() => {}}
+          onToggleSidebar={() => setSidebarOpen(true)}
+          title={currentMenuData?.label || 'Dashboard'}
+          subtitle="Prepress Integrated System & Monitoring"
         />
 
-        <main className="p-6 flex-1 space-y-6">
+        <main className="flex-1 p-3 sm:p-6">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 space-y-3">
-              <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
-              <p className="text-cyan-400 text-xs font-mono uppercase tracking-widest">Sinkronisasi Data...</p>
+            <div className="flex flex-col items-center justify-center py-20 sm:py-32">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center mb-4 anim-pulse-glow">
+                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              </div>
+              <p className="text-sm text-slate-400 font-semibold">Sinkronisasi data...</p>
             </div>
           ) : (
             renderView()
           )}
         </main>
 
-        <footer className="p-4 border-t border-white/10 text-center text-xs opacity-60 font-mono bg-black/10 backdrop-blur-md">
-          &copy; 2026 PRISM &bull; Integrated System & Monitoring
+        <footer className="hidden sm:block p-4 border-t border-cyan-500/15 text-center text-xs text-slate-500 font-mono">
+          &copy; 2026 PRISM V2.0 Cosmic • Aether Code
         </footer>
       </div>
 
-      <Modal
-        modalState={modalState}
-        onClose={() => setModalState(null)}
-        onSelectRow={handleSelectRow}
-        onBack={handleModalBack}
+      {/* Mobile Bottom Navigation */}
+      <MobileNav
+        currentMenu={currentMenu}
+        onMenuChange={setCurrentMenu}
+        user={currentUser}
       />
     </div>
   );
