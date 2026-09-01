@@ -52,22 +52,75 @@ export default function CompareView({ data = {}, onToast }) {
   const dRusak = delta(m2.rusak, m1.rusak);
   const dGanti = delta(m2.ganti, m1.ganti);
 
-  const arrow = (d, mode) => {
-    let color = 'text-slate-300 bg-slate-800 border border-slate-700', label = 'TETAP';
-    if (d.dir === 'up') {
-      if (mode === 'normal') { color = 'text-emerald-300 bg-emerald-950/60 border border-emerald-500/40'; label = 'NAIK'; }
-      else if (mode === 'invert') { color = 'text-rose-300 bg-rose-950/60 border border-rose-500/40'; label = 'NAIK'; }
-      else { color = 'text-amber-300 bg-amber-950/60 border border-amber-500/40'; label = 'NAIK'; }
-    } else if (d.dir === 'down') {
-      if (mode === 'normal') { color = 'text-rose-300 bg-rose-950/60 border border-rose-500/40'; label = 'TURUN'; }
-      else { color = 'text-emerald-300 bg-emerald-950/60 border border-emerald-500/40'; label = 'TURUN'; }
+  const renderStatus = (d, metricType) => {
+    const isHigherBetter = metricType === 'higher_is_better';
+    const isZero = d.dir === 'equal' || Math.abs(d.pct) < 0.01;
+    const sign = d.pct > 0 ? '+' : '';
+    const pctStr = `${sign}${d.pct.toFixed(1)}%`;
+
+    if (isZero) {
+      return {
+        badge: (
+          <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 inline-flex items-center gap-1 shadow-sm">
+            &mdash; 0.0% (STABIL)
+          </span>
+        ),
+        deltaColor: 'text-slate-500 dark:text-slate-400',
+        deltaText: '0.0%'
+      };
     }
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${color}`}>
-        {label}
-      </span>
-    );
+
+    if (isHigherBetter) {
+      if (d.dir === 'up') {
+        return {
+          badge: (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30 inline-flex items-center gap-1 shadow-sm">
+              &uarr; {pctStr} (NAIK)
+            </span>
+          ),
+          deltaColor: 'text-emerald-600 dark:text-emerald-400',
+          deltaText: pctStr
+        };
+      } else {
+        return {
+          badge: (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30 inline-flex items-center gap-1 shadow-sm">
+              &darr; {pctStr} (TURUN)
+            </span>
+          ),
+          deltaColor: 'text-rose-600 dark:text-rose-400',
+          deltaText: pctStr
+        };
+      }
+    } else {
+      // lower is better (Total Rusak / Total Ganti)
+      if (d.dir === 'down') {
+        return {
+          badge: (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30 inline-flex items-center gap-1 shadow-sm">
+              &darr; {pctStr} (MEMBAIK)
+            </span>
+          ),
+          deltaColor: 'text-emerald-600 dark:text-emerald-400',
+          deltaText: pctStr
+        };
+      } else {
+        return {
+          badge: (
+            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30 inline-flex items-center gap-1 shadow-sm">
+              &uarr; {pctStr} (MEMBURUK)
+            </span>
+          ),
+          deltaColor: 'text-rose-600 dark:text-rose-400',
+          deltaText: pctStr
+        };
+      }
+    }
   };
+
+  const statusHasil = renderStatus(dHasil, 'higher_is_better');
+  const statusRusak = renderStatus(dRusak, 'lower_is_better');
+  const statusGanti = renderStatus(dGanti, 'lower_is_better');
 
   const handleSwap = () => {
     setPeriods({ p1: periods.p2, p2: periods.p1 });
@@ -173,11 +226,12 @@ export default function CompareView({ data = {}, onToast }) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3 stagger">
+        {/* Card 1: Total Hasil */}
         <div className="card p-5 relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-blue-600"></div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">Total Hasil</span>
-            {arrow(dHasil, 'normal')}
+            {statusHasil.badge}
           </div>
           <div className="mt-3 flex items-end gap-3">
             <div className="flex-1">
@@ -193,18 +247,19 @@ export default function CompareView({ data = {}, onToast }) {
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500 dark:text-slate-400">Delta</span>
-            <span className={`font-bold ${dHasil.dir === 'up' ? 'text-emerald-600 dark:text-emerald-400' : dHasil.dir === 'down' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>
-              {dHasil.pct > 0 ? '+' : ''}{dHasil.pct.toFixed(1)}%
+            <span className="text-slate-500 dark:text-slate-400 font-medium">Delta</span>
+            <span className={`font-bold ${statusHasil.deltaColor}`}>
+              {statusHasil.deltaText}
             </span>
           </div>
         </div>
 
+        {/* Card 2: Total Rusak */}
         <div className="card p-5 relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-rose-500"></div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">Total Rusak</span>
-            {arrow(dRusak, 'invert')}
+            {statusRusak.badge}
           </div>
           <div className="mt-3 flex items-end gap-3">
             <div className="flex-1">
@@ -220,18 +275,19 @@ export default function CompareView({ data = {}, onToast }) {
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500 dark:text-slate-400">Delta</span>
-            <span className={`font-bold ${dRusak.dir === 'up' ? 'text-rose-600 dark:text-rose-400' : dRusak.dir === 'down' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
-              {dRusak.pct > 0 ? '+' : ''}{dRusak.pct.toFixed(1)}%
+            <span className="text-slate-500 dark:text-slate-400 font-medium">Delta</span>
+            <span className={`font-bold ${statusRusak.deltaColor}`}>
+              {statusRusak.deltaText}
             </span>
           </div>
         </div>
 
+        {/* Card 3: Total Ganti */}
         <div className="card p-5 relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">Total Ganti</span>
-            {arrow(dGanti, 'warning')}
+            {statusGanti.badge}
           </div>
           <div className="mt-3 flex items-end gap-3">
             <div className="flex-1">
@@ -247,8 +303,10 @@ export default function CompareView({ data = {}, onToast }) {
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500 dark:text-slate-400">Delta</span>
-            <span className="font-bold text-amber-600 dark:text-amber-300">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
+            <span className="text-slate-500 dark:text-slate-400 font-medium">Delta</span>
+            <span className={`font-bold ${statusGanti.deltaColor}`}>
+              {statusGanti.deltaText}
+            </span>
           </div>
         </div>
       </div>

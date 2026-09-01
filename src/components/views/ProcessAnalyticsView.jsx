@@ -528,24 +528,27 @@ export default function ProcessAnalyticsView({ tabKey, onTabChange, data, period
           <div>
             <div className="flex items-center gap-2">
               {activeLeaderboardTab === 'OP' ? (
-                <Users className="w-5 h-5 text-cyan-400" />
+                <Users className="w-5 h-5 text-blue-600 dark:text-cyan-400" />
               ) : (
-                <Briefcase className="w-5 h-5 text-amber-400" />
+                <Briefcase className="w-5 h-5 text-amber-500" />
               )}
-              <h3 className="card-title">
+              <h3 className="card-title text-slate-900 dark:text-white">
                 {activeLeaderboardTab === 'OP' ? 'Leaderboard Performa Operator' : 'Leaderboard Performa PO (Customer)'}
               </h3>
             </div>
-            <p className="text-xs text-slate-400">Klik baris nama untuk melihat detail seluruh transaksi individu</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Klik baris nama untuk melihat detail seluruh transaksi individu</p>
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-            <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+            {/* iOS-style Segmented Control Toggle Switch */}
+            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1 h-9">
               <button
                 type="button"
                 onClick={() => { setActiveLeaderboardTab('OP'); setSearchQuery(''); }}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
-                  activeLeaderboardTab === 'OP' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow' : 'text-slate-400 hover:text-white'
+                className={`h-7 px-4 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center ${
+                  activeLeaderboardTab === 'OP'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
                 }`}
               >
                 Operator
@@ -553,14 +556,17 @@ export default function ProcessAnalyticsView({ tabKey, onTabChange, data, period
               <button
                 type="button"
                 onClick={() => { setActiveLeaderboardTab('PO'); setSearchQuery(''); }}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
-                  activeLeaderboardTab === 'PO' ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow' : 'text-slate-400 hover:text-white'
+                className={`h-7 px-4 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center ${
+                  activeLeaderboardTab === 'PO'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
                 }`}
               >
-                PO
+                PO (Customer)
               </button>
             </div>
 
+            {/* Search Input with matching h-9 height */}
             <div className="relative w-full sm:w-56">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -568,7 +574,7 @@ export default function ProcessAnalyticsView({ tabKey, onTabChange, data, period
                 placeholder={activeLeaderboardTab === 'OP' ? 'Cari Operator...' : 'Cari PO...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="inp !pl-9 text-xs py-1.5 w-full"
+                className="inp !pl-9 text-xs h-9 w-full"
               />
             </div>
           </div>
@@ -594,21 +600,25 @@ export default function ProcessAnalyticsView({ tabKey, onTabChange, data, period
                   onClick={() => onOpenList?.(`Rekap Transaksi: ${o.name}`, activeKey, o.rowList)}
                   className="cursor-pointer"
                 >
-                  <td className="font-mono font-bold text-slate-400">#{idx + 1}</td>
-                  <td className="font-semibold text-slate-100 flex items-center gap-1.5">
+                  <td className="font-mono font-bold text-slate-500 dark:text-slate-400">#{idx + 1}</td>
+                  <td className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                     {o.name}
-                    <span className="text-[10px] text-cyan-400">→</span>
+                    <span className="text-[10px] text-blue-600 dark:text-cyan-400">&rarr;</span>
                   </td>
-                  <td className="font-bold text-white">{o.output.toLocaleString('id-ID')}</td>
-                  <td className="text-emerald-400 font-semibold">{o.good.toLocaleString('id-ID')}</td>
-                  <td className="text-rose-400 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
-                  <td className="text-amber-400">{o.replace.toLocaleString('id-ID')}</td>
-                  <td className={`font-bold ${o.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'}`}>{o.lossRate.toFixed(1)}%</td>
+                  <td className="font-bold text-slate-900 dark:text-white">{o.output.toLocaleString('id-ID')}</td>
+                  <td className="text-emerald-600 dark:text-emerald-400 font-semibold">{o.good.toLocaleString('id-ID')}</td>
+                  <td className="text-rose-600 dark:text-rose-400 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
+                  <td className="text-amber-600 dark:text-amber-400">{o.replace.toLocaleString('id-ID')}</td>
+                  <td>
+                    <span className={`badge ${o.lossRate > 1.0 ? 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40' : 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40'} font-bold`}>
+                      {o.lossRate.toFixed(1)}%
+                    </span>
+                  </td>
                 </tr>
               ))}
               {filteredLeaderboard.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-400">
+                  <td colSpan={7} className="text-center py-8 text-slate-500 dark:text-slate-400">
                     Tidak ada data ditemukan.
                   </td>
                 </tr>

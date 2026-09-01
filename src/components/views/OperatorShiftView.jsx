@@ -130,21 +130,21 @@ export default function OperatorShiftView({ data, period }) {
   return (
     <div className="space-y-4 anim-in">
       {/* Header & Filter Lini */}
-      <div className="card p-5 flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
+      <div className="card p-5 flex flex-wrap items-center justify-between gap-4 bg-blue-50/70 dark:bg-gradient-to-r dark:from-slate-900 dark:via-[#0e172e] dark:to-slate-900 text-slate-900 dark:text-white border border-blue-200 dark:border-cyan-500/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-400/30 grid place-items-center">
+            <span className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 dark:bg-cyan-500/10 dark:text-cyan-300 border border-blue-200 dark:border-cyan-400/30 grid place-items-center">
               <Users className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="font-display font-extrabold text-lg sm:text-xl text-white">Evaluasi Performa Operator, PO & Shift</h2>
-              <p className="text-xs text-slate-400">Analisis produktivitas tim, rasio afval/reject, dan efisiensi lini</p>
+              <h2 className="font-display font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white">Evaluasi Performa Operator, PO & Shift</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300">Analisis produktivitas tim, rasio afval/reject, dan efisiensi lini</p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-cyan-400 shrink-0" />
+          <Filter className="w-4 h-4 text-blue-600 dark:text-cyan-400 shrink-0" />
           <select
             value={selectedProcess}
             onChange={e => setSelectedProcess(e.target.value)}
@@ -162,8 +162,8 @@ export default function OperatorShiftView({ data, period }) {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-cyan-400" />
-            <h3 className="card-title">Performa Output per Shift</h3>
+            <Clock className="w-4 h-4 text-blue-600 dark:text-cyan-400" />
+            <h3 className="card-title text-slate-900 dark:text-white">Performa Output per Shift</h3>
           </div>
           <div className="h-64">
             {(() => {
@@ -201,7 +201,7 @@ export default function OperatorShiftView({ data, period }) {
         </div>
 
         <div className="card p-5">
-          <h3 className="card-title mb-3">Porsi Good Output Antar Shift</h3>
+          <h3 className="card-title mb-3 text-slate-900 dark:text-white">Porsi Good Output Antar Shift</h3>
           <div className="h-64 flex items-center justify-center">
             {(() => {
               const ct = getChartTheme();
@@ -244,24 +244,27 @@ export default function OperatorShiftView({ data, period }) {
           <div>
             <div className="flex items-center gap-2">
               {activeLeaderboardTab === 'OP' ? (
-                <Users className="w-5 h-5 text-cyan-400" />
+                <Users className="w-5 h-5 text-blue-600 dark:text-cyan-400" />
               ) : (
-                <Briefcase className="w-5 h-5 text-amber-400" />
+                <Briefcase className="w-5 h-5 text-amber-500" />
               )}
-              <h3 className="card-title">
+              <h3 className="card-title text-slate-900 dark:text-white">
                 {activeLeaderboardTab === 'OP' ? 'Ranking Produktivitas Operator' : 'Ranking Produktivitas PO (Customer)'}
               </h3>
             </div>
-            <p className="text-xs text-slate-400">Daftar peringkat berdasarkan volume output dan rasio reject terkecil</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Daftar peringkat berdasarkan volume output dan rasio reject terkecil</p>
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-            <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+            {/* iOS-style Segmented Control Toggle Switch */}
+            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1 h-9">
               <button
                 type="button"
                 onClick={() => { setActiveLeaderboardTab('OP'); setSearchQuery(''); }}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
-                  activeLeaderboardTab === 'OP' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow' : 'text-slate-400 hover:text-white'
+                className={`h-7 px-4 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center ${
+                  activeLeaderboardTab === 'OP'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
                 }`}
               >
                 Operator
@@ -269,14 +272,17 @@ export default function OperatorShiftView({ data, period }) {
               <button
                 type="button"
                 onClick={() => { setActiveLeaderboardTab('PO'); setSearchQuery(''); }}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
-                  activeLeaderboardTab === 'PO' ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow' : 'text-slate-400 hover:text-white'
+                className={`h-7 px-4 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center ${
+                  activeLeaderboardTab === 'PO'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
                 }`}
               >
-                PO
+                PO (Customer)
               </button>
             </div>
 
+            {/* Search Input with matching h-9 height */}
             <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -284,7 +290,7 @@ export default function OperatorShiftView({ data, period }) {
                 placeholder={activeLeaderboardTab === 'OP' ? 'Cari Operator...' : 'Cari PO...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="inp !pl-9 text-xs py-1.5 w-full"
+                className="inp !pl-9 text-xs h-9 w-full"
               />
             </div>
           </div>
@@ -307,19 +313,23 @@ export default function OperatorShiftView({ data, period }) {
             <tbody>
               {filteredData.map((o, idx) => (
                 <tr key={o.name} className="cursor-pointer">
-                  <td className="font-mono font-bold text-slate-400">#{idx + 1}</td>
-                  <td className="font-semibold text-slate-100">{o.name}</td>
-                  <td className="text-slate-400">{o.process}</td>
-                  <td className="font-bold text-white">{o.output.toLocaleString('id-ID')}</td>
-                  <td className="text-emerald-400 font-semibold">{o.good.toLocaleString('id-ID')}</td>
-                  <td className="text-rose-400 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
-                  <td className="text-amber-400">{o.replace.toLocaleString('id-ID')}</td>
-                  <td className={`font-bold ${o.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'}`}>{o.lossRate.toFixed(1)}%</td>
+                  <td className="font-mono font-bold text-slate-500 dark:text-slate-400">#{idx + 1}</td>
+                  <td className="font-semibold text-slate-900 dark:text-slate-100">{o.name}</td>
+                  <td className="text-slate-600 dark:text-slate-400">{o.process}</td>
+                  <td className="font-bold text-slate-900 dark:text-white">{o.output.toLocaleString('id-ID')}</td>
+                  <td className="text-emerald-600 dark:text-emerald-400 font-semibold">{o.good.toLocaleString('id-ID')}</td>
+                  <td className="text-rose-600 dark:text-rose-400 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
+                  <td className="text-amber-600 dark:text-amber-400">{o.replace.toLocaleString('id-ID')}</td>
+                  <td>
+                    <span className={`badge ${o.lossRate > 1.0 ? 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40' : 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40'} font-bold`}>
+                      {o.lossRate.toFixed(1)}%
+                    </span>
+                  </td>
                 </tr>
               ))}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-400">
+                  <td colSpan={8} className="text-center py-8 text-slate-500 dark:text-slate-400">
                     Tidak ada data ditemukan.
                   </td>
                 </tr>
