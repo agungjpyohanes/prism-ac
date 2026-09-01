@@ -203,7 +203,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060a14] dark:bg-[#060a14] text-slate-100 dark:text-slate-100 flex overflow-x-hidden transition-colors">
+    <div className="min-h-screen bg-[#f1f5f9] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex overflow-x-hidden transition-colors duration-200">
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -233,7 +233,7 @@ export default function App() {
 
         <main className="p-3 sm:p-5 lg:p-6 flex-1 space-y-5 sm:space-y-6 overflow-x-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-32 text-slate-400 text-sm font-semibold">
+            <div className="flex items-center justify-center py-32 text-slate-500 dark:text-slate-400 text-sm font-semibold">
               Sinkronisasi data sistem...
             </div>
           ) : (
@@ -241,7 +241,7 @@ export default function App() {
           )}
         </main>
 
-        <footer className="p-4 border-t border-slate-800/80 dark:border-slate-800/80 text-center text-xs text-slate-500 dark:text-slate-400 font-mono">
+        <footer className="p-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 font-mono bg-white dark:bg-[#090d16]">
           &copy; 2026 PRISM Integrated System & Monitoring V2.5 &bull; Aether Code
         </footer>
       </div>

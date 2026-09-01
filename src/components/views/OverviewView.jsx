@@ -345,11 +345,11 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
       <div className="card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display font-extrabold text-base sm:text-lg text-white">
+            <h2 className="font-display font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">
               Daftar Antrean & Eksekusi Job Aktif
             </h2>
-            <p className="text-xs text-slate-400">
-              Menampilkan <b className="text-cyan-300">{sorted.length.toLocaleString('id-ID')} pekerjaan</b> · Klik baris untuk detail lengkap
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Menampilkan <b className="text-blue-600 dark:text-cyan-300">{sorted.length.toLocaleString('id-ID')} pekerjaan</b> &bull; Klik baris untuk detail lengkap
             </p>
           </div>
 
@@ -407,7 +407,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                   <th
                     key={i}
                     onClick={() => handleSort(i)}
-                    className="cursor-pointer hover:text-cyan-300 transition select-none"
+                    className="cursor-pointer hover:text-blue-600 dark:hover:text-cyan-300 transition select-none"
                   >
                     <div className="flex items-center gap-1">
                       <span>{h.replace(/_/g, ' ')}</span>
@@ -424,7 +424,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                   onClick={() => onSelectRow?.('job_active', row)}
                   className="cursor-pointer"
                 >
-                  <td className="text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
+                  <td className="text-slate-500 dark:text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
                   {(cfg.headers || []).map((_, colIdx) => {
                     const val = row[colIdx];
 
@@ -453,7 +453,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                     }
 
                     return (
-                      <td key={colIdx} className={`whitespace-nowrap ${colIdx === cfg.i.id ? 'font-bold text-white' : 'text-slate-200'}`}>
+                      <td key={colIdx} className={`whitespace-nowrap ${colIdx === cfg.i.id ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                         {colIdx === cfg.i.date ? (val && String(val).toUpperCase() !== 'NULL' ? fmtDate(val) : '—') : (val ?? '—')}
                       </td>
                     );
@@ -462,7 +462,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
               ))}
               {paginatedRows.length === 0 && (
                 <tr>
-                  <td colSpan={cfg.headers.length + 1} className="text-center py-8 text-slate-400">
+                  <td colSpan={cfg.headers.length + 1} className="text-center py-8 text-slate-500 dark:text-slate-400">
                     Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian/filter.
                   </td>
                 </tr>
@@ -472,22 +472,22 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
         </div>
 
         {/* Pagination Control */}
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+        <div className="flex items-center justify-between pt-2 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            Halaman <b className="text-white">{page}</b> dari <b className="text-white">{totalPages}</b>
+            Halaman <b className="text-slate-900 dark:text-white">{page}</b> dari <b className="text-slate-900 dark:text-white">{totalPages}</b>
           </span>
           <div className="flex items-center gap-1.5">
             <button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="btn-ghost !py-1 !px-2.5 text-xs disabled:opacity-30 rounded-lg"
+              className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40 rounded-lg"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="btn-ghost !py-1 !px-2.5 text-xs disabled:opacity-30 rounded-lg"
+              className="btn-secondary !py-1 !px-2.5 text-xs disabled:opacity-40 rounded-lg"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

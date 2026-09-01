@@ -76,9 +76,9 @@ export default function DataTableView({
 
   return (
     <div className="space-y-5 anim-in">
-      {/* Pill Tabs Pemilihan Lini Proses (Sesuai Slide 5 PDF) */}
-      <div className="card p-4 flex flex-wrap items-center justify-between gap-3 no-print">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Pill Tabs Pemilihan Lini Proses */}
+      <div className="card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 max-w-full bg-slate-100 dark:bg-slate-900/90 p-1 rounded-2xl border border-slate-200 dark:border-slate-800" style={{ WebkitOverflowScrolling: 'touch' }}>
           {PROD_KEYS.map((k) => {
             const itemCfg = SHEETS[k];
             const isActive = activeKey === k;
@@ -92,8 +92,8 @@ export default function DataTableView({
                 }}
                 className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isActive
-                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-105'
-                    : 'bg-slate-800/80 border border-slate-700 text-slate-300 hover:bg-slate-700/80 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-sm dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-600'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800'
                 }`}
               >
                 {itemCfg.label}
@@ -107,13 +107,13 @@ export default function DataTableView({
       <div className="card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl grid place-items-center bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+            <span className="w-10 h-10 rounded-2xl grid place-items-center bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-400/30 text-blue-600 dark:text-cyan-300 shadow-sm">
               <Database className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="card-title text-base">Data Produksi {cfg.label}</h3>
-              <p className="text-xs text-slate-400">
-                Menampilkan <b className="text-cyan-300">{sortedRows.length.toLocaleString('id-ID')} baris</b> &bull; Klik baris untuk melihat detail semua kolom
+              <h3 className="card-title text-base text-slate-900 dark:text-white">Data Produksi {cfg.label}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Menampilkan <b className="text-blue-600 dark:text-cyan-300">{sortedRows.length.toLocaleString('id-ID')} baris</b> &bull; Klik baris untuk detail lengkap
               </p>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function DataTableView({
                   <th
                     key={ci}
                     onClick={() => handleSort(ci)}
-                    className="whitespace-nowrap cursor-pointer select-none hover:text-cyan-300 transition"
+                    className="whitespace-nowrap cursor-pointer select-none hover:text-blue-600 dark:hover:text-cyan-300 transition"
                   >
                     {cfg.headers[ci]?.toUpperCase().replace(/_/g, ' ')}{' '}
                     {sortCol === ci ? (sortDir === 1 ? '▲' : '▼') : ''}
@@ -152,7 +152,7 @@ export default function DataTableView({
             <tbody>
               {paginatedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={visibleCols.length} className="text-center py-12 text-slate-400 text-xs">
+                  <td colSpan={visibleCols.length} className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
                     Tidak ada data {cfg.label} yang cocok pada periode ini.
                   </td>
                 </tr>
@@ -164,9 +164,9 @@ export default function DataTableView({
                         key={ci}
                         className={`whitespace-nowrap ${
                           ci === cfg.i.date
-                            ? 'text-cyan-300 font-semibold'
+                            ? 'text-blue-600 dark:text-cyan-300 font-semibold'
                             : ci === cfg.i.id
-                            ? 'font-bold text-white'
+                            ? 'font-bold text-slate-900 dark:text-white'
                             : ''
                         }`}
                       >
@@ -181,16 +181,16 @@ export default function DataTableView({
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+        <div className="flex items-center justify-between pt-2 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            Halaman <b className="text-white">{page}</b> dari <b className="text-white">{totalPages}</b> (Total {sortedRows.length} data)
+            Halaman <b className="text-slate-900 dark:text-white">{page}</b> dari <b className="text-slate-900 dark:text-white">{totalPages}</b> (Total {sortedRows.length.toLocaleString('id-ID')} data)
           </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-30 rounded-xl"
+              className="btn-secondary !py-1.5 !px-3.5 text-xs disabled:opacity-40 rounded-xl"
             >
               Sebelumnya
             </button>
@@ -198,7 +198,7 @@ export default function DataTableView({
               type="button"
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-30 rounded-xl"
+              className="btn-secondary !py-1.5 !px-3.5 text-xs disabled:opacity-40 rounded-xl"
             >
               Berikutnya
             </button>

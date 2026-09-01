@@ -31,7 +31,7 @@ export default function Header({
 
   return (
     <header
-      className="sticky top-0 z-30 bg-[#0b1329]/95 dark:bg-[#0b1329]/95 border-b border-slate-700/70 px-3 sm:px-6 py-2.5 sm:py-3 no-print transition-colors shadow-lg"
+      className="sticky top-0 z-30 bg-white/95 dark:bg-[#0f172a]/95 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2.5 sm:py-3 no-print transition-colors shadow-sm"
       style={{
         WebkitBackdropFilter: 'blur(20px)',
         backdropFilter: 'blur(20px)'
@@ -44,22 +44,22 @@ export default function Header({
           <div className="flex items-center gap-2.5">
             <button
               onClick={onToggleSidebar}
-              className="lg:hidden p-2 rounded-xl text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 transition border border-slate-700/80 shrink-0"
+              className="lg:hidden p-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 transition border border-slate-200 dark:border-slate-700 shrink-0"
               title="Menu Navigasi"
               type="button"
             >
-              <Menu className="w-5 h-5 text-cyan-300" />
+              <Menu className="w-5 h-5 text-blue-600 dark:text-cyan-300" />
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-display font-black text-base sm:text-lg text-white leading-tight tracking-wide">
+                <h1 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight tracking-wide">
                   PRISM
                 </h1>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-cyan-500/20 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-400/30">
                   V2.5
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-cyan-400 font-semibold truncate max-w-[200px] sm:max-w-none">
+              <p className="text-[10px] sm:text-[11px] text-blue-600 dark:text-cyan-400 font-bold truncate max-w-[200px] sm:max-w-none">
                 Integrated System & Monitoring
               </p>
             </div>
@@ -69,15 +69,15 @@ export default function Header({
           <div className="flex items-center gap-1.5 lg:hidden">
             <button
               onClick={onToggleTheme}
-              className="p-2 rounded-xl bg-slate-900/90 text-amber-300 hover:text-amber-200 hover:bg-slate-800 transition border border-slate-700/80"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#090d16] text-amber-600 dark:text-amber-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-800"
               title={theme === 'dark' ? 'Ganti ke Tema Terang (Light Mode)' : 'Ganti ke Tema Gelap (Dark Mode)'}
               type="button"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
             </button>
             <button
               onClick={onReset}
-              className="p-2 rounded-xl bg-slate-900/90 text-slate-200 hover:text-cyan-300 hover:bg-slate-800 transition border border-slate-700/80"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#090d16] text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-800"
               title="Muat Ulang Data"
               type="button"
             >
@@ -91,10 +91,8 @@ export default function Header({
           
           {/* Quick Date Presets (Hari Ini, 7 Hari, 30 Hari, Bulan Ini, Bulan Lalu) */}
           <div
-            className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 overflow-x-auto max-w-full shadow-inner"
+            className="flex items-center gap-1 bg-slate-100 dark:bg-[#090d16] p-1 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto max-w-full"
             style={{
-              WebkitBackdropFilter: 'blur(12px)',
-              backdropFilter: 'blur(12px)',
               WebkitOverflowScrolling: 'touch'
             }}
           >
@@ -107,8 +105,8 @@ export default function Header({
                   onClick={() => handleSelectPreset(p)}
                   className={`px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all whitespace-nowrap select-none ${
                     isActive
-                      ? 'bg-gradient-to-r from-cyan-500/30 to-indigo-500/30 text-cyan-200 border border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-transparent'
+                      ? 'bg-blue-600 text-white shadow-sm dark:bg-gradient-to-r dark:from-cyan-500/30 dark:to-indigo-500/30 dark:text-cyan-200 dark:border dark:border-cyan-400/50'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/80 border border-transparent'
                   }`}
                   title={p.fullLabel}
                 >
@@ -120,27 +118,23 @@ export default function Header({
 
           {/* Date Picker Custom Range */}
           <div
-            className="flex items-center gap-1 bg-slate-900/90 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-700/80 flex-1 sm:flex-none justify-center shadow-inner"
-            style={{
-              WebkitBackdropFilter: 'blur(12px)',
-              backdropFilter: 'blur(12px)'
-            }}
+            className="flex items-center gap-1 bg-slate-100 dark:bg-[#090d16] px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 flex-1 sm:flex-none justify-center"
           >
-            <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400 shrink-0" />
             <input
               type="date"
               value={fromStr}
               onChange={(e) => handleDateChange('from', e.target.value)}
               aria-label="Tanggal Mulai Periode"
-              className="bg-transparent text-[10px] sm:text-xs font-semibold text-slate-100 outline-none w-[84px] sm:w-28 text-center cursor-pointer [color-scheme:dark]"
+              className="bg-transparent text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none w-[84px] sm:w-28 text-center cursor-pointer"
             />
-            <span className="text-slate-500 text-xs font-bold px-0.5">–</span>
+            <span className="text-slate-400 dark:text-slate-500 text-xs font-bold px-0.5">–</span>
             <input
               type="date"
               value={toStr}
               onChange={(e) => handleDateChange('to', e.target.value)}
               aria-label="Tanggal Akhir Periode"
-              className="bg-transparent text-[10px] sm:text-xs font-semibold text-slate-100 outline-none w-[84px] sm:w-28 text-center cursor-pointer [color-scheme:dark]"
+              className="bg-transparent text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none w-[84px] sm:w-28 text-center cursor-pointer"
             />
           </div>
 
@@ -149,7 +143,7 @@ export default function Header({
             {/* Theme Toggle (Dark / Light) */}
             <button
               onClick={onToggleTheme}
-              className="p-2 rounded-xl bg-slate-900/90 text-amber-300 hover:text-amber-200 hover:bg-slate-800 transition border border-slate-700/80 flex items-center gap-1.5"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#090d16] text-slate-700 dark:text-amber-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-800 flex items-center gap-1.5"
               title={theme === 'dark' ? 'Ganti ke Tema Terang (Light Mode)' : 'Ganti ke Tema Gelap (Dark Mode)'}
               type="button"
             >
@@ -160,7 +154,7 @@ export default function Header({
                 </>
               ) : (
                 <>
-                  <Moon className="w-4 h-4 text-indigo-400" />
+                  <Moon className="w-4 h-4 text-indigo-600" />
                   <span className="text-xs font-semibold text-slate-700">Dark</span>
                 </>
               )}
@@ -169,7 +163,7 @@ export default function Header({
             {/* Reload Data */}
             <button
               onClick={onReset}
-              className="p-2 rounded-xl bg-slate-900/90 text-slate-200 hover:text-cyan-300 hover:bg-slate-800 transition border border-slate-700/80"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#090d16] text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-800"
               title="Muat Ulang Data"
               type="button"
             >

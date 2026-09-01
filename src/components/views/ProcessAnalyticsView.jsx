@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { SHEETS, JOP_CATS } from '../../constants/schema';
-import { parseDateVal, num, cell, jopCat, fmtPeriodRange, startOfDay } from '../../utils/formatters';
+import { SHEETS, PROD_KEYS, JOP_CATS } from '../../constants/schema';
+import { parseDateVal, num, cell, jopCat, fmtPeriodRange, startOfDay, getChartTheme } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -16,7 +16,7 @@ import { CheckCircle2, AlertTriangle, RotateCcw, Layers, Percent, Award, Search,
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList }) {
+export default function ProcessAnalyticsView({ tabKey, onTabChange, data, period, onOpenList }) {
   const activeKey = tabKey || 'rec_ctcp';
   const cfg = SHEETS[activeKey] || SHEETS.rec_ctcp;
   const rawRows = data[activeKey] || [];
@@ -29,11 +29,11 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
       const idVal = cell(r, cfg.i.id).trim();
       const jopVal = cell(r, cfg.i.jop).trim();
       const noJopVal = cell(r, cfg.i.nojop).trim();
-      if (!idVal || idVal === '-' || (!jopVal && !noJopVal)) return false;
+      if (!idVal || (!jopVal && !noJopVal)) return false;
 
       const d = parseDateVal(r[cfg.i.date]);
       if (!d) return true;
-      const from = period?.from ? startOfDay(period.from)?.getTime() : null;
+      const from = period?.from ? startOfDay(period.from).getTime() : null;
       const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
       if (from && d.getTime() < from) return false;
       if (to && d.getTime() > to) return false;
@@ -50,72 +50,58 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
     });
     const output = good + reject;
     const lossRate = output > 0 ? (reject / output) * 100 : 0;
-    const perfScore = output > 0 ? Math.max(0, 100 - (lossRate * 10)) : 100;
+    const perfScore = Math.max(0, 100 - lossRate * 5);
     return { good, reject, replace, output, lossRate, perfScore };
   }, [rows, cfg]);
 
   const paramData = useMemo(() => {
-    let colIdx = -1;
-    let label = 'Parameter Mesin';
-
-    if (activeKey === 'rec_ctcp' || activeKey === 'rec_ctp') {
-      colIdx = cfg.i.expose_mach ?? 5;
-      label = 'Mesin Expose';
-    } else if (activeKey === 'rec_screen') {
-      colIdx = cfg.i.screen_type ?? 4;
-      label = 'Tipe Screen';
-    } else if (activeKey === 'rec_flexo') {
-      colIdx = cfg.i.flexo_thickness ?? 11;
-      label = 'Tebal Flexo';
-    } else if (activeKey === 'rec_etching') {
-      colIdx = cfg.i.plate_type ?? 4;
-      label = 'Tipe Plate';
-    }
-
-    if (colIdx === -1 || colIdx === undefined) return { label, colIdx, labels: [], good: [], reject: [] };
+    const colIdx = cfg.i.mesin ?? -1;
+    if (colIdx === -1) return { label: 'Data Mesin', labels: [], good: [], reject: [] };
 
     const map = new Map();
     rows.forEach(r => {
-      const val = cell(r, colIdx).trim() || 'Lainnya / Standar';
-      const e = map.get(val) || { good: 0, reject: 0 };
+      const m = cell(r, colIdx).trim() || 'N/A';
+      const e = map.get(m) || { good: 0, reject: 0 };
       e.good += num(r[cfg.i.baik]);
       e.reject += num(r[cfg.i.rusak]);
-      map.set(val, e);
+      map.set(m, e);
     });
 
-    const labels = [...map.keys()];
+    const labels = [...map.keys()].sort();
     return {
-      label,
       colIdx,
+      label: cfg.headers[colIdx]?.replace(/_/g, ' ') || 'Parameter Mesin',
       labels,
       good: labels.map(l => map.get(l).good),
       reject: labels.map(l => map.get(l).reject)
     };
-  }, [rows, activeKey, cfg]);
+  }, [rows, cfg]);
 
   const secondaryParamData = useMemo(() => {
-    if (activeKey === 'rec_ctcp' || activeKey === 'rec_ctp') {
-      const colIdx = cfg.i.print_mach ?? 6;
+    if (activeKey === 'rec_screen') {
+      const colIdx = cfg.i.mesh ?? -1;
+      if (colIdx === -1) return null;
       const map = new Map();
       rows.forEach(r => {
-        const printMachine = cell(r, colIdx).trim() || 'Mesin Cetak Standar';
-        const e = map.get(printMachine) || { good: 0, reject: 0 };
+        const mesh = cell(r, colIdx).trim() || 'Tanpa Mesh';
+        const e = map.get(mesh) || { good: 0, reject: 0 };
         e.good += num(r[cfg.i.baik]);
         e.reject += num(r[cfg.i.rusak]);
-        map.set(printMachine, e);
+        map.set(mesh, e);
       });
-      const labels = [...map.keys()].slice(0, 8);
-      return { colIdx, title: 'Breakdown Mesin Cetak', labels, good: labels.map(l => map.get(l).good), reject: labels.map(l => map.get(l).reject) };
+      const labels = [...map.keys()].sort();
+      return { colIdx, title: 'Breakdown Tipe Mesh', labels, good: labels.map(l => map.get(l).good), reject: labels.map(l => map.get(l).reject) };
     }
-    if (activeKey === 'rec_etching') {
-      const colIdx = cfg.i.plate_thickness ?? 11;
+    if (activeKey === 'rec_flexo') {
+      const colIdx = cfg.i.tebal ?? -1;
+      if (colIdx === -1) return null;
       const map = new Map();
       rows.forEach(r => {
-        const tebal = cell(r, colIdx).trim() || 'Standard';
-        const e = map.get(tebal) || { good: 0, reject: 0 };
+        const t = cell(r, colIdx).trim() || 'Tanpa Info';
+        const e = map.get(t) || { good: 0, reject: 0 };
         e.good += num(r[cfg.i.baik]);
         e.reject += num(r[cfg.i.rusak]);
-        map.set(tebal, e);
+        map.set(t, e);
       });
       const labels = [...map.keys()];
       return { colIdx, title: 'Breakdown Tebal Plate', labels, good: labels.map(l => map.get(l).good), reject: labels.map(l => map.get(l).reject) };
@@ -221,21 +207,48 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
 
   return (
     <div className="space-y-4 anim-in">
-      <div className="card p-5 bg-gradient-to-r from-slate-900 via-[#0e172e] to-slate-900 text-white flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
+      {/* Pill Selector Sub-Tabs */}
+      {onTabChange && (
+        <div className="card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 max-w-full bg-slate-100 dark:bg-slate-900/90 p-1 rounded-2xl border border-slate-200 dark:border-slate-800" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {PROD_KEYS.map((k) => {
+              const itemCfg = SHEETS[k];
+              const isActive = activeKey === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => onTabChange(k)}
+                  className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-sm dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-600'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {itemCfg.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Header Banner */}
+      <div className="card p-5 bg-blue-50/70 dark:bg-gradient-to-r dark:from-slate-900 dark:via-[#0e172e] dark:to-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-4 border border-blue-200 dark:border-cyan-500/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-bold">INTERNAL PREPRESS ANALYTICS</span>
-            <span className="text-xs text-slate-300">· {cfg.label} Focus Mode</span>
+            <span className="badge bg-blue-100 text-blue-800 border-blue-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-400/40 font-bold">ANALITIK PROSES PREPRESS</span>
+            <span className="text-xs text-slate-600 dark:text-slate-300">&bull; {cfg.label} Focus Mode</span>
           </div>
-          <h2 className="font-display font-black text-xl sm:text-2xl mt-1.5 text-white tracking-wide">{cfg.label} Performance & Parameter Control</h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            Audit mendalam efisiensi mesin expose/cetak, kategori JOP, performa shift, dan evaluasi performa individu Operator vs PO. Klik elemen kartu atau grafik untuk melihat data transaksi detail.
+          <h2 className="font-display font-black text-xl sm:text-2xl mt-1.5 text-slate-900 dark:text-white tracking-wide">{cfg.label} Performance & Parameter Control</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-xl">
+            Audit mendalam efisiensi mesin expose/cetak, kategori JOP, performa shift, dan evaluasi performa individu Operator vs PO. Klik elemen kartu atau grafik untuk melihat detail transaksi.
           </p>
         </div>
-        <div className="text-right">
-          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider font-semibold">Rentang Periode</div>
-          <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
-          <div className="text-xs text-slate-400 mt-0.5">{rows.length} Transaksi Teranalisis</div>
+        <div className="text-left sm:text-right">
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-mono tracking-wider font-semibold">Rentang Periode</div>
+          <div className="font-bold text-sm text-blue-600 dark:text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{rows.length.toLocaleString('id-ID')} Transaksi Teranalisis</div>
         </div>
       </div>
 
@@ -243,14 +256,14 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
         <button
           type="button"
           onClick={() => onOpenList?.(`Total Output ${cfg.label}`, activeKey, rows)}
-          className="card p-4 border-l-4 border-l-cyan-500 text-left cursor-pointer hover:scale-[1.02] transition"
+          className="card p-4 border-l-4 border-l-blue-600 text-left cursor-pointer hover:scale-[1.02] transition"
         >
-          <div className="flex items-center justify-between text-slate-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">TOTAL OUTPUT</span>
-            <Layers className="w-4 h-4 text-cyan-400" />
+            <Layers className="w-4 h-4 text-blue-600 dark:text-cyan-400" />
           </div>
-          <div className="mt-2 font-display font-black text-2xl text-white">{kpi.output.toLocaleString('id-ID')}</div>
-          <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} diproses</div>
+          <div className="mt-2 font-display font-black text-2xl text-slate-900 dark:text-white">{kpi.output.toLocaleString('id-ID')}</div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{cfg.unit} diproses</div>
         </button>
 
         <button
@@ -325,139 +338,187 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="card-title">Breakdown: {paramData.label}</h3>
-              <p className="text-xs text-slate-400">Klik batang grafik untuk melihat detail transaksi</p>
+              <h3 className="card-title text-slate-900 dark:text-white">Breakdown: {paramData.label}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Klik batang grafik untuk melihat detail transaksi</p>
             </div>
-            <span className="badge bg-slate-800 text-slate-200 border-slate-700 font-semibold">{paramData.labels.length} Kategori</span>
+            <span className="badge bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 font-semibold">{paramData.labels.length} Kategori</span>
           </div>
           <div className="h-64">
-            <Bar
-              data={{
-                labels: paramData.labels,
-                datasets: [
-                  { label: 'Good', data: paramData.good, backgroundColor: '#10b981', borderRadius: 4 },
-                  { label: 'Reject', data: paramData.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
-                ]
-              }}
-              options={{
-                maintainAspectRatio: false,
-                scales: {
-                  x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                  y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                },
-                plugins: {
-                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                },
-                onClick: (e, els) => {
-                  if (!els.length || paramData.colIdx === -1) return;
-                  const cat = paramData.labels[els[0].index];
-                  onOpenList?.(`${paramData.label}: ${cat}`, activeKey, rows.filter(r => cell(r, paramData.colIdx) === cat));
-                }
-              }}
-            />
+            {(() => {
+              const ct = getChartTheme();
+              return (
+                <Bar
+                  data={{
+                    labels: paramData.labels,
+                    datasets: [
+                      { label: 'Good Output', data: paramData.good, backgroundColor: ct.goodColor, borderRadius: 4 },
+                      { label: 'Reject / Defect', data: paramData.reject, backgroundColor: ct.defectColor, borderRadius: 4 }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      x: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                      y: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                    },
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    },
+                    onClick: (e, els) => {
+                      if (!els.length || paramData.colIdx === -1) return;
+                      const cat = paramData.labels[els[0].index];
+                      onOpenList?.(`${paramData.label}: ${cat}`, activeKey, rows.filter(r => cell(r, paramData.colIdx) === cat));
+                    }
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
 
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="card-title">Evaluasi Kategori JOP</h3>
-              <p className="text-xs text-slate-400">Klik batang grafik untuk melihat rincian pekerjaan</p>
+              <h3 className="card-title text-slate-900 dark:text-white">Evaluasi Kategori JOP</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Klik batang grafik untuk melihat rincian pekerjaan</p>
             </div>
           </div>
           <div className="h-64">
-            <Bar
-              data={{
-                labels: jopData.labels,
-                datasets: [
-                  { label: 'Good', data: jopData.good, backgroundColor: '#6366f1', borderRadius: 4 },
-                  { label: 'Reject', data: jopData.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
-                ]
-              }}
-              options={{
-                maintainAspectRatio: false,
-                scales: {
-                  x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                  y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                },
-                plugins: {
-                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                },
-                onClick: (e, els) => {
-                  if (!els.length) return;
-                  const cat = jopData.labels[els[0].index];
-                  onOpenList?.(`Kategori JOP: ${cat}`, activeKey, rows.filter(r => jopCat(cell(r, cfg.i.nojop)) === cat));
-                }
-              }}
-            />
+            {(() => {
+              const ct = getChartTheme();
+              return (
+                <Bar
+                  data={{
+                    labels: jopData.labels,
+                    datasets: [
+                      { label: 'Good Output', data: jopData.good, backgroundColor: ct.isLight ? '#4f46e5' : '#6366f1', borderRadius: 4 },
+                      { label: 'Reject / Defect', data: jopData.reject, backgroundColor: ct.defectColor, borderRadius: 4 }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      x: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                      y: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                    },
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    },
+                    onClick: (e, els) => {
+                      if (!els.length) return;
+                      const cat = jopData.labels[els[0].index];
+                      onOpenList?.(`Kategori JOP: ${cat}`, activeKey, rows.filter(r => jopCat(cell(r, cfg.i.nojop)) === cat));
+                    }
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
 
         {secondaryParamData && (
           <div className="card p-5">
-            <h3 className="card-title mb-1">{secondaryParamData.title}</h3>
-            <p className="text-xs text-slate-400 mb-3">Klik batang grafik untuk melihat daftar record</p>
+            <h3 className="card-title mb-1 text-slate-900 dark:text-white">{secondaryParamData.title}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Klik batang grafik untuk melihat daftar record</p>
             <div className="h-64">
-              <Bar
-                data={{
-                  labels: secondaryParamData.labels,
-                  datasets: [
-                    { label: 'Good', data: secondaryParamData.good, backgroundColor: '#06b6d4', borderRadius: 4 },
-                    { label: 'Reject', data: secondaryParamData.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
-                  ]
-                }}
-                options={{
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                  },
-                  plugins: {
-                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                  },
-                  onClick: (e, els) => {
-                    if (!els.length) return;
-                    const cat = secondaryParamData.labels[els[0].index];
-                    onOpenList?.(`${secondaryParamData.title}: ${cat}`, activeKey, rows.filter(r => cell(r, secondaryParamData.colIdx) === cat));
-                  }
-                }}
-              />
+              {(() => {
+                const ct = getChartTheme();
+                return (
+                  <Bar
+                    data={{
+                      labels: secondaryParamData.labels,
+                      datasets: [
+                        { label: 'Good Output', data: secondaryParamData.good, backgroundColor: ct.totalColor, borderRadius: 4 },
+                        { label: 'Reject / Defect', data: secondaryParamData.reject, backgroundColor: ct.defectColor, borderRadius: 4 }
+                      ]
+                    }}
+                    options={{
+                      maintainAspectRatio: false,
+                      scales: {
+                        x: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                        y: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                      },
+                      plugins: {
+                        legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                        tooltip: {
+                          backgroundColor: '#0f172a',
+                          titleColor: '#ffffff',
+                          bodyColor: '#f8fafc',
+                          padding: 10,
+                          cornerRadius: 8
+                        }
+                      },
+                      onClick: (e, els) => {
+                        if (!els.length) return;
+                        const cat = secondaryParamData.labels[els[0].index];
+                        onOpenList?.(`${secondaryParamData.title}: ${cat}`, activeKey, rows.filter(r => cell(r, secondaryParamData.colIdx) === cat));
+                      }
+                    }}
+                  />
+                );
+              })()}
             </div>
           </div>
         )}
 
         <div className={`card p-5 ${secondaryParamData ? '' : 'md:col-span-2'}`}>
-          <h3 className="card-title mb-1">Performa Shift</h3>
-          <p className="text-xs text-slate-400 mb-3">Klik segmen donat untuk melihat detail transaksi per shift</p>
+          <h3 className="card-title mb-1 text-slate-900 dark:text-white">Performa Shift</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Klik segmen donat untuk melihat detail transaksi per shift</p>
           <div className="h-64 flex items-center justify-center">
-            <Doughnut
-              data={{
-                labels: shiftData.labels,
-                datasets: [
-                  {
-                    data: shiftData.good,
-                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'],
-                    borderColor: '#0f172a',
-                    borderWidth: 2
-                  }
-                ]
-              }}
-              options={{
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                },
-                onClick: (e, els) => {
-                  if (!els.length) return;
-                  const sh = shiftData.labels[els[0].index];
-                  onOpenList?.(`Detail Shift: ${sh}`, activeKey, rows.filter(r => {
-                    let s = cell(r, cfg.i.shift).toUpperCase().trim();
-                    if (!s || s === '-' || s === 'UNDEFINED') s = 'NON-SHIFT';
-                    return s === sh;
-                  }));
-                }
-              }}
-            />
+            {(() => {
+              const ct = getChartTheme();
+              return (
+                <Doughnut
+                  data={{
+                    labels: shiftData.labels,
+                    datasets: [
+                      {
+                        data: shiftData.good,
+                        backgroundColor: ['#0284c7', '#059669', '#d97706', '#6366f1', '#64748b'],
+                        borderColor: ct.isLight ? '#ffffff' : '#0f172a',
+                        borderWidth: 2
+                      }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    },
+                    onClick: (e, els) => {
+                      if (!els.length) return;
+                      const sh = shiftData.labels[els[0].index];
+                      onOpenList?.(`Detail Shift: ${sh}`, activeKey, rows.filter(r => {
+                        let s = cell(r, cfg.i.shift).toUpperCase().trim();
+                        if (!s || s === '-' || s === 'UNDEFINED') s = 'NON-SHIFT';
+                        return s === sh;
+                      }));
+                    }
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
       </div>

@@ -22,8 +22,8 @@ export default function ProductionView({
   onTabChange,
   data,
   period,
-  onSelectRow,
-  onOpenList,
+  onSelectRow: _onSelectRow,
+  onOpenList: _onOpenList,
   onOpenMetric,
   onOpenDayModal,
   onGoToData
@@ -95,9 +95,9 @@ export default function ProductionView({
 
   return (
     <div className="space-y-5 anim-in">
-      {/* Pill Selector 5 Lini + Tombol Print */}
-      <div className="card p-4 flex flex-wrap items-center justify-between gap-3 no-print">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Pill Selector 5 Lini + Tombol Menuju Data */}
+      <div className="card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 max-w-full bg-slate-100 dark:bg-slate-900/90 p-1 rounded-2xl border border-slate-200 dark:border-slate-800" style={{ WebkitOverflowScrolling: 'touch' }}>
           {PROD_KEYS.map((k) => {
             const itemCfg = SHEETS[k];
             const isActive = activeKey === k;
@@ -108,8 +108,8 @@ export default function ProductionView({
                 onClick={() => onTabChange?.(k)}
                 className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isActive
-                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-105'
-                    : 'bg-slate-800/80 border border-slate-700 text-slate-300 hover:bg-slate-700/80 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-sm dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-600'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800'
                 }`}
               >
                 {itemCfg.label}
@@ -122,7 +122,7 @@ export default function ProductionView({
           <button
             type="button"
             onClick={() => onGoToData?.(activeKey)}
-            className="btn-primary text-xs py-2 px-4 rounded-xl shadow-md flex items-center gap-1.5"
+            className="btn-primary text-xs py-2 px-4 rounded-xl shadow-sm flex items-center gap-1.5"
           >
             <span>Lihat Tabel Data {cfg.label}</span>
             <span>&rarr;</span>
@@ -130,7 +130,7 @@ export default function ProductionView({
         </div>
       </div>
 
-      {/* KPI Cards Glow */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         {cards.map((c) => {
           const Icon = c.icon;
@@ -142,13 +142,13 @@ export default function ProductionView({
               className="card p-4 sm:p-5 text-left cursor-pointer hover:scale-[1.02] flex flex-col justify-between"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{c.label}</span>
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{c.label}</span>
                 <Icon className={`w-4 h-4 ${c.color}`} />
               </div>
               <div className={`mt-2 font-display font-black text-2xl sm:text-3xl ${c.color} tracking-tight`}>
                 <CountUp target={c.val} isPct={c.pct} />
               </div>
-              <div className="text-[10px] text-slate-400 mt-1">{c.pct ? 'Target: ≤ 1.0%' : `${cfg.unit} diproses`}</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{c.pct ? 'Target: ≤ 1.0%' : `${cfg.unit} diproses`} &bull; Klik rincian</div>
             </button>
           );
         })}
