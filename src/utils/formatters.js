@@ -207,45 +207,61 @@ export const getActivePresetId = (period) => {
   return null;
 };
 
-// Pewarnaan Dinamis Status Badge
+// Pewarnaan Dinamis Status Badge (Light Mode & Dark Mode Optimized)
 export const getStatusBadgeClass = (statusStr = '') => {
   const s = String(statusStr || '').toUpperCase().trim();
   if (s.includes('SELESAI') || s.includes('OK') || s.includes('DONE') || s.includes('GOOD')) {
-    return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+    return 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40';
   }
   if (s.includes('REJECT') || s.includes('ERROR') || s.includes('RUSAK') || s.includes('DEFECT')) {
-    return 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
+    return 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40';
   }
   if (s.includes('WASHING') || s.includes('EXPOSE')) {
-    return 'bg-purple-500/20 text-purple-300 border border-purple-500/40';
+    return 'bg-purple-50 text-purple-800 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40';
   }
   if (s.includes('HDI') || s.includes('PROGRESS') || s.includes('PROSES') || s.includes('RUNNING')) {
-    return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+    return 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40';
   }
   if (s.includes('TUNGGU') || s.includes('INFO') || s.includes('FILE') || s.includes('PENDING') || s.includes('HOLD')) {
-    return 'bg-orange-500/20 text-orange-300 border border-orange-500/40';
+    return 'bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40';
   }
   // Default: ANTRI / QUEUE
-  return 'bg-amber-500/20 text-amber-300 border border-amber-500/40';
+  return 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40';
 };
 
-// Pewarnaan Dinamis Category Badge
+// Pewarnaan Dinamis Category Badge (Light Mode & Dark Mode Optimized)
 export const getCategoryBadgeClass = (categoryStr = '') => {
   const c = String(categoryStr || '').toUpperCase().trim();
   if (c.includes('CTCP')) {
-    return 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
+    return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30';
   }
   if (c.includes('CTP')) {
-    return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+    return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30';
   }
   if (c.includes('FLEXO')) {
-    return 'bg-teal-500/20 text-teal-300 border border-teal-500/30';
+    return 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/30';
   }
   if (c.includes('SCREEN')) {
-    return 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30';
+    return 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-500/20 dark:text-fuchsia-300 dark:border-fuchsia-500/30';
   }
   if (c.includes('ETCHING') || c.includes('ETCH')) {
-    return 'bg-amber-600/20 text-amber-200 border border-amber-600/30';
+    return 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-600/20 dark:text-amber-200 dark:border-amber-600/30';
   }
-  return 'bg-slate-700/30 text-slate-300 border border-slate-600/40';
+  return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700/30 dark:text-slate-300 dark:border-slate-600/40';
+};
+
+// Konfigurasi Dinamis Tema Grafik (Light / Dark Mode)
+export const getChartTheme = () => {
+  const isLight = typeof document !== 'undefined' && document.documentElement.classList.contains('light');
+  return {
+    isLight,
+    gridColor: isLight ? 'rgba(203, 213, 225, 0.7)' : 'rgba(255, 255, 255, 0.06)',
+    tickColor: isLight ? '#475569' : '#94a3b8',
+    legendColor: isLight ? '#1e293b' : '#e2e8f0',
+    tooltipBg: '#0f172a',
+    tooltipText: '#f8fafc',
+    goodColor: isLight ? '#059669' : '#10b981',
+    defectColor: isLight ? '#dc2626' : '#f43f5e',
+    totalColor: isLight ? '#2563eb' : '#38bdf8'
+  };
 };

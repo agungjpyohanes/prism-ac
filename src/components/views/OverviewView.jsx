@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS } from '../../constants/schema';
-import { cell, fmtDate, jopCat, getStatusBadgeClass, getCategoryBadgeClass } from '../../utils/formatters';
+import { cell, fmtDate, jopCat, getStatusBadgeClass, getCategoryBadgeClass, getChartTheme } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -258,28 +258,38 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
           <div className="h-64 flex items-center justify-center">
             {Object.keys(stats.categoryCount).length === 0 ? (
               <span className="text-xs text-slate-400">Tidak ada data kategori</span>
-            ) : (
-              <Doughnut
-                data={{
-                  labels: Object.keys(stats.categoryCount),
-                  datasets: [
-                    {
-                      data: Object.values(stats.categoryCount),
-                      backgroundColor: ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#64748b'],
-                      borderColor: '#0f172a',
-                      borderWidth: 2
-                    }
-                  ]
-                }}
-                options={{
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                  },
-                  onClick: handleDoughnutClick
-                }}
-              />
-            )}
+            ) : (() => {
+              const ct = getChartTheme();
+              return (
+                <Doughnut
+                  data={{
+                    labels: Object.keys(stats.categoryCount),
+                    datasets: [
+                      {
+                        data: Object.values(stats.categoryCount),
+                        backgroundColor: ['#0284c7', '#6366f1', '#059669', '#d97706', '#d946ef', '#2563eb', '#64748b'],
+                        borderColor: ct.isLight ? '#ffffff' : '#0f172a',
+                        borderWidth: 2
+                      }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    },
+                    onClick: handleDoughnutClick
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
 
@@ -291,32 +301,42 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
           <div className="h-64">
             {Object.keys(stats.statusCount).length === 0 ? (
               <span className="text-xs text-slate-400">Tidak ada data status</span>
-            ) : (
-              <Bar
-                data={{
-                  labels: Object.keys(stats.statusCount),
-                  datasets: [
-                    {
-                      label: 'Jumlah Job',
-                      data: Object.values(stats.statusCount),
-                      backgroundColor: '#0284c7',
-                      borderRadius: 6
-                    }
-                  ]
-                }}
-                options={{
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                  },
-                  plugins: {
-                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                  },
-                  onClick: handleBarClick
-                }}
-              />
-            )}
+            ) : (() => {
+              const ct = getChartTheme();
+              return (
+                <Bar
+                  data={{
+                    labels: Object.keys(stats.statusCount),
+                    datasets: [
+                      {
+                        label: 'Jumlah Job',
+                        data: Object.values(stats.statusCount),
+                        backgroundColor: ct.totalColor,
+                        borderRadius: 6
+                      }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      x: { ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                      y: { beginAtZero: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                    },
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    },
+                    onClick: handleBarClick
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
       </div>

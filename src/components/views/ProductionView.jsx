@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, startOfDay } from '../../utils/formatters';
+import { parseDateVal, num, cell, startOfDay, getChartTheme } from '../../utils/formatters';
 import CountUp from '../common/CountUp';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -161,27 +161,41 @@ export default function ProductionView({
           <span className="text-[10px] text-cyan-400 font-mono">Klik batang grafik untuk rincian harian</span>
         </div>
         <div className="h-72">
-          <Bar
-            data={{
-              labels: daily.labels,
-              datasets: [
-                { label: `${cfg.unit} Baik`, data: daily.baik, backgroundColor: '#10b981', stack: 's', borderRadius: 6 },
-                { label: `${cfg.unit} Defect`, data: daily.rusak, backgroundColor: '#f43f5e', stack: 's', borderRadius: 6 }
-              ]
-            }}
-            options={{
-              maintainAspectRatio: false,
-              scales: {
-                x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { stacked: true, beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-              },
-              plugins: { legend: { labels: { color: '#e2e8f0', font: { size: 11 } } } },
-              onClick: (e, els) => {
-                if (!els.length) return;
-                onOpenDayModal(activeKey, daily.keys[els[0].index]);
-              }
-            }}
-          />
+          {(() => {
+            const ct = getChartTheme();
+            return (
+              <Bar
+                data={{
+                  labels: daily.labels,
+                  datasets: [
+                    { label: `${cfg.unit} Baik`, data: daily.baik, backgroundColor: ct.goodColor, stack: 's', borderRadius: 6 },
+                    { label: `${cfg.unit} Defect`, data: daily.rusak, backgroundColor: ct.defectColor, stack: 's', borderRadius: 6 }
+                  ]
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                    y: { stacked: true, beginAtZero: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                  },
+                  plugins: {
+                    legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                    tooltip: {
+                      backgroundColor: '#0f172a',
+                      titleColor: '#ffffff',
+                      bodyColor: '#f8fafc',
+                      padding: 10,
+                      cornerRadius: 8
+                    }
+                  },
+                  onClick: (e, els) => {
+                    if (!els.length) return;
+                    onOpenDayModal(activeKey, daily.keys[els[0].index]);
+                  }
+                }}
+              />
+            );
+          })()}
         </div>
       </div>
     </div>

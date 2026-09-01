@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PROD_KEYS, SHEETS } from '../../constants/schema';
-import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso } from '../../utils/formatters';
+import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso, getChartTheme } from '../../utils/formatters';
 import { Bar } from 'react-chartjs-2';
 import { Check, RotateCcw, GitCompare } from 'lucide-react';
 
@@ -256,25 +256,37 @@ export default function CompareView({ data = {}, onToast }) {
       <div className="card p-5">
         <h3 className="card-title mb-3">Grafik Komparasi — Total Hasil & Total Ganti</h3>
         <div className="h-80">
-          <Bar
-            data={{
-              labels: ['Total Hasil', 'Total Ganti', 'Total Rusak'],
-              datasets: [
-                { label: 'Periode 1', data: [m1.pakai, m1.ganti, m1.rusak], backgroundColor: hexA(cfg.color, 0.35), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 },
-                { label: 'Periode 2', data: [m2.pakai, m2.ganti, m2.rusak], backgroundColor: hexA(cfg.color, 0.9), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 }
-              ]
-            }}
-            options={{
-              maintainAspectRatio: false,
-              scales: {
-                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-              },
-              plugins: {
-                legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-              }
-            }}
-          />
+          {(() => {
+            const ct = getChartTheme();
+            return (
+              <Bar
+                data={{
+                  labels: ['Total Hasil', 'Total Ganti', 'Total Rusak'],
+                  datasets: [
+                    { label: 'Periode 1', data: [m1.pakai, m1.ganti, m1.rusak], backgroundColor: hexA(cfg.color, 0.35), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 },
+                    { label: 'Periode 2', data: [m2.pakai, m2.ganti, m2.rusak], backgroundColor: hexA(cfg.color, 0.9), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 }
+                  ]
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: { ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                    y: { beginAtZero: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                  },
+                  plugins: {
+                    legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                    tooltip: {
+                      backgroundColor: '#0f172a',
+                      titleColor: '#ffffff',
+                      bodyColor: '#f8fafc',
+                      padding: 10,
+                      cornerRadius: 8
+                    }
+                  }
+                }}
+              />
+            );
+          })()}
         </div>
       </div>
     </div>

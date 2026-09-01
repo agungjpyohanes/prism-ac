@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, startOfDay } from '../../utils/formatters';
+import { parseDateVal, num, cell, startOfDay, getChartTheme } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -166,50 +166,74 @@ export default function OperatorShiftView({ data, period }) {
             <h3 className="card-title">Performa Output per Shift</h3>
           </div>
           <div className="h-64">
-            <Bar
-              data={{
-                labels: shiftStats.labels,
-                datasets: [
-                  { label: 'Good', data: shiftStats.good, backgroundColor: '#10b981', borderRadius: 4 },
-                  { label: 'Reject', data: shiftStats.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
-                ]
-              }}
-              options={{
-                maintainAspectRatio: false,
-                scales: {
-                  x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                  y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                },
-                plugins: {
-                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                }
-              }}
-            />
+            {(() => {
+              const ct = getChartTheme();
+              return (
+                <Bar
+                  data={{
+                    labels: shiftStats.labels,
+                    datasets: [
+                      { label: 'Good Output', data: shiftStats.good, backgroundColor: ct.goodColor, borderRadius: 4 },
+                      { label: 'Defect / Reject', data: shiftStats.reject, backgroundColor: ct.defectColor, borderRadius: 4 }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      x: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } },
+                      y: { stacked: true, ticks: { color: ct.tickColor }, grid: { color: ct.gridColor } }
+                    },
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    }
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
 
         <div className="card p-5">
           <h3 className="card-title mb-3">Porsi Good Output Antar Shift</h3>
           <div className="h-64 flex items-center justify-center">
-            <Doughnut
-              data={{
-                labels: shiftStats.labels,
-                datasets: [
-                  {
-                    data: shiftStats.good,
-                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'],
-                    borderColor: '#0f172a',
-                    borderWidth: 2
-                  }
-                ]
-              }}
-              options={{
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
-                }
-              }}
-            />
+            {(() => {
+              const ct = getChartTheme();
+              return (
+                <Doughnut
+                  data={{
+                    labels: shiftStats.labels,
+                    datasets: [
+                      {
+                        data: shiftStats.good,
+                        backgroundColor: ['#0284c7', '#059669', '#d97706', '#6366f1', '#64748b'],
+                        borderColor: ct.isLight ? '#ffffff' : '#0f172a',
+                        borderWidth: 2
+                      }
+                    ]
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } },
+                      tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#f8fafc',
+                        padding: 10,
+                        cornerRadius: 8
+                      }
+                    }
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
       </div>
