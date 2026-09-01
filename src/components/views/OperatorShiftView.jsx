@@ -278,7 +278,7 @@ export default function OperatorShiftView({ data, period }) {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
                 }`}
               >
-                PO (Customer)
+                PO
               </button>
             </div>
 

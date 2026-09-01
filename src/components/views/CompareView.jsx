@@ -3,6 +3,7 @@ import { PROD_KEYS, SHEETS } from '../../constants/schema';
 import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso, getChartTheme } from '../../utils/formatters';
 import { Bar } from 'react-chartjs-2';
 import { Check, RotateCcw, GitCompare } from 'lucide-react';
+import DatePickerInput from '../ui/DatePickerInput';
 
 export default function CompareView({ data = {}, onToast }) {
   const [key, setKey] = useState('rec_ctcp');
@@ -184,7 +185,11 @@ export default function CompareView({ data = {}, onToast }) {
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">Pilih Proses</label>
-            <select value={key} onChange={e => setKey(e.target.value)} className="inp w-full">
+            <select
+              value={key}
+              onChange={e => setKey(e.target.value)}
+              className="inp w-full !py-2 font-semibold"
+            >
               {PROD_KEYS.map(k => (
                 <option key={k} value={k}>{SHEETS[k].label}</option>
               ))}
@@ -192,16 +197,32 @@ export default function CompareView({ data = {}, onToast }) {
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">Periode 1 (Pembanding)</label>
-            <div className="grid grid-cols-2 gap-1.5">
-              <input type="date" value={periods.p1.from} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp w-full" />
-              <input type="date" value={periods.p1.to} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp w-full" />
+            <div className="grid grid-cols-2 gap-2">
+              <DatePickerInput
+                label="Dari"
+                value={periods.p1.from}
+                onChange={(val) => setPeriods(prev => ({ ...prev, p1: { ...prev.p1, from: val } }))}
+              />
+              <DatePickerInput
+                label="Sampai"
+                value={periods.p1.to}
+                onChange={(val) => setPeriods(prev => ({ ...prev, p1: { ...prev.p1, to: val } }))}
+              />
             </div>
           </div>
           <div className="sm:col-span-2 md:col-span-1">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">Periode 2 (Dibandingkan)</label>
-            <div className="grid grid-cols-2 gap-1.5">
-              <input type="date" value={periods.p2.from} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp w-full" />
-              <input type="date" value={periods.p2.to} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp w-full" />
+            <div className="grid grid-cols-2 gap-2">
+              <DatePickerInput
+                label="Dari"
+                value={periods.p2.from}
+                onChange={(val) => setPeriods(prev => ({ ...prev, p2: { ...prev.p2, from: val } }))}
+              />
+              <DatePickerInput
+                label="Sampai"
+                value={periods.p2.to}
+                onChange={(val) => setPeriods(prev => ({ ...prev, p2: { ...prev.p2, to: val } }))}
+              />
             </div>
           </div>
         </div>

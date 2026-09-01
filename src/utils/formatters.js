@@ -120,6 +120,17 @@ export const fmtDate = (d) => {
   return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
+// Format Tanggal DD/MM/YYYY
+export const fmtDDMMYYYY = (d) => {
+  if (!d) return '--/--/----';
+  const parsed = parseDateVal(d);
+  if (!parsed) return String(d);
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const year = parsed.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 // Format Rentang Periode
 export const fmtPeriodRange = (start, end) => {
   if (!start && !end) return 'Semua Periode';
