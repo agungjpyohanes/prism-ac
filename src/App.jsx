@@ -29,6 +29,7 @@ export default function App() {
   const [currentMenu, setCurrentMenu] = useState('overview');
   const [activeTabKey, setActiveTabKey] = useState('rec_ctcp');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [modalState, setModalState] = useState(null);
 
   // State Rentang Periode Global
@@ -145,7 +146,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060a12] text-slate-100 flex">
+    <div className="min-h-screen bg-[#060a14] text-slate-100 flex overflow-x-hidden">
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -153,18 +154,26 @@ export default function App() {
         onLogout={handleLogout}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
-      <div className={`flex-1 transition-all flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
+      <div className={`flex-1 transition-all duration-300 flex flex-col min-h-screen ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'} pl-0 min-w-0`}>
         <Header
           period={period}
           onPeriodChange={setPeriod}
           onReset={reload}
           onOpenPrint={() => window.print()}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleSidebar={() => {
+            if (window.innerWidth < 1024) {
+              setMobileSidebarOpen(!mobileSidebarOpen);
+            } else {
+              setSidebarCollapsed(!sidebarCollapsed);
+            }
+          }}
         />
 
-        <main className="p-6 flex-1 space-y-6">
+        <main className="p-3 sm:p-5 lg:p-6 flex-1 space-y-5 sm:space-y-6 overflow-x-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-32 text-slate-400 text-sm font-semibold">
               Sinkronisasi data sistem...
@@ -175,7 +184,7 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; Aether Code
+          &copy; 2026 PRISM V2.5 (Prepress Integrated System & Monitoring) &bull; Aether Code
         </footer>
       </div>
 

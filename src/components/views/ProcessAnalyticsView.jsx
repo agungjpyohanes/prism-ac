@@ -221,19 +221,19 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
 
   return (
     <div className="space-y-4 anim-in">
-      <div className="card p-5 bg-gradient-to-r from-slate-900 to-[#101c36] text-white flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 bg-gradient-to-r from-slate-900 via-[#0e172e] to-slate-900 text-white flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-cyan-400/20 text-cyan-300 font-bold">INTERNAL PREPRESS ANALYTICS</span>
-            <span className="text-xs text-slate-400">· {cfg.label} Focus Mode</span>
+            <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-bold">INTERNAL PREPRESS ANALYTICS</span>
+            <span className="text-xs text-slate-300">· {cfg.label} Focus Mode</span>
           </div>
-          <h2 className="font-display font-extrabold text-2xl mt-1.5">{cfg.label} Performance & Parameter Control</h2>
+          <h2 className="font-display font-black text-xl sm:text-2xl mt-1.5 text-white tracking-wide">{cfg.label} Performance & Parameter Control</h2>
           <p className="text-xs text-slate-300 mt-1 max-w-xl">
             Audit mendalam efisiensi mesin expose/cetak, kategori JOP, performa shift, dan evaluasi performa individu Operator vs PO. Klik elemen kartu atau grafik untuk melihat data transaksi detail.
           </p>
         </div>
         <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Rentang Periode</div>
+          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider font-semibold">Rentang Periode</div>
           <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
           <div className="text-xs text-slate-400 mt-0.5">{rows.length} Transaksi Teranalisis</div>
         </div>
@@ -241,88 +241,94 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 stagger">
         <button
+          type="button"
           onClick={() => onOpenList?.(`Total Output ${cfg.label}`, activeKey, rows)}
-          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 text-left cursor-pointer hover:shadow-md transition"
+          className="card p-4 border-l-4 border-l-cyan-500 text-left cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">TOTAL OUTPUT</span>
-            <Layers className="w-4 h-4 text-blue-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">TOTAL OUTPUT</span>
+            <Layers className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">{kpi.output.toLocaleString('id-ID')}</div>
+          <div className="mt-2 font-display font-black text-2xl text-white">{kpi.output.toLocaleString('id-ID')}</div>
           <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} diproses</div>
         </button>
 
         <button
+          type="button"
           onClick={() => onOpenList?.(`Good Output ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.baik]) > 0))}
-          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 text-left cursor-pointer hover:shadow-md transition"
+          className="card p-4 border-l-4 border-l-emerald-500 text-left cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">GOOD</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">GOOD</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">{kpi.good.toLocaleString('id-ID')}</div>
+          <div className="mt-2 font-display font-black text-2xl text-emerald-400">{kpi.good.toLocaleString('id-ID')}</div>
           <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} lolos QC</div>
         </button>
 
         <button
+          type="button"
           onClick={() => onOpenList?.(`Reject / Rusak ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.rusak]) > 0))}
-          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-rose-500 text-left cursor-pointer hover:shadow-md transition"
+          className="card p-4 border-l-4 border-l-rose-500 text-left cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">REJECT</span>
-            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">REJECT</span>
+            <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-rose-600">{kpi.reject.toLocaleString('id-ID')}</div>
+          <div className="mt-2 font-display font-black text-2xl text-rose-400">{kpi.reject.toLocaleString('id-ID')}</div>
           <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} rusak / loss</div>
         </button>
 
         <button
+          type="button"
           onClick={() => onOpenList?.(`Replace / Ganti ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.ganti]) > 0))}
-          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 text-left cursor-pointer hover:shadow-md transition"
+          className="card p-4 border-l-4 border-l-amber-500 text-left cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">REPLACE</span>
-            <RotateCcw className="w-4 h-4 text-amber-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">REPLACE</span>
+            <RotateCcw className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">{kpi.replace.toLocaleString('id-ID')}</div>
+          <div className="mt-2 font-display font-black text-2xl text-amber-400">{kpi.replace.toLocaleString('id-ID')}</div>
           <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} diproduksi ulang</div>
         </button>
 
         <button
+          type="button"
           onClick={() => onOpenList?.(`Audit Loss Rate ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.rusak]) > 0))}
-          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 text-left cursor-pointer hover:shadow-md transition"
+          className="card p-4 border-l-4 border-l-purple-500 text-left cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">LOSS RATE</span>
-            <Percent className="w-4 h-4 text-purple-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">LOSS RATE</span>
+            <Percent className="w-4 h-4 text-purple-400" />
           </div>
-          <div className={`mt-2 font-display font-extrabold text-2xl ${kpi.lossRate > 1.0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+          <div className={`mt-2 font-display font-black text-2xl ${kpi.lossRate > 1.0 ? 'text-rose-400' : 'text-emerald-400'}`}>
             {kpi.lossRate.toFixed(1)}%
           </div>
           <div className="text-[10px] text-slate-400 mt-1">Toleransi Max &le; 1.0%</div>
         </button>
 
         <button
+          type="button"
           onClick={() => onOpenList?.(`Semua Data ${cfg.label}`, activeKey, rows)}
-          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-cyan-500 text-left cursor-pointer hover:shadow-md transition"
+          className="card p-4 border-l-4 border-l-cyan-500 text-left cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">SCORE</span>
-            <Award className="w-4 h-4 text-cyan-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">SCORE</span>
+            <Award className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-cyan-600">{kpi.perfScore.toFixed(0)}</div>
+          <div className="mt-2 font-display font-black text-2xl text-cyan-300">{kpi.perfScore.toFixed(0)}</div>
           <div className="text-[10px] text-slate-400 mt-1">Indeks Kinerja (0-100)</div>
         </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="card p-5 bg-white dark:bg-slate-900">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="card-title">Breakdown: {paramData.label}</h3>
-              <p className="text-xs text-slate-500">Klik batang grafik untuk melihat detail transaksi</p>
+              <p className="text-xs text-slate-400">Klik batang grafik untuk melihat detail transaksi</p>
             </div>
-            <span className="badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">{paramData.labels.length} Kategori</span>
+            <span className="badge bg-slate-800 text-slate-200 border-slate-700 font-semibold">{paramData.labels.length} Kategori</span>
           </div>
           <div className="h-64">
             <Bar
@@ -335,7 +341,13 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
               }}
               options={{
                 maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true } },
+                scales: {
+                  x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                  y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                },
+                plugins: {
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                },
                 onClick: (e, els) => {
                   if (!els.length || paramData.colIdx === -1) return;
                   const cat = paramData.labels[els[0].index];
@@ -346,11 +358,11 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
           </div>
         </div>
 
-        <div className="card p-5 bg-white dark:bg-slate-900">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="card-title">Evaluasi Kategori JOP</h3>
-              <p className="text-xs text-slate-500">Klik batang grafik untuk melihat rincian pekerjaan</p>
+              <p className="text-xs text-slate-400">Klik batang grafik untuk melihat rincian pekerjaan</p>
             </div>
           </div>
           <div className="h-64">
@@ -364,7 +376,13 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
               }}
               options={{
                 maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true } },
+                scales: {
+                  x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                  y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                },
+                plugins: {
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                },
                 onClick: (e, els) => {
                   if (!els.length) return;
                   const cat = jopData.labels[els[0].index];
@@ -376,9 +394,9 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
         </div>
 
         {secondaryParamData && (
-          <div className="card p-5 bg-white dark:bg-slate-900">
+          <div className="card p-5">
             <h3 className="card-title mb-1">{secondaryParamData.title}</h3>
-            <p className="text-xs text-slate-500 mb-3">Klik batang grafik untuk melihat daftar record</p>
+            <p className="text-xs text-slate-400 mb-3">Klik batang grafik untuk melihat daftar record</p>
             <div className="h-64">
               <Bar
                 data={{
@@ -390,7 +408,13 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
                 }}
                 options={{
                   maintainAspectRatio: false,
-                  scales: { x: { stacked: true }, y: { stacked: true } },
+                  scales: {
+                    x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                  },
+                  plugins: {
+                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                  },
                   onClick: (e, els) => {
                     if (!els.length) return;
                     const cat = secondaryParamData.labels[els[0].index];
@@ -402,9 +426,9 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
           </div>
         )}
 
-        <div className={`card p-5 bg-white dark:bg-slate-900 ${secondaryParamData ? '' : 'md:col-span-2'}`}>
+        <div className={`card p-5 ${secondaryParamData ? '' : 'md:col-span-2'}`}>
           <h3 className="card-title mb-1">Performa Shift</h3>
-          <p className="text-xs text-slate-500 mb-3">Klik segmen donat untuk melihat detail transaksi per shift</p>
+          <p className="text-xs text-slate-400 mb-3">Klik segmen donat untuk melihat detail transaksi per shift</p>
           <div className="h-64 flex items-center justify-center">
             <Doughnut
               data={{
@@ -412,12 +436,17 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
                 datasets: [
                   {
                     data: shiftData.good,
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#64748b']
+                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'],
+                    borderColor: '#0f172a',
+                    borderWidth: 2
                   }
                 ]
               }}
               options={{
                 maintainAspectRatio: false,
+                plugins: {
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                },
                 onClick: (e, els) => {
                   if (!els.length) return;
                   const sh = shiftData.labels[els[0].index];
@@ -433,87 +462,96 @@ export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList 
         </div>
       </div>
 
-      <div className="card p-5 bg-white dark:bg-slate-900">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div className="card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               {activeLeaderboardTab === 'OP' ? (
-                <Users className="w-5 h-5 text-indigo-600" />
+                <Users className="w-5 h-5 text-cyan-400" />
               ) : (
-                <Briefcase className="w-5 h-5 text-amber-600" />
+                <Briefcase className="w-5 h-5 text-amber-400" />
               )}
               <h3 className="card-title">
                 {activeLeaderboardTab === 'OP' ? 'Leaderboard Performa Operator' : 'Leaderboard Performa PO (Customer)'}
               </h3>
             </div>
-            <p className="text-xs text-slate-500">Klik baris nama untuk melihat detail seluruh transaksi individu</p>
+            <p className="text-xs text-slate-400">Klik baris nama untuk melihat detail seluruh transaksi individu</p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
               <button
+                type="button"
                 onClick={() => { setActiveLeaderboardTab('OP'); setSearchQuery(''); }}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                  activeLeaderboardTab === 'OP' ? 'bg-white dark:bg-slate-700 shadow text-indigo-700 dark:text-white' : 'text-slate-500'
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
+                  activeLeaderboardTab === 'OP' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Operator
               </button>
               <button
+                type="button"
                 onClick={() => { setActiveLeaderboardTab('PO'); setSearchQuery(''); }}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                  activeLeaderboardTab === 'PO' ? 'bg-white dark:bg-slate-700 shadow text-amber-700 dark:text-white' : 'text-slate-500'
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
+                  activeLeaderboardTab === 'PO' ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 PO
               </button>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 w-full sm:w-56">
-              <Search className="w-4 h-4 text-slate-400" />
+            <div className="relative w-full sm:w-56">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder={activeLeaderboardTab === 'OP' ? 'Cari Operator...' : 'Cari PO...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="bg-transparent text-xs outline-none w-full text-slate-700 dark:text-slate-200"
+                className="inp !pl-9 text-xs py-1.5 w-full"
               />
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="table-responsive">
+          <table className="tbl min-w-[650px]">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold uppercase tracking-wider">
-                <th className="py-2.5 px-3">Rank</th>
-                <th className="py-2.5 px-3">{activeLeaderboardTab === 'OP' ? 'Nama Operator' : 'Nama PO'}</th>
-                <th className="py-2.5 px-3">Total Output</th>
-                <th className="py-2.5 px-3">Good</th>
-                <th className="py-2.5 px-3">Reject</th>
-                <th className="py-2.5 px-3">Replace</th>
-                <th className="py-2.5 px-3">Loss Rate</th>
+              <tr>
+                <th>Rank</th>
+                <th>{activeLeaderboardTab === 'OP' ? 'Nama Operator' : 'Nama PO'}</th>
+                <th>Total Output</th>
+                <th>Good</th>
+                <th>Reject</th>
+                <th>Replace</th>
+                <th>Loss Rate</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody>
               {filteredLeaderboard.map((o, idx) => (
                 <tr
                   key={o.name}
                   onClick={() => onOpenList?.(`Rekap Transaksi: ${o.name}`, activeKey, o.rowList)}
-                  className="hover:bg-indigo-50/50 dark:hover:bg-slate-800/60 transition cursor-pointer"
+                  className="cursor-pointer"
                 >
-                  <td className="py-2 px-3 font-bold text-slate-400">#{idx + 1}</td>
-                  <td className="py-2 px-3 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <td className="font-mono font-bold text-slate-400">#{idx + 1}</td>
+                  <td className="font-semibold text-slate-100 flex items-center gap-1.5">
                     {o.name}
-                    <span className="text-[10px] text-slate-400">→</span>
+                    <span className="text-[10px] text-cyan-400">→</span>
                   </td>
-                  <td className="py-2 px-3 font-bold">{o.output.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 text-emerald-600 font-semibold">{o.good.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 text-rose-600 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 text-amber-600">{o.replace.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 font-bold">{o.lossRate.toFixed(1)}%</td>
+                  <td className="font-bold text-white">{o.output.toLocaleString('id-ID')}</td>
+                  <td className="text-emerald-400 font-semibold">{o.good.toLocaleString('id-ID')}</td>
+                  <td className="text-rose-400 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
+                  <td className="text-amber-400">{o.replace.toLocaleString('id-ID')}</td>
+                  <td className={`font-bold ${o.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'}`}>{o.lossRate.toFixed(1)}%</td>
                 </tr>
               ))}
+              {filteredLeaderboard.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-slate-400">
+                    Tidak ada data ditemukan.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

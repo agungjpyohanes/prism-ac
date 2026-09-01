@@ -82,7 +82,7 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">PRISM</h1>
-              <p className="text-xs text-indigo-400 font-mono uppercase tracking-wider">V 2.0</p>
+              <p className="text-xs text-indigo-400 font-mono uppercase tracking-wider">V 2.5</p>
             </div>
           </div>
 
@@ -97,33 +97,42 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
 
             {/* Feature Cards */}
             <div className="space-y-4">
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+              <div
+                className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-700/60"
+                style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/30">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white mb-1">Real-time Monitoring</h3>
-                  <p className="text-xs text-slate-400">Pantau semua lini produksi secara real-time dengan data yang selalu update</p>
+                  <p className="text-xs text-slate-300">Pantau semua lini produksi secara real-time dengan data yang selalu update</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+              <div
+                className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-700/60"
+                style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30">
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white mb-1">Advanced Analytics</h3>
-                  <p className="text-xs text-slate-400">Analisis mendalam dengan visualisasi data yang interaktif dan informatif</p>
+                  <p className="text-xs text-slate-300">Analisis mendalam dengan visualisasi data yang interaktif dan informatif</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0">
+              <div
+                className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-700/60"
+                style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/30">
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white mb-1">Secure & Reliable</h3>
-                  <p className="text-xs text-slate-400">Sistem aman dengan enkripsi end-to-end dan backup otomatis</p>
+                  <p className="text-xs text-slate-300">Sistem aman dengan enkripsi end-to-end dan backup otomatis</p>
                 </div>
               </div>
             </div>
@@ -148,34 +157,40 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
           {/* Logo Mobile */}
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/50">
+          <div className="lg:hidden flex items-center gap-3 mb-6 justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-cyan-500/30">
               <img src={LOGO_URL} alt="PRISM" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">PRISM</h1>
-              <p className="text-xs text-indigo-400 font-mono uppercase tracking-wider">V 2.0</p>
+              <h1 className="text-2xl font-black text-white">PRISM</h1>
+              <p className="text-xs text-cyan-400 font-mono uppercase tracking-wider">V 2.5</p>
             </div>
           </div>
 
           {/* Login Card */}
-          <div className="card p-8">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">Selamat Datang</h2>
-              <p className="text-sm text-slate-400">Masuk ke akun PRISM Anda untuk melanjutkan</p>
+          <div
+            className="card p-6 sm:p-8 border border-cyan-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+            style={{
+              WebkitBackdropFilter: 'blur(20px)',
+              backdropFilter: 'blur(20px)'
+            }}
+          >
+            <div className="mb-6">
+              <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Selamat Datang</h2>
+              <p className="text-xs sm:text-sm text-slate-300">Masuk ke akun PRISM Anda untuk melanjutkan</p>
             </div>
 
             {/* Tabs */}
-            <div className="flex p-1 bg-white/5 rounded-xl mb-6">
+            <div className="flex p-1 bg-slate-800/90 rounded-xl mb-6 border border-slate-700">
               <button
                 type="button"
                 onClick={() => setTab('login')}
-                className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   tab === 'login' 
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' 
+                    ? 'btn-primary text-white shadow-md' 
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -184,9 +199,9 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
               <button
                 type="button"
                 onClick={() => setTab('signup')}
-                className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   tab === 'signup' 
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' 
+                    ? 'btn-primary text-white shadow-md' 
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -195,21 +210,21 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
             </div>
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">Username</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Masukkan username"
-                  className="input"
+                  className="inp w-full"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">Password</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -217,12 +232,12 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Masukkan password"
-                    className="input pr-10"
+                    className="inp w-full !pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -232,7 +247,7 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary w-full"
+                className="btn-primary w-full py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 mt-2"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -249,20 +264,20 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
             </form>
 
             {/* Demo Account */}
-            <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
-              <p className="text-xs text-emerald-300 text-center">
-                <span className="font-bold">Demo Account:</span> guest / 123456
+            <div className="mt-5 p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-center">
+              <p className="text-xs text-cyan-300">
+                <span className="font-bold text-white">Demo Account:</span> guest / 123456
               </p>
             </div>
 
             {/* Database Status */}
-            <div className="mt-6 pt-6 border-t border-white/5">
-              <p className="text-xs text-slate-500 mb-3 font-semibold uppercase tracking-wider">Status Database</p>
+            <div className="mt-5 pt-4 border-t border-slate-800">
+              <p className="text-[10px] text-slate-400 mb-2.5 font-bold uppercase tracking-wider font-mono">Status Database (Live Google Sheets)</p>
               <div className="grid grid-cols-2 gap-2">
                 {['master_user', 'job_active', 'rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'].map((key) => (
                   <div key={key} className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${isReady(key) ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                    <span className="text-[10px] font-mono text-slate-400 uppercase">{key.replace('rec_', '').replace('master_', '')}</span>
+                    <span className={`w-2 h-2 rounded-full ${isReady(key) ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'}`} />
+                    <span className="text-[10px] font-mono text-slate-300 uppercase">{key.replace('rec_', '').replace('master_', '')}</span>
                   </div>
                 ))}
               </div>
@@ -270,8 +285,8 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
           </div>
 
           {/* Footer */}
-          <p className="text-center text-xs text-slate-500 mt-6">
-            &copy; 2026 PRISM V2.0 • Aether Code
+          <p className="text-center text-xs text-slate-400 mt-6">
+            &copy; 2026 PRISM V2.5 • Aether Code
           </p>
         </div>
       </div>

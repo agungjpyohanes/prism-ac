@@ -79,7 +79,7 @@ export default function DataTableView({
     <div className="space-y-5 anim-in">
       {/* Pill Tabs Pemilihan Lini Proses (Sesuai Slide 5 PDF) */}
       <div className="card p-4 flex flex-wrap items-center justify-between gap-3 no-print">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
           {PROD_KEYS.map((k) => {
             const itemCfg = SHEETS[k];
             const isActive = activeKey === k;
@@ -91,10 +91,10 @@ export default function DataTableView({
                   onTabChange?.(k);
                   setPage(1);
                 }}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isActive
-                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.5)] scale-105'
-                    : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-105'
+                    : 'bg-slate-800/80 border border-slate-700 text-slate-300 hover:bg-slate-700/80 hover:text-white'
                 }`}
               >
                 {itemCfg.label}
@@ -105,8 +105,9 @@ export default function DataTableView({
 
         {/* Tombol Print / PDF di Header Menu */}
         <button
+          type="button"
           onClick={onOpenPrint || (() => window.print())}
-          className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+          className="btn-primary text-xs py-2 px-3.5 sm:px-4 flex items-center gap-1.5 rounded-xl shadow-md"
         >
           <Printer className="w-3.5 h-3.5" />
           <span>Print / PDF {cfg.label}</span>
@@ -117,18 +118,18 @@ export default function DataTableView({
       <div className="card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl grid place-items-center bg-cyan-500/10 border border-cyan-400/30 text-cyan-300">
+            <span className="w-10 h-10 rounded-2xl grid place-items-center bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
               <Database className="w-5 h-5" />
             </span>
             <div>
               <h3 className="card-title text-base">Data Produksi {cfg.label}</h3>
               <p className="text-xs text-slate-400">
-                Menampilkan <b>{sortedRows.length.toLocaleString('id-ID')} baris</b> &bull; Klik baris untuk melihat detail semua kolom
+                Menampilkan <b className="text-cyan-300">{sortedRows.length.toLocaleString('id-ID')} baris</b> &bull; Klik baris untuk melihat detail semua kolom
               </p>
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
@@ -138,20 +139,20 @@ export default function DataTableView({
                 setPage(1);
               }}
               placeholder="Cari ID, Job, Plate, Operator..."
-              className="inp !pl-10 w-60 sm:w-72"
+              className="inp !pl-10 w-full sm:w-72"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
-          <table className="tbl">
+        <div className="table-responsive">
+          <table className="tbl min-w-[850px]">
             <thead>
               <tr>
                 {visibleCols.map((ci) => (
                   <th
                     key={ci}
                     onClick={() => handleSort(ci)}
-                    className="whitespace-nowrap cursor-pointer select-none hover:text-cyan-200 transition"
+                    className="whitespace-nowrap cursor-pointer select-none hover:text-cyan-300 transition"
                   >
                     {cfg.headers[ci]?.toUpperCase().replace(/_/g, ' ')}{' '}
                     {sortCol === ci ? (sortDir === 1 ? '▲' : '▼') : ''}
@@ -168,7 +169,7 @@ export default function DataTableView({
                 </tr>
               ) : (
                 paginatedRows.map((r, idx) => (
-                  <tr key={idx} onClick={() => onSelectRow?.(activeKey, r)}>
+                  <tr key={idx} onClick={() => onSelectRow?.(activeKey, r)} className="cursor-pointer">
                     {visibleCols.map((ci) => (
                       <td
                         key={ci}
@@ -193,20 +194,22 @@ export default function DataTableView({
         {/* Pagination */}
         <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
           <span>
-            Halaman <b>{page}</b> dari <b>{totalPages}</b> (Total {sortedRows.length} data)
+            Halaman <b className="text-white">{page}</b> dari <b className="text-white">{totalPages}</b> (Total {sortedRows.length} data)
           </span>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="btn-ghost !py-1 !px-3 text-xs disabled:opacity-30"
+              className="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-30 rounded-xl"
             >
               Sebelumnya
             </button>
             <button
+              type="button"
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="btn-ghost !py-1 !px-3 text-xs disabled:opacity-30"
+              className="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-30 rounded-xl"
             >
               Berikutnya
             </button>

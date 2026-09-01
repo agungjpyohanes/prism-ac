@@ -57,24 +57,24 @@ export default function PersonalKpiView({ data, user, period }) {
   return (
     <div className="space-y-5 anim-in">
       {/* Profile Card Header */}
-      <div className="card p-6 bg-gradient-to-r from-indigo-950/40 via-purple-950/40 to-slate-900/60 border-cyan-500/20 flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 sm:p-6 bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-slate-900 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 border border-cyan-400/40 flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 border border-cyan-400/40 flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(6,182,212,0.3)] shrink-0">
             {currentUsername.charAt(0).toUpperCase()}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/30">OPERATOR DASHBOARD</span>
-              <span className="text-xs text-slate-400">{fmtPeriodRange(period?.from, period?.to)}</span>
+              <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-bold">OPERATOR DASHBOARD</span>
+              <span className="text-xs text-slate-300">Periode: {fmtPeriodRange(period?.from, period?.to)}</span>
             </div>
-            <h2 className="font-display font-black text-2xl text-white mt-1 capitalize">{currentUsername}</h2>
+            <h2 className="font-display font-black text-xl sm:text-2xl text-white mt-1 capitalize tracking-wide">{currentUsername}</h2>
             <p className="text-xs text-slate-300">Ringkasan produktivitas personal & kontrol kualitas Anda</p>
           </div>
         </div>
 
         <div className="text-right">
-          <span className="text-[10px] text-slate-400 uppercase font-mono">Performance Index</span>
-          <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-emerald-300">
+          <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider font-semibold">Performance Index</span>
+          <div className="text-2xl sm:text-3xl font-black text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]">
             {userStats.score} <span className="text-xs text-slate-400 font-normal">/ 100</span>
           </div>
         </div>
@@ -93,28 +93,28 @@ export default function PersonalKpiView({ data, user, period }) {
         <h3 className="card-title flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-cyan-400" /> Riwayat Kontribusi Pekerjaan Anda
         </h3>
-        <div className="overflow-x-auto max-h-80">
-          <table className="w-full text-left text-xs">
+        <div className="table-responsive max-h-80">
+          <table className="tbl min-w-[450px]">
             <thead>
-              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase text-[10px]">
-                <th className="py-2.5 px-3">Lini</th>
-                <th className="py-2.5 px-3">JOP / Pekerjaan</th>
-                <th className="py-2.5 px-3">Good</th>
-                <th className="py-2.5 px-3">Reject</th>
+              <tr>
+                <th>Lini</th>
+                <th>JOP / Pekerjaan</th>
+                <th>Good</th>
+                <th>Reject</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody>
               {userStats.records.map((r, i) => (
-                <tr key={i} className="hover:bg-white/5 transition">
-                  <td className="py-2 px-3 text-cyan-300 font-semibold">{r.process}</td>
-                  <td className="py-2 px-3 text-slate-200">{r.job || '-'}</td>
-                  <td className="py-2 px-3 text-emerald-400">{r.good}</td>
-                  <td className="py-2 px-3 text-rose-400">{r.reject}</td>
+                <tr key={i} className="cursor-pointer">
+                  <td className="text-cyan-300 font-semibold">{r.process}</td>
+                  <td className="text-slate-100 font-medium">{r.job || '-'}</td>
+                  <td className="text-emerald-400 font-semibold">{r.good}</td>
+                  <td className="text-rose-400 font-semibold">{r.reject}</td>
                 </tr>
               ))}
               {userStats.records.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-slate-500">Tidak ada riwayat pekerjaan tercatat pada periode ini.</td>
+                  <td colSpan={4} className="text-center py-8 text-slate-400">Tidak ada riwayat pekerjaan tercatat pada periode ini.</td>
                 </tr>
               )}
             </tbody>

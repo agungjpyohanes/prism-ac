@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS } from '../../constants/schema';
-import { cell, parseDateVal, fmtDate, jopCat } from '../../utils/formatters';
+import { cell, fmtDate, jopCat } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -152,36 +152,36 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
   return (
     <div className="space-y-5 anim-in">
       {/* Header Info Panel */}
-      <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950/80 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-sky-400/20 text-sky-300 font-bold">MONITORING PRODUKSI</span>
+            <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-bold">MONITORING PRODUKSI</span>
             <span className="text-xs text-slate-300">· Real-time Job Status</span>
           </div>
-          <h2 className="font-display font-extrabold text-2xl mt-1 text-white">
+          <h2 className="font-display font-black text-xl sm:text-2xl mt-1 text-white tracking-wide">
             Dashboard Overview — Job Aktif (WIP)
           </h2>
-          <p className="text-xs text-slate-300 mt-0.5">
+          <p className="text-xs text-slate-300 mt-0.5 max-w-xl">
             Daftar seluruh pekerjaan yang sedang dalam antrean atau proses pembuatan di Prepress
           </p>
         </div>
         <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Status Data</div>
-          <div className="font-bold text-sm text-sky-300 mt-0.5">Semua Antrean Berjalan (Live)</div>
+          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider font-semibold">Status Data</div>
+          <div className="font-bold text-sm text-cyan-300 mt-0.5">Semua Antrean Berjalan (Live)</div>
         </div>
       </div>
 
       {/* 4 Kartu KPI Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div
           onClick={() => onOpenList?.('Seluruh Job Aktif', 'job_active', filtered)}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:shadow-md transition"
+          className="card p-4 sm:p-5 border-l-4 border-l-cyan-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">TOTAL JOB AKTIF</span>
-            <Activity className="w-4 h-4 text-sky-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">TOTAL JOB AKTIF</span>
+            <Activity className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">
+          <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-white">
             {filtered.length.toLocaleString('id-ID')}
           </div>
           <div className="text-[10px] text-slate-400 mt-1">Seluruh pekerjaan dalam sistem</div>
@@ -195,13 +195,13 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
             });
             onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
           }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:shadow-md transition"
+          className="card p-4 sm:p-5 border-l-4 border-l-emerald-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN PROGRESS / PROSES</span>
-            <PlayCircle className="w-4 h-4 text-emerald-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">IN PROGRESS / PROSES</span>
+            <PlayCircle className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">
+          <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-emerald-400">
             {filtered.filter((r) => {
               const s = cell(r, cfg.i.status).toLowerCase();
               return s.includes('progress') || s.includes('proses') || s.includes('screen') || s.includes('hdi');
@@ -218,13 +218,13 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
             });
             onOpenList?.('Job Dalam Antrean (Queue)', 'job_active', pending);
           }}
-          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:shadow-md transition"
+          className="card p-4 sm:p-5 border-l-4 border-l-amber-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN QUEUE / ANTREAN</span>
-            <Clock className="w-4 h-4 text-amber-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">IN QUEUE / ANTREAN</span>
+            <Clock className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">
+          <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-amber-400">
             {filtered.filter((r) => {
               const s = cell(r, cfg.i.status).toLowerCase();
               return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
@@ -233,12 +233,12 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
           <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran / kelengkapan</div>
         </div>
 
-        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500">
+        <div className="card p-4 sm:p-5 border-l-4 border-l-indigo-500">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">KATEGORI PROSES</span>
-            <Layers className="w-4 h-4 text-indigo-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">KATEGORI PROSES</span>
+            <Layers className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-indigo-600">
+          <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-indigo-300">
             {Object.keys(stats.categoryCount).length}
           </div>
           <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan aktif</div>
@@ -247,10 +247,10 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
 
       {/* Visualisasi Grafik Status & Kategori */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="card p-5 bg-white dark:bg-slate-900">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-2">
             <h3 className="card-title">Porsi Job Berdasarkan Kategori</h3>
-            <span className="text-[10px] text-slate-400">Klik grafik untuk rincian</span>
+            <span className="text-[10px] text-cyan-400 font-mono">Klik grafik untuk rincian</span>
           </div>
           <div className="h-64 flex items-center justify-center">
             {Object.keys(stats.categoryCount).length === 0 ? (
@@ -262,12 +262,17 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                   datasets: [
                     {
                       data: Object.values(stats.categoryCount),
-                      backgroundColor: ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b']
+                      backgroundColor: ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#64748b'],
+                      borderColor: '#0f172a',
+                      borderWidth: 2
                     }
                   ]
                 }}
                 options={{
                   maintainAspectRatio: false,
+                  plugins: {
+                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                  },
                   onClick: handleDoughnutClick
                 }}
               />
@@ -275,10 +280,10 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
           </div>
         </div>
 
-        <div className="card p-5 bg-white dark:bg-slate-900">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-2">
             <h3 className="card-title">Distribusi Status Pengerjaan</h3>
-            <span className="text-[10px] text-slate-400">Klik bar untuk rincian</span>
+            <span className="text-[10px] text-cyan-400 font-mono">Klik bar untuk rincian</span>
           </div>
           <div className="h-64">
             {Object.keys(stats.statusCount).length === 0 ? (
@@ -292,12 +297,19 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                       label: 'Jumlah Job',
                       data: Object.values(stats.statusCount),
                       backgroundColor: '#0284c7',
-                      borderRadius: 4
+                      borderRadius: 6
                     }
                   ]
                 }}
                 options={{
                   maintainAspectRatio: false,
+                  scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                  },
+                  plugins: {
+                    legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                  },
                   onClick: handleBarClick
                 }}
               />
@@ -307,25 +319,25 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
       </div>
 
       {/* Tabel Data Job Aktif */}
-      <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
+      <div className="card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display font-extrabold text-lg text-slate-800 dark:text-white">
+            <h2 className="font-display font-extrabold text-base sm:text-lg text-white">
               Daftar Antrean & Eksekusi Job Aktif
             </h2>
-            <p className="text-xs text-slate-500">
-              Menampilkan <b>{sorted.length.toLocaleString('id-ID')} pekerjaan</b> · Klik baris untuk detail lengkap
+            <p className="text-xs text-slate-400">
+              Menampilkan <b className="text-cyan-300">{sorted.length.toLocaleString('id-ID')} pekerjaan</b> · Klik baris untuk detail lengkap
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <select
               value={categoryFilter}
               onChange={(e) => {
                 setCategoryFilter(e.target.value);
                 setPage(1);
               }}
-              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
+              className="inp text-xs py-1.5 px-2.5 w-full sm:w-auto"
             >
               <option value="ALL">Semua Kategori</option>
               {distinctCategories.map((c) => (
@@ -339,7 +351,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
+              className="inp text-xs py-1.5 px-2.5 w-full sm:w-auto"
             >
               <option value="ALL">Semua Status</option>
               {distinctStatuses.map((s) => (
@@ -347,8 +359,8 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
               ))}
             </select>
 
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <div className="relative w-full sm:w-auto">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Cari Job, No SPK, File..."
@@ -357,22 +369,22 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="inp !pl-8 text-xs py-1.5 w-48 sm:w-56 dark:bg-slate-800 dark:text-white"
+                className="inp !pl-9 text-xs py-1.5 w-full sm:w-56"
               />
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+        <div className="table-responsive">
+          <table className="tbl min-w-[700px]">
+            <thead>
               <tr>
-                <th className="py-2.5 px-3">No</th>
+                <th>No</th>
                 {(cfg.headers || []).map((h, i) => (
                   <th
                     key={i}
                     onClick={() => handleSort(i)}
-                    className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                    className="cursor-pointer hover:text-cyan-300 transition select-none"
                   >
                     <div className="flex items-center gap-1">
                       <span>{h.replace(/_/g, ' ')}</span>
@@ -382,14 +394,14 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody>
               {paginatedRows.map((row, idx) => (
                 <tr
                   key={idx}
                   onClick={() => onSelectRow?.('job_active', row)}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
+                  className="cursor-pointer"
                 >
-                  <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
+                  <td className="text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
                   {(cfg.headers || []).map((_, colIdx) => {
                     const val = row[colIdx];
 
@@ -397,7 +409,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                     if (colIdx === cfg.i.category) {
                       const displayCat = val && val !== '-' && String(val).toUpperCase() !== 'NULL' ? val : getRowCategory(row);
                       return (
-                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap font-bold text-sky-600">
+                        <td key={colIdx} className="whitespace-nowrap font-bold text-cyan-300">
                           {displayCat}
                         </td>
                       );
@@ -409,14 +421,14 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                       const isDone = str.includes('selesai') || str.includes('done');
                       const isInProg = str.includes('progress') || str.includes('proses') || str.includes('screen') || str.includes('hdi');
                       return (
-                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
+                        <td key={colIdx} className="whitespace-nowrap">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            className={`badge ${
                               isDone
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                ? 'badge-success'
                                 : isInProg
-                                ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                                ? 'badge-info'
+                                : 'badge-warning'
                             }`}
                           >
                             {val || 'ANTRI'}
@@ -426,7 +438,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                     }
 
                     return (
-                      <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
+                      <td key={colIdx} className={`whitespace-nowrap ${colIdx === cfg.i.id ? 'font-bold text-white' : 'text-slate-200'}`}>
                         {colIdx === cfg.i.date ? (val && String(val).toUpperCase() !== 'NULL' ? fmtDate(val) : '—') : (val ?? '—')}
                       </td>
                     );
@@ -445,22 +457,22 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
         </div>
 
         {/* Pagination Control */}
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
+        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
           <span>
-            Halaman <b>{page}</b> dari <b>{totalPages}</b>
+            Halaman <b className="text-white">{page}</b> dari <b className="text-white">{totalPages}</b>
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="btn-ghost !py-1 !px-2.5 text-xs disabled:opacity-30 rounded-lg"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="btn-ghost !py-1 !px-2.5 text-xs disabled:opacity-30 rounded-lg"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

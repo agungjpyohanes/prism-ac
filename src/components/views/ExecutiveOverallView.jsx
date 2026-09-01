@@ -103,74 +103,74 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
   return (
     <div className="space-y-6 anim-in">
       {/* Header Panel */}
-      <div className="card p-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-6 flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge">MANAGEMENT OVERALL</span>
-            <span className="text-xs text-slate-300">Executive Strategic Overview[cite: 3]</span>
+            <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-bold">MANAGEMENT OVERALL</span>
+            <span className="text-xs text-slate-300">Executive Strategic Overview</span>
           </div>
-          <h2 className="font-display font-black text-2xl mt-1 text-white">Executive Prepress Dashboard</h2>
+          <h2 className="font-display font-black text-xl sm:text-2xl mt-1 text-white tracking-wide">Executive Prepress Dashboard</h2>
           <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            Ringkasan makro performa lintas divisi, perbandingan efisiensi 5 lini proses, dan deteksi anomali operasional[cite: 1, 2].
+            Ringkasan makro performa lintas divisi, perbandingan efisiensi 5 lini proses, dan deteksi anomali operasional.
           </p>
         </div>
         <div className="text-right">
-          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Rentang Periode</div>
-          <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}[cite: 1, 2]</div>
+          <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider font-semibold">Rentang Periode</div>
+          <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
         </div>
       </div>
 
       {/* 4 Grand Total Cards Sesuai Slide 9 PDF */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Output Pabrik</span>
-            <div className="mt-1 font-display font-black text-3xl text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="card p-4 sm:p-5 flex items-center justify-between">
+          <div className="min-w-0 pr-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate block">Total Output Pabrik</span>
+            <div className="mt-1 font-display font-black text-2xl sm:text-3xl text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]">
               {grandTotal.output.toLocaleString('id-ID')}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">Gabungan 5 Lini Proses</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-300">
-            <Layers className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
+            <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Good</span>
-            <div className="mt-1 font-display font-black text-3xl text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+        <div className="card p-4 sm:p-5 flex items-center justify-between">
+          <div className="min-w-0 pr-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate block">Total Good</span>
+            <div className="mt-1 font-display font-black text-2xl sm:text-3xl text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
               {grandTotal.good.toLocaleString('id-ID')}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">Siap Cetak / QC Passed</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Reject</span>
-            <div className="mt-1 font-display font-black text-3xl text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.4)]">
+        <div className="card p-4 sm:p-5 flex items-center justify-between">
+          <div className="min-w-0 pr-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate block">Total Reject</span>
+            <div className="mt-1 font-display font-black text-2xl sm:text-3xl text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.4)]">
               {grandTotal.reject.toLocaleString('id-ID')}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">Total Afval / Rusak</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-400/30 flex items-center justify-center text-rose-400">
-            <AlertTriangle className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/10 border border-rose-400/30 flex items-center justify-center text-rose-400 shrink-0">
+            <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
-        <div className="card p-5 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Overall Loss Rate</span>
-            <div className={`mt-1 font-display font-black text-3xl ${grandTotal.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'} drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]`}>
+        <div className="card p-4 sm:p-5 flex items-center justify-between">
+          <div className="min-w-0 pr-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate block">Overall Loss Rate</span>
+            <div className={`mt-1 font-display font-black text-2xl sm:text-3xl ${grandTotal.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'} drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]`}>
               {grandTotal.lossRate.toFixed(1)}%
             </div>
             <div className="text-[10px] text-slate-400 mt-1">Toleransi Target: ≤ 1.0%</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-400/30 flex items-center justify-center text-purple-300">
-            <Percent className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-500/10 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
+            <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
                   y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
                 },
                 plugins: {
-                  legend: { labels: { color: '#e2e8f0' } }
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
                 },
                 onClick: (e, els) => {
                   if (!els.length) return;
@@ -231,7 +231,7 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
                   y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
                 },
                 plugins: {
-                  legend: { labels: { color: '#e2e8f0' } }
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
                 },
                 onClick: (e, els) => {
                   if (!els.length) return;
@@ -263,17 +263,17 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
                 al.rows && al.rows.length > 0 ? 'cursor-pointer hover:scale-[1.01]' : ''
               } ${
                 al.level === 'CRITICAL'
-                  ? 'bg-rose-950/40 border-rose-500/40 text-rose-200'
-                  : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                  ? 'bg-rose-950/60 border-rose-500/50 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.15)]'
+                  : 'bg-emerald-950/60 border-emerald-500/50 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
               }`}
             >
               <Activity className="w-5 h-5 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="font-bold text-xs flex items-center justify-between">
-                  <span>{al.title}</span>
-                  {al.rows && al.rows.length > 0 && <span className="text-[11px] text-cyan-300 underline font-semibold">Lihat Detail →</span>}
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-xs sm:text-sm flex items-center justify-between gap-2">
+                  <span className="truncate">{al.title}</span>
+                  {al.rows && al.rows.length > 0 && <span className="text-[11px] text-cyan-300 underline font-semibold shrink-0">Lihat Detail →</span>}
                 </div>
-                <div className="text-[11px] opacity-80 mt-1">{al.desc}</div>
+                <div className="text-[11px] sm:text-xs text-slate-300 mt-1">{al.desc}</div>
               </div>
             </div>
           ))}

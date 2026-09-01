@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
+import { parseDateVal, num, cell, startOfDay } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -130,25 +130,25 @@ export default function OperatorShiftView({ data, period }) {
   return (
     <div className="space-y-4 anim-in">
       {/* Header & Filter Lini */}
-      <div className="card p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 grid place-items-center">
+            <span className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-400/30 grid place-items-center">
               <Users className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="font-display font-extrabold text-xl text-slate-800">Evaluasi Performa Operator, PO & Shift</h2>
-              <p className="text-xs text-slate-500">Analisis produktivitas tim, rasio afval/reject, dan efisiensi lini</p>
+              <h2 className="font-display font-extrabold text-lg sm:text-xl text-white">Evaluasi Performa Operator, PO & Shift</h2>
+              <p className="text-xs text-slate-400">Analisis produktivitas tim, rasio afval/reject, dan efisiensi lini</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Filter className="w-4 h-4 text-cyan-400 shrink-0" />
           <select
             value={selectedProcess}
             onChange={e => setSelectedProcess(e.target.value)}
-            className="inp text-xs !py-1.5 font-semibold"
+            className="inp text-xs !py-1.5 font-semibold w-full sm:w-auto"
           >
             <option value="ALL">Semua Lini Proses (Gabungan)</option>
             {PROD_KEYS.map(k => (
@@ -162,7 +162,7 @@ export default function OperatorShiftView({ data, period }) {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-indigo-500" />
+            <Clock className="w-4 h-4 text-cyan-400" />
             <h3 className="card-title">Performa Output per Shift</h3>
           </div>
           <div className="h-64">
@@ -174,7 +174,16 @@ export default function OperatorShiftView({ data, period }) {
                   { label: 'Reject', data: shiftStats.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
                 ]
               }}
-              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }}
+              options={{
+                maintainAspectRatio: false,
+                scales: {
+                  x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                  y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                },
+                plugins: {
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                }
+              }}
             />
           </div>
         </div>
@@ -188,93 +197,109 @@ export default function OperatorShiftView({ data, period }) {
                 datasets: [
                   {
                     data: shiftStats.good,
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#64748b']
+                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'],
+                    borderColor: '#0f172a',
+                    borderWidth: 2
                   }
                 ]
               }}
-              options={{ maintainAspectRatio: false }}
+              options={{
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { labels: { color: '#e2e8f0', font: { size: 11 } } }
+                }
+              }}
             />
           </div>
         </div>
       </div>
 
       {/* Tabel Leaderboard Terpisah (Operator vs PO) */}
-      <div className="card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div className="card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               {activeLeaderboardTab === 'OP' ? (
-                <Users className="w-5 h-5 text-indigo-600" />
+                <Users className="w-5 h-5 text-cyan-400" />
               ) : (
-                <Briefcase className="w-5 h-5 text-amber-600" />
+                <Briefcase className="w-5 h-5 text-amber-400" />
               )}
               <h3 className="card-title">
                 {activeLeaderboardTab === 'OP' ? 'Ranking Produktivitas Operator' : 'Ranking Produktivitas PO (Customer)'}
               </h3>
             </div>
-            <p className="text-xs text-slate-500">Daftar peringkat berdasarkan volume output dan rasio reject terkecil</p>
+            <p className="text-xs text-slate-400">Daftar peringkat berdasarkan volume output dan rasio reject terkecil</p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex bg-slate-100 p-1 rounded-lg">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
               <button
+                type="button"
                 onClick={() => { setActiveLeaderboardTab('OP'); setSearchQuery(''); }}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                  activeLeaderboardTab === 'OP' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
+                  activeLeaderboardTab === 'OP' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Operator
               </button>
               <button
+                type="button"
                 onClick={() => { setActiveLeaderboardTab('PO'); setSearchQuery(''); }}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                  activeLeaderboardTab === 'PO' ? 'bg-white shadow text-amber-700' : 'text-slate-500'
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
+                  activeLeaderboardTab === 'PO' ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 PO
               </button>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 w-full sm:w-64">
-              <Search className="w-4 h-4 text-slate-400" />
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder={activeLeaderboardTab === 'OP' ? 'Cari Operator...' : 'Cari PO...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="bg-transparent text-xs outline-none w-full text-slate-700"
+                className="inp !pl-9 text-xs py-1.5 w-full"
               />
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="table-responsive">
+          <table className="tbl min-w-[700px]">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider">
-                <th className="py-2.5 px-3">Rank</th>
-                <th className="py-2.5 px-3">{activeLeaderboardTab === 'OP' ? 'Nama Operator' : 'Nama PO'}</th>
-                <th className="py-2.5 px-3">Lini Terakhir</th>
-                <th className="py-2.5 px-3">Total Output</th>
-                <th className="py-2.5 px-3">Good</th>
-                <th className="py-2.5 px-3">Reject</th>
-                <th className="py-2.5 px-3">Replace</th>
-                <th className="py-2.5 px-3">Loss Rate</th>
+              <tr>
+                <th>Rank</th>
+                <th>{activeLeaderboardTab === 'OP' ? 'Nama Operator' : 'Nama PO'}</th>
+                <th>Lini Terakhir</th>
+                <th>Total Output</th>
+                <th>Good</th>
+                <th>Reject</th>
+                <th>Replace</th>
+                <th>Loss Rate</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {filteredData.map((o, idx) => (
-                <tr key={o.name} className="hover:bg-slate-50/80 transition">
-                  <td className="py-2 px-3 font-bold text-slate-400">#{idx + 1}</td>
-                  <td className="py-2 px-3 font-semibold text-slate-800">{o.name}</td>
-                  <td className="py-2 px-3 text-slate-500">{o.process}</td>
-                  <td className="py-2 px-3 font-bold">{o.output.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 text-emerald-600 font-semibold">{o.good.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 text-rose-600 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 text-amber-600">{o.replace.toLocaleString('id-ID')}</td>
-                  <td className="py-2 px-3 font-bold">{o.lossRate.toFixed(1)}%</td>
+                <tr key={o.name} className="cursor-pointer">
+                  <td className="font-mono font-bold text-slate-400">#{idx + 1}</td>
+                  <td className="font-semibold text-slate-100">{o.name}</td>
+                  <td className="text-slate-400">{o.process}</td>
+                  <td className="font-bold text-white">{o.output.toLocaleString('id-ID')}</td>
+                  <td className="text-emerald-400 font-semibold">{o.good.toLocaleString('id-ID')}</td>
+                  <td className="text-rose-400 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
+                  <td className="text-amber-400">{o.replace.toLocaleString('id-ID')}</td>
+                  <td className={`font-bold ${o.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'}`}>{o.lossRate.toFixed(1)}%</td>
                 </tr>
               ))}
+              {filteredData.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="text-center py-8 text-slate-400">
+                    Tidak ada data ditemukan.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

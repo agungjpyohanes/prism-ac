@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { SHEETS, PROD_KEYS, CAT_COLORS, JOP_CATS } from '../../constants/schema';
-import { parseDateVal, num, hexA, cell, jopCat, countBy, startOfDay, fmtPeriodRange } from '../../utils/formatters';
+import { SHEETS, PROD_KEYS } from '../../constants/schema';
+import { parseDateVal, num, cell, startOfDay } from '../../utils/formatters';
 import CountUp from '../common/CountUp';
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -98,7 +98,7 @@ export default function ProductionView({
     <div className="space-y-5 anim-in">
       {/* Pill Selector 5 Lini + Tombol Print */}
       <div className="card p-4 flex flex-wrap items-center justify-between gap-3 no-print">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
           {PROD_KEYS.map((k) => {
             const itemCfg = SHEETS[k];
             const isActive = activeKey === k;
@@ -107,10 +107,10 @@ export default function ProductionView({
                 key={k}
                 type="button"
                 onClick={() => onTabChange?.(k)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isActive
-                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.5)] scale-105'
-                    : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-105'
+                    : 'bg-slate-800/80 border border-slate-700 text-slate-300 hover:bg-slate-700/80 hover:text-white'
                 }`}
               >
                 {itemCfg.label}
@@ -119,16 +119,18 @@ export default function ProductionView({
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <button
+            type="button"
             onClick={() => onGoToData?.(activeKey)}
-            className="btn-ghost text-xs"
+            className="btn-ghost text-xs py-2 px-3 rounded-xl"
           >
             Lihat Tabel Data &rarr;
           </button>
           <button
+            type="button"
             onClick={onOpenPrint || (() => window.print())}
-            className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+            className="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 rounded-xl shadow-md"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print / PDF</span>
@@ -143,14 +145,15 @@ export default function ProductionView({
           return (
             <button
               key={c.metric}
+              type="button"
               onClick={() => onOpenMetric(activeKey, c.metric, rows)}
-              className="card p-5 text-left cursor-pointer hover:scale-[1.02] flex flex-col justify-between"
+              className="card p-4 sm:p-5 text-left cursor-pointer hover:scale-[1.02] flex flex-col justify-between"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{c.label}</span>
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{c.label}</span>
                 <Icon className={`w-4 h-4 ${c.color}`} />
               </div>
-              <div className={`mt-2 font-display font-black text-2xl ${c.color}`}>
+              <div className={`mt-2 font-display font-black text-2xl sm:text-3xl ${c.color} tracking-tight`}>
                 <CountUp target={c.val} isPct={c.pct} />
               </div>
               <div className="text-[10px] text-slate-400 mt-1">{c.pct ? 'Target: ≤ 1.0%' : `${cfg.unit} diproses`}</div>
@@ -162,8 +165,8 @@ export default function ProductionView({
       {/* Daily Chart */}
       <div className="card p-5">
         <div className="flex justify-between items-center flex-wrap gap-2 mb-3">
-          <h3 className="card-title">Tren Harian {cfg.label}</h3>
-          <span className="text-[10px] text-cyan-400 font-mono">Klik batang untuk rincian harian</span>
+          <h3 className="card-title">Tren Harian Output {cfg.label}</h3>
+          <span className="text-[10px] text-cyan-400 font-mono">Klik batang grafik untuk rincian harian</span>
         </div>
         <div className="h-72">
           <Bar
@@ -180,7 +183,7 @@ export default function ProductionView({
                 x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
                 y: { stacked: true, beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
               },
-              plugins: { legend: { labels: { color: '#e2e8f0' } } },
+              plugins: { legend: { labels: { color: '#e2e8f0', font: { size: 11 } } } },
               onClick: (e, els) => {
                 if (!els.length) return;
                 onOpenDayModal(activeKey, daily.keys[els[0].index]);

@@ -7,9 +7,7 @@ import {
   Users,
   Trophy,
   Briefcase,
-  User,
-  Layers,
-  FileSpreadsheet
+  User
 } from 'lucide-react';
 
 export const MENUS = [

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
 import { parseDateVal, num, cell, startOfDay, fmtPeriodRange } from '../../utils/formatters';
-import { Trophy, Medal, Flame, Search, Crown } from 'lucide-react';
+import { Medal, Flame, Search, Crown } from 'lucide-react';
 
 export default function LeaderboardView({ data, period }) {
   const [search, setSearch] = useState('');
@@ -52,23 +52,23 @@ export default function LeaderboardView({ data, period }) {
   return (
     <div className="space-y-6 anim-in">
       {/* Header Panel */}
-      <div className="card p-6 bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900/60 border-purple-500/20 flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 sm:p-6 bg-gradient-to-r from-purple-950/60 via-indigo-950/60 to-slate-900 text-white border border-purple-500/30 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-purple-500/20 text-purple-300 border-purple-400/30">STAR RANKING</span>
-            <span className="text-xs text-slate-400">Periode: {fmtPeriodRange(period?.from, period?.to)}</span>
+            <span className="badge bg-purple-500/20 text-purple-300 border-purple-400/40 font-bold">STAR RANKING</span>
+            <span className="text-xs text-slate-300">Periode: {fmtPeriodRange(period?.from, period?.to)}</span>
           </div>
-          <h2 className="font-display font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-200 to-cyan-300 mt-1">
-            Cosmic KPI Leaderboard
+          <h2 className="font-display font-black text-xl sm:text-2xl text-white mt-1.5 tracking-wide">
+            Prepress KPI Leaderboard
           </h2>
-          <p className="text-xs text-slate-300">Peringkat performa operator berdasarkan efisiensi output dan rasio reject terendah</p>
+          <p className="text-xs text-slate-300 mt-0.5 max-w-xl">Peringkat performa operator berdasarkan efisiensi output dan rasio reject terendah</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={selectedProcess}
             onChange={(e) => setSelectedProcess(e.target.value)}
-            className="inp text-xs"
+            className="inp text-xs w-full sm:w-auto"
           >
             <option value="ALL">Semua Lini Proses</option>
             {PROD_KEYS.map((k) => (
@@ -83,33 +83,33 @@ export default function LeaderboardView({ data, period }) {
         <div className="grid md:grid-cols-3 gap-4">
           {topThree.map((item, idx) => {
             const podiumStyles = [
-              'from-amber-500/20 via-yellow-500/5 to-transparent border-amber-400/40 shadow-[0_0_25px_rgba(245,158,11,0.15)] order-1 md:order-2 md:-translate-y-2',
-              'from-slate-400/20 via-slate-500/5 to-transparent border-slate-400/40 shadow-[0_0_20px_rgba(148,163,184,0.1)] order-2 md:order-1',
-              'from-amber-700/20 via-amber-800/5 to-transparent border-amber-600/40 shadow-[0_0_20px_rgba(180,83,9,0.1)] order-3'
+              'border-amber-400/60 bg-gradient-to-b from-amber-950/50 via-slate-900 to-slate-900 shadow-[0_0_30px_rgba(245,158,11,0.25)] order-1 md:order-2 md:-translate-y-2',
+              'border-slate-400/60 bg-gradient-to-b from-slate-800/50 via-slate-900 to-slate-900 shadow-[0_0_25px_rgba(148,163,184,0.2)] order-2 md:order-1',
+              'border-amber-700/60 bg-gradient-to-b from-amber-950/30 via-slate-900 to-slate-900 shadow-[0_0_25px_rgba(180,83,9,0.2)] order-3'
             ];
             const badges = ['Champion #1', 'Runner Up #2', 'Third Place #3'];
 
             return (
               <div
                 key={item.name}
-                className={`card p-5 bg-gradient-to-b ${podiumStyles[idx]} relative flex flex-col items-center text-center`}
+                className={`card p-5 ${podiumStyles[idx]} relative flex flex-col items-center text-center`}
               >
-                <div className="w-12 h-12 rounded-full bg-slate-900/80 border border-white/20 flex items-center justify-center mb-2 shadow-inner">
+                <div className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700 flex items-center justify-center mb-2 shadow-inner">
                   {idx === 0 ? <Crown className="w-6 h-6 text-amber-400" /> : <Medal className="w-6 h-6 text-cyan-400" />}
                 </div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{badges[idx]}</span>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold">{badges[idx]}</span>
                 <h3 className="font-display font-black text-lg text-white mt-0.5 truncate max-w-full">{item.name}</h3>
-                <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-200 mt-2">
+                <div className="text-3xl font-black text-cyan-300 mt-2 tracking-tight">
                   {item.score} <span className="text-xs text-slate-400 font-normal">pts</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 w-full mt-4 pt-3 border-t border-white/10 text-xs">
+                <div className="grid grid-cols-2 gap-2 w-full mt-4 pt-3 border-t border-slate-800 text-xs">
                   <div>
-                    <span className="text-slate-400 text-[10px]">Good Output</span>
-                    <p className="font-bold text-emerald-400">{item.good.toLocaleString('id-ID')}</p>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold">Good Output</span>
+                    <p className="font-bold text-emerald-400 mt-0.5">{item.good.toLocaleString('id-ID')}</p>
                   </div>
                   <div>
-                    <span className="text-slate-400 text-[10px]">Loss Rate</span>
-                    <p className={`font-bold ${item.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-400'}`}>{item.lossRate.toFixed(1)}%</p>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold">Loss Rate</span>
+                    <p className={`font-bold mt-0.5 ${item.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'}`}>{item.lossRate.toFixed(1)}%</p>
                   </div>
                 </div>
               </div>
@@ -122,50 +122,50 @@ export default function LeaderboardView({ data, period }) {
       <div className="card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="card-title flex items-center gap-2">
-            <Flame className="w-4 h-4 text-orange-400" /> Seluruh Peringkat Operator
+            <Flame className="w-4 h-4 text-amber-400" /> Seluruh Peringkat Operator
           </h3>
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Cari Operator..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="inp !pl-9 text-xs w-56"
+              className="inp !pl-9 text-xs w-full sm:w-56"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="table-responsive">
+          <table className="tbl min-w-[550px]">
             <thead>
-              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase text-[10px]">
-                <th className="py-3 px-3">Rank</th>
-                <th className="py-3 px-3">Operator</th>
-                <th className="py-3 px-3">Good</th>
-                <th className="py-3 px-3">Reject</th>
-                <th className="py-3 px-3">Loss Rate</th>
-                <th className="py-3 px-3 text-right">Skor Total</th>
+              <tr>
+                <th>Rank</th>
+                <th>Operator</th>
+                <th>Good</th>
+                <th>Reject</th>
+                <th>Loss Rate</th>
+                <th className="text-right">Skor Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody>
               {filtered.map((item, idx) => (
-                <tr key={item.name} className="hover:bg-slate-800/30 transition">
-                  <td className="py-2.5 px-3 font-mono font-bold text-slate-400">#{idx + 1}</td>
-                  <td className="py-2.5 px-3 font-semibold text-slate-200">{item.name}</td>
-                  <td className="py-2.5 px-3 text-emerald-400 font-medium">{item.good.toLocaleString('id-ID')}</td>
-                  <td className="py-2.5 px-3 text-rose-400 font-medium">{item.reject.toLocaleString('id-ID')}</td>
-                  <td className="py-2.5 px-3">
-                    <span className={`badge ${item.lossRate > 1.0 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'}`}>
+                <tr key={item.name} className="cursor-pointer">
+                  <td className="font-mono font-bold text-slate-400">#{idx + 1}</td>
+                  <td className="font-semibold text-white">{item.name}</td>
+                  <td className="text-emerald-400 font-semibold">{item.good.toLocaleString('id-ID')}</td>
+                  <td className="text-rose-400 font-semibold">{item.reject.toLocaleString('id-ID')}</td>
+                  <td>
+                    <span className={`badge ${item.lossRate > 1.0 ? 'badge-danger' : 'badge-info'}`}>
                       {item.lossRate.toFixed(1)}%
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-right font-black text-cyan-300">{item.score}</td>
+                  <td className="text-right font-black text-cyan-300 text-sm">{item.score}</td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-500">Tidak ada data peringkat ditemukan.</td>
+                  <td colSpan={6} className="text-center py-8 text-slate-400">Tidak ada data peringkat ditemukan.</td>
                 </tr>
               )}
             </tbody>
