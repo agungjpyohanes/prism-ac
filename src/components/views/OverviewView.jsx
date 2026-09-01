@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS } from '../../constants/schema';
-import { cell, parseDateVal, startOfDay, endOfDay, fmtDate, fmtPeriodRange } from '../../utils/formatters';
+import { cell, parseDateVal, fmtDate, jopCat } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -16,7 +16,7 @@ import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight,
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-export default function OverviewView({ data = {}, period, onOpenList, onSelectRow }) {
+export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -30,41 +30,49 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     i: { id: 0, job_name: 1, jop: 1, job_no: 2, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
   };
 
-  const rawRows = data?.job_active || [];
+  // Mengambil seluruh data dari tabel job_active
+  const rawRows = data.job_active || [];
 
+  // Helper cerdas deteksi Kategori jika kolom category di DB bernilai NULL
+  const getRowCategory = (r) => {
+    const directCat = cell(r, cfg.i.category).trim();
+    if (directCat && directCat !== '-' && directCat.toUpperCase() !== 'NULL') {
+      return directCat.toUpperCase();
+    }
+    
+    // Auto-detect dari prefix ID (FLX -> FLEXO, SCRN -> SCREEN, dst)
+    const idVal = cell(r, cfg.i.id).toUpperCase();
+    if (idVal.startsWith('FLX')) return 'FLEXO';
+    if (idVal.startsWith('SCRN')) return 'SCREEN';
+    if (idVal.startsWith('CTCP')) return 'CTCP';
+    if (idVal.startsWith('CTP')) return 'CTP';
+    if (idVal.startsWith('ETCH')) return 'ETCHING';
+
+    return jopCat(cell(r, cfg.i.job_no || cfg.i.nojop));
+  };
+
+  // Filter HANYA berdasarkan Search Query, Kategori, dan Status (Tanpa Batasan Tanggal)
   const filtered = useMemo(() => {
-    const fromTime = period?.from ? startOfDay(period.from)?.getTime() : null;
-    const toTime = period?.to ? endOfDay(period.to)?.getTime() : null;
     const q = search.trim().toLowerCase();
 
     return rawRows.filter((r) => {
-      if (!r || !r.length) return false;
+      const idVal = cell(r, cfg.i.id).trim();
+      if (!idVal || idVal.toUpperCase() === 'NULL') return false;
 
-      const idVal = cell(r, cfg.i.id, '').trim();
-      const jobName = cell(r, cfg.i.job_name, '').trim();
-      const jobNo = cell(r, cfg.i.job_no, '').trim();
-      
-      if (!idVal && !jobName && !jobNo) return false;
+      const st = cell(r, cfg.i.status).trim();
+      if (statusFilter !== 'ALL' && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
 
-      const d = parseDateVal(r[cfg.i.date]);
-      if (d && fromTime && toTime) {
-        const t = d.getTime();
-        if (t < fromTime || t > toTime) return false;
-      }
-
-      const st = cell(r, cfg.i.status, '').trim();
-      if (statusFilter !== 'ALL' && st && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
-
-      const cat = cell(r, cfg.i.category, '').trim();
-      if (categoryFilter !== 'ALL' && cat && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
+      const cat = getRowCategory(r);
+      if (categoryFilter !== 'ALL' && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
 
       if (q) {
         return r.some((c) => String(c || '').toLowerCase().includes(q));
       }
       return true;
     });
-  }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
+  }, [rawRows, search, statusFilter, categoryFilter, cfg]);
 
+  // Sorting
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
       const valA = a[sortCol] ?? '';
@@ -78,9 +86,11 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
   }, [filtered, sortCol, sortAsc]);
 
+  // Pagination
   const totalPages = Math.ceil(sorted.length / pageSize) || 1;
   const paginatedRows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
+  // Agregasi Status & Kategori untuk Chart & KPI
   const stats = useMemo(() => {
     const statusCount = {};
     const categoryCount = {};
@@ -88,8 +98,8 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     const statusRows = {};
 
     filtered.forEach((r) => {
-      const st = cell(r, cfg.i.status, '').trim() || 'Pending';
-      const cat = cell(r, cfg.i.category, '').trim() || 'General';
+      const st = cell(r, cfg.i.status).trim() || 'ANTRI';
+      const cat = getRowCategory(r) || 'GENERAL';
 
       statusCount[st] = (statusCount[st] || 0) + 1;
       categoryCount[cat] = (categoryCount[cat] || 0) + 1;
@@ -105,11 +115,11 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
   }, [filtered, cfg]);
 
   const distinctCategories = useMemo(() => {
-    return Array.from(new Set(rawRows.map((r) => cell(r, cfg.i.category, '').trim()).filter(Boolean)));
+    return Array.from(new Set(rawRows.map((r) => getRowCategory(r)).filter(Boolean)));
   }, [rawRows, cfg]);
 
   const distinctStatuses = useMemo(() => {
-    return Array.from(new Set(rawRows.map((r) => cell(r, cfg.i.status, '').trim()).filter(Boolean)));
+    return Array.from(new Set(rawRows.map((r) => cell(r, cfg.i.status).trim()).filter(Boolean)));
   }, [rawRows, cfg]);
 
   const handleSort = (idx) => {
@@ -121,22 +131,27 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     }
   };
 
-  const inProgressCount = useMemo(() => {
-    return filtered.filter((r) => {
-      const s = cell(r, cfg.i.status, '').toLowerCase();
-      return s.includes('progress') || s.includes('proses') || s.includes('jalan');
-    }).length;
-  }, [filtered, cfg]);
+  const handleDoughnutClick = (event, elements) => {
+    if (!elements || elements.length === 0) return;
+    const clickedIndex = elements[0].index;
+    const catName = Object.keys(stats.categoryCount)[clickedIndex];
+    if (catName && stats.categoryRows[catName]) {
+      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
+    }
+  };
 
-  const inQueueCount = useMemo(() => {
-    return filtered.filter((r) => {
-      const s = cell(r, cfg.i.status, '').toLowerCase();
-      return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-    }).length;
-  }, [filtered, cfg]);
+  const handleBarClick = (event, elements) => {
+    if (!elements || elements.length === 0) return;
+    const clickedIndex = elements[0].index;
+    const statusName = Object.keys(stats.statusCount)[clickedIndex];
+    if (statusName && stats.statusRows[statusName]) {
+      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
+    }
+  };
 
   return (
     <div className="space-y-5 anim-in">
+      {/* Header Info Panel */}
       <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -151,14 +166,15 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </p>
         </div>
         <div className="text-right">
-          <div className="text-[11px] text-slate-400 uppercase font-semibold">Periode</div>
-          <div className="font-bold text-sm text-sky-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+          <div className="text-[11px] text-slate-400 uppercase font-semibold">Status Data</div>
+          <div className="font-bold text-sm text-sky-300 mt-0.5">Semua Antrean Berjalan (Live)</div>
         </div>
       </div>
 
+      {/* 4 Kartu KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div
-          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
+          onClick={() => onOpenList?.('Seluruh Job Aktif', 'job_active', filtered)}
           className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:shadow-md transition"
         >
           <div className="flex items-center justify-between text-slate-400">
@@ -168,25 +184,28 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">
             {filtered.length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat seluruh antrean</div>
+          <div className="text-[10px] text-slate-400 mt-1">Seluruh pekerjaan dalam sistem</div>
         </div>
 
         <div
           onClick={() => {
             const inProg = filtered.filter((r) => {
-              const s = cell(r, cfg.i.status, '').toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('jalan');
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('progress') || s.includes('proses') || s.includes('screen') || s.includes('hdi');
             });
             onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
           }}
           className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:shadow-md transition"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-bold uppercase">IN PROGRESS</span>
+            <span className="text-[11px] font-bold uppercase">IN PROGRESS / PROSES</span>
             <PlayCircle className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">
-            {inProgressCount.toLocaleString('id-ID')}
+            {filtered.filter((r) => {
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('progress') || s.includes('proses') || s.includes('screen') || s.includes('hdi');
+            }).length.toLocaleString('id-ID')}
           </div>
           <div className="text-[10px] text-slate-400 mt-1">Sedang dikerjakan mesin/operator</div>
         </div>
@@ -194,7 +213,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         <div
           onClick={() => {
             const pending = filtered.filter((r) => {
-              const s = cell(r, cfg.i.status, '').toLowerCase();
+              const s = cell(r, cfg.i.status).toLowerCase();
               return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
             });
             onOpenList?.('Job Dalam Antrean (Queue)', 'job_active', pending);
@@ -206,9 +225,12 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">
-            {inQueueCount.toLocaleString('id-ID')}
+            {filtered.filter((r) => {
+              const s = cell(r, cfg.i.status).toLowerCase();
+              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
+            }).length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran mesin</div>
+          <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran / kelengkapan</div>
         </div>
 
         <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500">
@@ -219,10 +241,11 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           <div className="mt-2 font-display font-extrabold text-2xl text-indigo-600">
             {Object.keys(stats.categoryCount).length}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan pemohon</div>
+          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan aktif</div>
         </div>
       </div>
 
+      {/* Visualisasi Grafik Status & Kategori */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
@@ -245,13 +268,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                 }}
                 options={{
                   maintainAspectRatio: false,
-                  onClick: (e, els) => {
-                    if (!els.length) return;
-                    const catName = Object.keys(stats.categoryCount)[els[0].index];
-                    if (catName && stats.categoryRows[catName]) {
-                      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
-                    }
-                  }
+                  onClick: handleDoughnutClick
                 }}
               />
             )}
@@ -281,13 +298,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                 }}
                 options={{
                   maintainAspectRatio: false,
-                  onClick: (e, els) => {
-                    if (!els.length) return;
-                    const statusName = Object.keys(stats.statusCount)[els[0].index];
-                    if (statusName && stats.statusRows[statusName]) {
-                      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
-                    }
-                  }
+                  onClick: handleBarClick
                 }}
               />
             )}
@@ -295,6 +306,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
         </div>
       </div>
 
+      {/* Tabel Data Job Aktif */}
       <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -380,10 +392,22 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                   <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
                   {(cfg.headers || []).map((_, colIdx) => {
                     const val = row[colIdx];
+
+                    // Kategori
+                    if (colIdx === cfg.i.category) {
+                      const displayCat = val && val !== '-' && String(val).toUpperCase() !== 'NULL' ? val : getRowCategory(row);
+                      return (
+                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap font-bold text-sky-600">
+                          {displayCat}
+                        </td>
+                      );
+                    }
+
+                    // Status Badge
                     if (colIdx === cfg.i.status) {
-                      const stStr = String(val || '').toLowerCase();
-                      const isDone = stStr.includes('selesai') || stStr.includes('done');
-                      const isInProg = stStr.includes('progress') || stStr.includes('proses') || stStr.includes('jalan');
+                      const str = String(val || '').toLowerCase();
+                      const isDone = str.includes('selesai') || str.includes('done');
+                      const isInProg = str.includes('progress') || str.includes('proses') || str.includes('screen') || str.includes('hdi');
                       return (
                         <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
                           <span
@@ -395,14 +419,15 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
                                 : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
                             }`}
                           >
-                            {val || 'Pending'}
+                            {val || 'ANTRI'}
                           </span>
                         </td>
                       );
                     }
+
                     return (
                       <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
-                        {colIdx === cfg.i.date ? fmtDate(val) : (val || '-')}
+                        {colIdx === cfg.i.date ? (val && String(val).toUpperCase() !== 'NULL' ? fmtDate(val) : '—') : (val ?? '—')}
                       </td>
                     );
                   })}
@@ -419,6 +444,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
           </table>
         </div>
 
+        {/* Pagination Control */}
         <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
           <span>
             Halaman <b>{page}</b> dari <b>{totalPages}</b>

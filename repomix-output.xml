@@ -508,6 +508,11 @@ export default defineConfig([
 ])
 </file>
 
+<file path="readme.md">
+# PRISM Integrated System & Monitoring
+Sistem antarmuka visualisasi dan monitoring operasional prepress yang terhubung dengan Supabase dan Google Sheets.
+</file>
+
 <file path="vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -695,11 +700,6 @@ export default {
     autoprefixer: {},
   },
 }
-</file>
-
-<file path="readme.md">
-# PRISM Integrated System & Monitoring
-Sistem antarmuka visualisasi dan monitoring operasional prepress yang terhubung dengan Supabase dan Google Sheets.
 </file>
 
 <file path="README.md">
@@ -2227,9 +2227,9 @@ import React, { useState, useMemo } from 'react';
 import { PROD_KEYS, SHEETS } from '../../constants/schema';
 import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso } from '../../utils/formatters';
 import { Bar } from 'react-chartjs-2';
-import { Check, RotateCcw, GitCompare, Calendar } from 'lucide-react';
+import { Check, RotateCcw, GitCompare } from 'lucide-react';
 
-export default function CompareView({ data, onToast }) {
+export default function CompareView({ data = {}, onToast }) {
   const [key, setKey] = useState('rec_ctcp');
   const cfg = SHEETS[key] || SHEETS.rec_ctcp;
 
@@ -2247,15 +2247,15 @@ export default function CompareView({ data, onToast }) {
   const getMetrics = (fromStr, toStr) => {
     const from = new Date(fromStr).setHours(0, 0, 0, 0);
     const to = new Date(toStr).setHours(23, 59, 59, 999);
-    const rows = (data[key] || []).filter((r) => {
+    const rows = (data[key] || []).filter(r => {
       const idVal = cell(r, cfg.i.id).trim();
-      if (!idVal) return false;
+      if (!idVal || idVal === '-') return false;
       const d = parseDateVal(r[cfg.i.date]);
       return d && d.getTime() >= from && d.getTime() <= to;
     });
 
     let baik = 0, rusak = 0, ganti = 0;
-    rows.forEach((r) => {
+    rows.forEach(r => {
       baik += num(r[cfg.i.baik]);
       rusak += num(r[cfg.i.rusak]);
       ganti += num(r[cfg.i.ganti]);
@@ -2278,17 +2278,17 @@ export default function CompareView({ data, onToast }) {
   const dGanti = delta(m2.ganti, m1.ganti);
 
   const arrow = (d, mode) => {
-    let color = 'text-slate-400 bg-white/5 border-white/10', label = 'TETAP';
+    let color = 'text-slate-500 bg-slate-100 dark:bg-slate-800', label = 'TETAP';
     if (d.dir === 'up') {
-      if (mode === 'normal') { color = 'text-emerald-300 bg-emerald-950/40 border-emerald-500/40'; label = 'NAIK'; }
-      else if (mode === 'invert') { color = 'text-rose-300 bg-rose-950/40 border-rose-500/40'; label = 'NAIK'; }
-      else { color = 'text-orange-300 bg-orange-950/40 border-orange-500/40'; label = 'NAIK'; }
+      if (mode === 'normal') { color = 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40'; label = 'NAIK'; }
+      else if (mode === 'invert') { color = 'text-rose-600 bg-rose-50 dark:bg-rose-950/40'; label = 'NAIK'; }
+      else { color = 'text-orange-600 bg-orange-50 dark:bg-orange-950/40'; label = 'NAIK'; }
     } else if (d.dir === 'down') {
-      if (mode === 'normal') { color = 'text-rose-300 bg-rose-950/40 border-rose-500/40'; label = 'TURUN'; }
-      else { color = 'text-emerald-300 bg-emerald-950/40 border-emerald-500/40'; label = 'TURUN'; }
+      if (mode === 'normal') { color = 'text-rose-600 bg-rose-50 dark:bg-rose-950/40'; label = 'TURUN'; }
+      else { color = 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40'; label = 'TURUN'; }
     }
     return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${color}`}>
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${color}`}>
         {label}
       </span>
     );
@@ -2305,322 +2305,146 @@ export default function CompareView({ data, onToast }) {
   };
 
   return (
-    <div className="space-y-6 anim-in">
-      {/* Control Filter Card */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <span className="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-            <GitCompare className="w-6 h-6" />
+    <div className="space-y-4 anim-in">
+      <div className="card p-5 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="w-11 h-11 rounded-xl grid place-items-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+            <GitCompare className="w-5 h-5" />
           </span>
           <div>
-            <h3 className="card-title text-base">Dashboard Komparasi</h3>
-            <p className="text-xs text-slate-300">Bandingkan capaian antar periode untuk menganalisis tren produksi[cite: 1, 2]</p>
+            <h3 className="card-title">Dashboard Komparasi</h3>
+            <p className="text-xs text-slate-500">Bandingkan capaian antar periode untuk menganalisis tren produksi</p>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3">
           <div>
-            <label className="text-xs font-semibold text-cyan-300 mb-1.5 block">Jenis Capaian</label>
-            <select value={key} onChange={(e) => setKey(e.target.value)} className="inp w-full">
-              {PROD_KEYS.map((k) => (
+            <label className="text-xs font-semibold text-slate-500 mb-1 block">Jenis Capaian</label>
+            <select value={key} onChange={e => setKey(e.target.value)} className="inp w-full">
+              {PROD_KEYS.map(k => (
                 <option key={k} value={k}>{SHEETS[k].label}</option>
               ))}
             </select>
           </div>
-
           <div>
-            <label className="text-xs font-semibold text-cyan-300 mb-1.5 block">Periode 1 (Pembanding)</label>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="date" value={periods.p1.from} onChange={(e) => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp w-full" />
-              <input type="date" value={periods.p1.to} onChange={(e) => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp w-full" />
-            </div>
+            <label className="text-xs font-semibold text-slate-500 mb-1 block">Periode 1 (Pembanding)</label>
+            <input type="date" value={periods.p1.from} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp w-full" />
+            <input type="date" value={periods.p1.to} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp w-full mt-1.5" />
           </div>
-
           <div>
-            <label className="text-xs font-semibold text-cyan-300 mb-1.5 block">Periode 2 (Dibandingkan)</label>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="date" value={periods.p2.from} onChange={(e) => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp w-full" />
-              <input type="date" value={periods.p2.to} onChange={(e) => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp w-full" />
-            </div>
+            <label className="text-xs font-semibold text-slate-500 mb-1 block">Periode 2 (Dibandingkan)</label>
+            <input type="date" value={periods.p2.from} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp w-full" />
+            <input type="date" value={periods.p2.to} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp w-full mt-1.5" />
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 mt-6 flex-wrap items-center pt-4 border-t border-white/10">
-          <button
-            onClick={() => onToast?.('Komparasi diperbarui', 'ok')}
-            className="btn-primary text-xs py-2.5 px-5 flex items-center gap-2"
-          >
-            <Check className="w-4 h-4" /> Terapkan Komparasi
+        <div className="flex gap-2 mt-4 flex-wrap">
+          <button onClick={() => onToast?.('Komparasi diperbarui', 'ok')} className="btn btn-primary text-xs py-2 px-4">
+            <Check className="w-4 h-4 mr-1" /> Terapkan Komparasi
           </button>
-          
-          <button
-            onClick={handleSwap}
-            className="btn-ghost flex items-center gap-2"
-          >
-            <RotateCcw className="w-3.5 h-3.5" /> Tukar Periode
+          <button onClick={handleSwap} className="btn btn-ghost text-xs py-2 px-3">
+            <RotateCcw className="w-4 h-4 mr-1" /> Tukar Periode
           </button>
-          
-          <button
-            onClick={handleLastMonth}
-            className="btn-ghost flex items-center gap-2"
-          >
-            <Calendar className="w-3.5 h-3.5" /> Bulan Lalu vs Bulan Ini
+          <button onClick={handleLastMonth} className="btn btn-ghost text-xs py-2 px-3">
+            Bulan Lalu vs Bulan Ini
           </button>
         </div>
       </div>
 
-      {/* Metric Delta Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="card p-5">
+      <div className="grid gap-4 md:grid-cols-3 stagger">
+        <div className="card p-5 relative overflow-hidden bg-white dark:bg-slate-900">
+          <div className="absolute top-0 inset-x-0 h-1" style={{ background: cfg.color }}></div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Total Hasil</span>
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Hasil</span>
             {arrow(dHasil, 'normal')}
           </div>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <div className="text-[10px] text-slate-400">Periode 1</div>
-              <div className="font-display font-black text-2xl text-slate-200">{m1.pakai.toLocaleString('id-ID')}</div>
+          <div className="mt-3 flex items-end gap-3">
+            <div className="flex-1">
+              <div className="text-[11px] text-slate-400">Periode 1</div>
+              <div className="font-display font-extrabold text-2xl text-slate-700 dark:text-slate-300">{m1.pakai.toLocaleString('id-ID')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
             </div>
-            <div className="text-cyan-400 text-xl font-bold pb-1">→</div>
-            <div>
-              <div className="text-[10px] text-slate-400">Periode 2</div>
-              <div className="font-display font-black text-2xl text-cyan-300">{m2.pakai.toLocaleString('id-ID')}</div>
+            <div className="text-slate-300 text-xl pb-1">→</div>
+            <div className="flex-1">
+              <div className="text-[11px] text-slate-400">Periode 2</div>
+              <div className="font-display font-extrabold text-2xl" style={{ color: cfg.color }}>{m2.pakai.toLocaleString('id-ID')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Delta Capaian</span>
-            <span className={`font-black ${dHasil.dir === 'up' ? 'text-emerald-400' : dHasil.dir === 'down' ? 'text-rose-400' : 'text-slate-300'}`}>
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Delta</span>
+            <span className={`font-bold ${dHasil.dir === 'up' ? 'text-emerald-600' : dHasil.dir === 'down' ? 'text-rose-600' : 'text-slate-600'}`}>
               {dHasil.pct > 0 ? '+' : ''}{dHasil.pct.toFixed(1)}%
             </span>
           </div>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-5 relative overflow-hidden bg-white dark:bg-slate-900">
+          <div className="absolute top-0 inset-x-0 h-1 bg-rose-500"></div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Total Rusak</span>
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Rusak</span>
             {arrow(dRusak, 'invert')}
           </div>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <div className="text-[10px] text-slate-400">Periode 1</div>
-              <div className="font-display font-black text-2xl text-rose-400">{m1.rusak.toLocaleString('id-ID')}</div>
+          <div className="mt-3 flex items-end gap-3">
+            <div className="flex-1">
+              <div className="text-[11px] text-slate-400">Periode 1</div>
+              <div className="font-display font-extrabold text-2xl text-rose-500">{m1.rusak.toLocaleString('id-ID')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
             </div>
-            <div className="text-rose-400 text-xl font-bold pb-1">→</div>
-            <div>
-              <div className="text-[10px] text-slate-400">Periode 2</div>
-              <div className="font-display font-black text-2xl text-rose-400">{m2.rusak.toLocaleString('id-ID')}</div>
+            <div className="text-slate-300 text-xl pb-1">→</div>
+            <div className="flex-1">
+              <div className="text-[11px] text-slate-400">Periode 2</div>
+              <div className="font-display font-extrabold text-2xl text-rose-600">{m2.rusak.toLocaleString('id-ID')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Delta Rusak</span>
-            <span className={`font-black ${dRusak.dir === 'up' ? 'text-rose-400' : dRusak.dir === 'down' ? 'text-emerald-400' : 'text-slate-300'}`}>
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Delta</span>
+            <span className={`font-bold ${dRusak.dir === 'up' ? 'text-rose-600' : dRusak.dir === 'down' ? 'text-emerald-600' : 'text-slate-600'}`}>
               {dRusak.pct > 0 ? '+' : ''}{dRusak.pct.toFixed(1)}%
             </span>
           </div>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-5 relative overflow-hidden bg-white dark:bg-slate-900">
+          <div className="absolute top-0 inset-x-0 h-1 bg-orange-500"></div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Total Ganti</span>
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Ganti</span>
             {arrow(dGanti, 'warning')}
           </div>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <div className="text-[10px] text-slate-400">Periode 1</div>
-              <div className="font-display font-black text-2xl text-amber-400">{m1.ganti.toLocaleString('id-ID')}</div>
+          <div className="mt-3 flex items-end gap-3">
+            <div className="flex-1">
+              <div className="text-[11px] text-slate-400">Periode 1</div>
+              <div className="font-display font-extrabold text-2xl text-orange-500">{m1.ganti.toLocaleString('id-ID')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p1.from), new Date(periods.p1.to))}</div>
             </div>
-            <div className="text-amber-400 text-xl font-bold pb-1">→</div>
-            <div>
-              <div className="text-[10px] text-slate-400">Periode 2</div>
-              <div className="font-display font-black text-2xl text-amber-300">{m2.ganti.toLocaleString('id-ID')}</div>
+            <div className="text-slate-300 text-xl pb-1">→</div>
+            <div className="flex-1">
+              <div className="text-[11px] text-slate-400">Periode 2</div>
+              <div className="font-display font-extrabold text-2xl text-orange-600">{m2.ganti.toLocaleString('id-ID')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{fmtPeriodRange(new Date(periods.p2.from), new Date(periods.p2.to))}</div>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Delta Ganti</span>
-            <span className="font-black text-amber-300">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Delta</span>
+            <span className="font-bold text-slate-600">{dGanti.pct > 0 ? '+' : ''}{dGanti.pct.toFixed(1)}%</span>
           </div>
         </div>
       </div>
 
-      {/* Chart Komparasi */}
-      <div className="card p-5">
-        <h3 className="card-title mb-4">Grafik Komparasi — Hasil, Ganti & Rusak[cite: 1, 2]</h3>
+      <div className="card p-5 bg-white dark:bg-slate-900">
+        <h3 className="card-title mb-3">Grafik Komparasi — Total Hasil & Total Ganti</h3>
         <div className="h-80">
           <Bar
             data={{
               labels: ['Total Hasil', 'Total Ganti', 'Total Rusak'],
               datasets: [
-                {
-                  label: 'Periode 1',
-                  data: [m1.pakai, m1.ganti, m1.rusak],
-                  backgroundColor: 'rgba(56, 189, 248, 0.4)',
-                  borderColor: '#38bdf8',
-                  borderWidth: 2,
-                  borderRadius: 8
-                },
-                {
-                  label: 'Periode 2',
-                  data: [m2.pakai, m2.ganti, m2.rusak],
-                  backgroundColor: 'rgba(168, 85, 247, 0.7)',
-                  borderColor: '#a855f7',
-                  borderWidth: 2,
-                  borderRadius: 8
-                }
+                { label: 'Periode 1', data: [m1.pakai, m1.ganti, m1.rusak], backgroundColor: hexA(cfg.color, 0.4), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 },
+                { label: 'Periode 2', data: [m2.pakai, m2.ganti, m2.rusak], backgroundColor: hexA(cfg.color, 0.9), borderColor: cfg.color, borderWidth: 2, borderRadius: 6 }
               ]
             }}
-            options={{
-              maintainAspectRatio: false,
-              scales: {
-                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-              },
-              plugins: {
-                legend: { labels: { color: '#e2e8f0' } }
-              }
-            }}
+            options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }}
           />
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/views/ProcessAnalyticsView.jsx">
-import React, { useMemo, useState } from 'react';
-import { SHEETS, PROD_KEYS, JOP_CATS } from '../../constants/schema';
-import { parseDateVal, num, cell, jopCat, fmtPeriodRange, startOfDay } from '../../utils/formatters';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
-import { CheckCircle2, AlertTriangle, RotateCcw, Layers, Percent, Award, Printer } from 'lucide-react';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
-
-export default function ProcessAnalyticsView({
-  tabKey = 'rec_ctcp',
-  onTabChange,
-  data,
-  period,
-  onOpenList,
-  onOpenPrint
-}) {
-  const activeKey = tabKey || 'rec_ctcp';
-  const cfg = SHEETS[activeKey] || SHEETS.rec_ctcp;
-  const rawRows = data[activeKey] || [];
-
-  const rows = useMemo(() => {
-    return rawRows.filter((r) => {
-      const idVal = cell(r, cfg.i.id).trim();
-      const jopVal = cell(r, cfg.i.jop).trim();
-      const noJopVal = cell(r, cfg.i.nojop).trim();
-      if (!idVal || (!jopVal && !noJopVal)) return false;
-
-      const d = parseDateVal(r[cfg.i.date]);
-      if (!d) return true;
-      const from = period?.from ? startOfDay(period.from).getTime() : null;
-      const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-      if (from && d.getTime() < from) return false;
-      if (to && d.getTime() > to) return false;
-      return true;
-    });
-  }, [rawRows, cfg, period]);
-
-  const kpi = useMemo(() => {
-    let good = 0, reject = 0, replace = 0;
-    rows.forEach((r) => {
-      good += num(r[cfg.i.baik]);
-      reject += num(r[cfg.i.rusak]);
-      replace += num(r[cfg.i.ganti]);
-    });
-    const output = good + reject;
-    const lossRate = output > 0 ? (reject / output) * 100 : 0;
-    const perfScore = output > 0 ? Math.max(0, 100 - lossRate * 10) : 100;
-    return { good, reject, replace, output, lossRate, perfScore };
-  }, [rows, cfg]);
-
-  return (
-    <div className="space-y-5 anim-in">
-      {/* Pill Selector Lini + Print */}
-      <div className="card p-4 flex flex-wrap items-center justify-between gap-3 no-print">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-          {PROD_KEYS.map((k) => {
-            const itemCfg = SHEETS[k];
-            const isActive = activeKey === k;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => onTabChange?.(k)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                  isActive
-                    ? 'btn-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.5)] scale-105'
-                    : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {itemCfg.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          onClick={onOpenPrint || (() => window.print())}
-          className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          <span>Print Analitik {cfg.label}</span>
-        </button>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <button
-          onClick={() => onOpenList?.(`Total Output ${cfg.label}`, activeKey, rows)}
-          className="card p-4 text-left cursor-pointer"
-        >
-          <span className="text-[10px] font-bold uppercase text-slate-400">TOTAL OUTPUT</span>
-          <div className="mt-1 font-display font-black text-2xl text-cyan-300">{kpi.output.toLocaleString('id-ID')}</div>
-        </button>
-        <button
-          onClick={() => onOpenList?.(`Good Output ${cfg.label}`, activeKey, rows.filter((r) => num(r[cfg.i.baik]) > 0))}
-          className="card p-4 text-left cursor-pointer"
-        >
-          <span className="text-[10px] font-bold uppercase text-slate-400">GOOD</span>
-          <div className="mt-1 font-display font-black text-2xl text-emerald-400">{kpi.good.toLocaleString('id-ID')}</div>
-        </button>
-        <button
-          onClick={() => onOpenList?.(`Reject ${cfg.label}`, activeKey, rows.filter((r) => num(r[cfg.i.rusak]) > 0))}
-          className="card p-4 text-left cursor-pointer"
-        >
-          <span className="text-[10px] font-bold uppercase text-slate-400">DEFECT</span>
-          <div className="mt-1 font-display font-black text-2xl text-rose-400">{kpi.reject.toLocaleString('id-ID')}</div>
-        </button>
-        <button
-          onClick={() => onOpenList?.(`Replace ${cfg.label}`, activeKey, rows.filter((r) => num(r[cfg.i.ganti]) > 0))}
-          className="card p-4 text-left cursor-pointer"
-        >
-          <span className="text-[10px] font-bold uppercase text-slate-400">REPLACE</span>
-          <div className="mt-1 font-display font-black text-2xl text-amber-400">{kpi.replace.toLocaleString('id-ID')}</div>
-        </button>
-        <div className="card p-4 text-left">
-          <span className="text-[10px] font-bold uppercase text-slate-400">DEFECT RATE</span>
-          <div className={`mt-1 font-display font-black text-2xl ${kpi.lossRate > 1.0 ? 'text-rose-400' : 'text-cyan-300'}`}>
-            {kpi.lossRate.toFixed(1)}%
-          </div>
-        </div>
-        <div className="card p-4 text-left">
-          <span className="text-[10px] font-bold uppercase text-slate-400">SCORE</span>
-          <div className="mt-1 font-display font-black text-2xl text-indigo-300">{kpi.perfScore.toFixed(0)}</div>
         </div>
       </div>
     </div>
@@ -2675,10 +2499,10 @@ export async function fetchAllRows(tableName) {
 }
 </file>
 
-<file path="src/components/views/OverviewView.jsx">
-import React, { useState, useMemo } from 'react';
-import { SHEETS } from '../../constants/schema';
-import { cell, parseDateVal, startOfDay, endOfDay, fmtDate, fmtPeriodRange } from '../../utils/formatters';
+<file path="src/components/views/ProcessAnalyticsView.jsx">
+import React, { useMemo, useState } from 'react';
+import { SHEETS, JOP_CATS } from '../../constants/schema';
+import { parseDateVal, num, cell, jopCat, fmtPeriodRange, startOfDay } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -2690,495 +2514,510 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
-import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, RotateCcw, Layers, Percent, Award, Search, Users, Briefcase } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-export default function OverviewView({ data = {}, period, onOpenList, onSelectRow }) {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [sortCol, setSortCol] = useState(0);
-  const [sortAsc, setSortAsc] = useState(true);
-  const [page, setPage] = useState(1);
-  const pageSize = 15;
+export default function ProcessAnalyticsView({ tabKey, data, period, onOpenList }) {
+  const activeKey = tabKey || 'rec_ctcp';
+  const cfg = SHEETS[activeKey] || SHEETS.rec_ctcp;
+  const rawRows = data[activeKey] || [];
+  
+  const [activeLeaderboardTab, setActiveLeaderboardTab] = useState('OP');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const cfg = SHEETS.job_active || {
-    headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
-    i: { id: 0, job_name: 1, jop: 1, job_no: 2, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
-  };
-
-  const rawRows = data.job_active || [];
-
-  const filtered = useMemo(() => {
-    const fromTime = period?.from ? startOfDay(period.from).getTime() : null;
-    const toTime = period?.to ? endOfDay(period.to).getTime() : null;
-    const q = search.trim().toLowerCase();
-    
-    return rawRows.filter((r) => {
+  const rows = useMemo(() => {
+    return rawRows.filter(r => {
       const idVal = cell(r, cfg.i.id).trim();
-      if (!idVal) return false;
-      
+      const jopVal = cell(r, cfg.i.jop).trim();
+      const noJopVal = cell(r, cfg.i.nojop).trim();
+      if (!idVal || idVal === '-' || (!jopVal && !noJopVal)) return false;
+
       const d = parseDateVal(r[cfg.i.date]);
-      if (d) {
-        const t = d.getTime();
-        if (fromTime && t < fromTime) return false;
-        if (toTime && t > toTime) return false;
-      }
-      
-      const st = cell(r, cfg.i.status).trim();
-      if (statusFilter !== 'ALL' && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
-      
-      const cat = cell(r, cfg.i.category).trim();
-      if (categoryFilter !== 'ALL' && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
-      
-      if (q) {
-        return r.some((c) => String(c || '').toLowerCase().includes(q));
-      }
-      
+      if (!d) return true;
+      const from = period?.from ? startOfDay(period.from)?.getTime() : null;
+      const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
+      if (from && d.getTime() < from) return false;
+      if (to && d.getTime() > to) return false;
       return true;
     });
-  }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
+  }, [rawRows, cfg, period]);
 
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      const valA = a[sortCol] ?? '';
-      const valB = b[sortCol] ?? '';
-      
-      if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
-        return sortAsc ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
+  const kpi = useMemo(() => {
+    let good = 0, reject = 0, replace = 0;
+    rows.forEach(r => {
+      good += num(r[cfg.i.baik]);
+      reject += num(r[cfg.i.rusak]);
+      replace += num(r[cfg.i.ganti]);
+    });
+    const output = good + reject;
+    const lossRate = output > 0 ? (reject / output) * 100 : 0;
+    const perfScore = output > 0 ? Math.max(0, 100 - (lossRate * 10)) : 100;
+    return { good, reject, replace, output, lossRate, perfScore };
+  }, [rows, cfg]);
+
+  const paramData = useMemo(() => {
+    let colIdx = -1;
+    let label = 'Parameter Mesin';
+
+    if (activeKey === 'rec_ctcp' || activeKey === 'rec_ctp') {
+      colIdx = cfg.i.expose_mach ?? 5;
+      label = 'Mesin Expose';
+    } else if (activeKey === 'rec_screen') {
+      colIdx = cfg.i.screen_type ?? 4;
+      label = 'Tipe Screen';
+    } else if (activeKey === 'rec_flexo') {
+      colIdx = cfg.i.flexo_thickness ?? 11;
+      label = 'Tebal Flexo';
+    } else if (activeKey === 'rec_etching') {
+      colIdx = cfg.i.plate_type ?? 4;
+      label = 'Tipe Plate';
+    }
+
+    if (colIdx === -1 || colIdx === undefined) return { label, colIdx, labels: [], good: [], reject: [] };
+
+    const map = new Map();
+    rows.forEach(r => {
+      const val = cell(r, colIdx).trim() || 'Lainnya / Standar';
+      const e = map.get(val) || { good: 0, reject: 0 };
+      e.good += num(r[cfg.i.baik]);
+      e.reject += num(r[cfg.i.rusak]);
+      map.set(val, e);
+    });
+
+    const labels = [...map.keys()];
+    return {
+      label,
+      colIdx,
+      labels,
+      good: labels.map(l => map.get(l).good),
+      reject: labels.map(l => map.get(l).reject)
+    };
+  }, [rows, activeKey, cfg]);
+
+  const secondaryParamData = useMemo(() => {
+    if (activeKey === 'rec_ctcp' || activeKey === 'rec_ctp') {
+      const colIdx = cfg.i.print_mach ?? 6;
+      const map = new Map();
+      rows.forEach(r => {
+        const printMachine = cell(r, colIdx).trim() || 'Mesin Cetak Standar';
+        const e = map.get(printMachine) || { good: 0, reject: 0 };
+        e.good += num(r[cfg.i.baik]);
+        e.reject += num(r[cfg.i.rusak]);
+        map.set(printMachine, e);
+      });
+      const labels = [...map.keys()].slice(0, 8);
+      return { colIdx, title: 'Breakdown Mesin Cetak', labels, good: labels.map(l => map.get(l).good), reject: labels.map(l => map.get(l).reject) };
+    }
+    if (activeKey === 'rec_etching') {
+      const colIdx = cfg.i.plate_thickness ?? 11;
+      const map = new Map();
+      rows.forEach(r => {
+        const tebal = cell(r, colIdx).trim() || 'Standard';
+        const e = map.get(tebal) || { good: 0, reject: 0 };
+        e.good += num(r[cfg.i.baik]);
+        e.reject += num(r[cfg.i.rusak]);
+        map.set(tebal, e);
+      });
+      const labels = [...map.keys()];
+      return { colIdx, title: 'Breakdown Tebal Plate', labels, good: labels.map(l => map.get(l).good), reject: labels.map(l => map.get(l).reject) };
+    }
+    return null;
+  }, [rows, activeKey, cfg]);
+
+  const jopData = useMemo(() => {
+    const order = JOP_CATS.map(x => x[1]).concat(['Lainnya']);
+    const map = new Map(order.map(o => [o, { good: 0, reject: 0 }]));
+
+    rows.forEach(r => {
+      const cat = jopCat(cell(r, cfg.i.nojop));
+      const e = map.get(cat) || { good: 0, reject: 0 };
+      e.good += num(r[cfg.i.baik]);
+      e.reject += num(r[cfg.i.rusak]);
+      map.set(cat, e);
+    });
+
+    const labels = [], good = [], reject = [];
+    order.forEach(o => {
+      const val = map.get(o);
+      if (val && (val.good > 0 || val.reject > 0)) {
+        labels.push(o);
+        good.push(val.good);
+        reject.push(val.reject);
       }
-      
-      return sortAsc
-        ? String(valA).localeCompare(String(valB))
-        : String(valB).localeCompare(String(valA));
     });
-  }, [filtered, sortCol, sortAsc]);
 
-  const totalPages = Math.ceil(sorted.length / pageSize) || 1;
-  const paginatedRows = sorted.slice((page - 1) * pageSize, page * pageSize);
+    return { labels, good, reject };
+  }, [rows, cfg]);
 
-  const stats = useMemo(() => {
-    const statusCount = {};
-    const categoryCount = {};
-    const categoryRows = {};
-    const statusRows = {};
-    
-    filtered.forEach((r) => {
-      const st = cell(r, cfg.i.status).trim() || 'Pending';
-      const cat = cell(r, cfg.i.category).trim() || 'General';
-      
-      statusCount[st] = (statusCount[st] || 0) + 1;
-      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
-      
-      if (!statusRows[st]) statusRows[st] = [];
-      statusRows[st].push(r);
-      
-      if (!categoryRows[cat]) categoryRows[cat] = [];
-      categoryRows[cat].push(r);
+  const shiftData = useMemo(() => {
+    const map = new Map();
+    rows.forEach(r => {
+      let sh = cell(r, cfg.i.shift).toUpperCase().trim();
+      if (!sh || sh === '-' || sh === 'UNDEFINED') sh = 'NON-SHIFT';
+      const e = map.get(sh) || { good: 0, reject: 0 };
+      e.good += num(r[cfg.i.baik]);
+      e.reject += num(r[cfg.i.rusak]);
+      map.set(sh, e);
     });
-    
-    return { statusCount, categoryCount, statusRows, categoryRows };
-  }, [filtered, cfg]);
 
-  const distinctCategories = useMemo(() => {
-    return Array.from(new Set(rawRows.map(r => cell(r, cfg.i.category).trim()).filter(Boolean)));
-  }, [rawRows, cfg]);
+    const labels = [...map.keys()].sort();
+    return {
+      labels,
+      good: labels.map(l => map.get(l).good),
+      reject: labels.map(l => map.get(l).reject)
+    };
+  }, [rows, cfg]);
 
-  const distinctStatuses = useMemo(() => {
-    return Array.from(new Set(rawRows.map(r => cell(r, cfg.i.status).trim()).filter(Boolean)));
-  }, [rawRows, cfg]);
+  const opRanking = useMemo(() => {
+    const map = new Map();
+    rows.forEach(r => {
+      const op = cell(r, cfg.i.op).trim() || 'Unassigned';
+      const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0, rowList: [] };
+      e.good += num(r[cfg.i.baik]);
+      e.reject += num(r[cfg.i.rusak]);
+      e.replace += num(r[cfg.i.ganti]);
+      e.rowList.push(r);
+      map.set(op, e);
+    });
 
-  const handleSort = (idx) => {
-    if (sortCol === idx) {
-      setSortAsc(!sortAsc);
-    } else {
-      setSortCol(idx);
-      setSortAsc(true);
-    }
-  };
+    return [...map.values()]
+      .map(o => {
+        const output = o.good + o.reject;
+        const lossRate = output > 0 ? (o.reject / output) * 100 : 0;
+        return { ...o, output, lossRate };
+      })
+      .sort((a, b) => b.output - a.output);
+  }, [rows, cfg]);
 
-  const handleDoughnutClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
-    const clickedIndex = elements[0].index;
-    const catName = Object.keys(stats.categoryCount)[clickedIndex];
-    if (catName && stats.categoryRows[catName]) {
-      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
-    }
-  };
+  const poRanking = useMemo(() => {
+    const map = new Map();
+    const poCol = cfg.i.po_helper ?? -1;
 
-  const handleBarClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
-    const clickedIndex = elements[0].index;
-    const statusName = Object.keys(stats.statusCount)[clickedIndex];
-    if (statusName && stats.statusRows[statusName]) {
-      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
-    }
-  };
+    rows.forEach(r => {
+      const po = (poCol !== -1 && cell(r, poCol).trim()) || 'Tanpa PO';
+      const e = map.get(po) || { name: po, good: 0, reject: 0, replace: 0, rowList: [] };
+      e.good += num(r[cfg.i.baik]);
+      e.reject += num(r[cfg.i.rusak]);
+      e.replace += num(r[cfg.i.ganti]);
+      e.rowList.push(r);
+      map.set(po, e);
+    });
 
-  const inProgressCount = filtered.filter(r => 
-    cell(r, cfg.i.status).toLowerCase().includes('progress') || 
-    cell(r, cfg.i.status).toLowerCase().includes('proses')
-  ).length;
+    return [...map.values()]
+      .map(o => {
+        const output = o.good + o.reject;
+        const lossRate = output > 0 ? (o.reject / output) * 100 : 0;
+        return { ...o, output, lossRate };
+      })
+      .sort((a, b) => b.output - a.output);
+  }, [rows, cfg]);
 
-  const queueCount = filtered.filter(r => 
-    cell(r, cfg.i.status).toLowerCase().includes('queue') || 
-    cell(r, cfg.i.status).toLowerCase().includes('pending') || 
-    cell(r, cfg.i.status).toLowerCase().includes('antri')
-  ).length;
+  const activeLeaderboardData = activeLeaderboardTab === 'OP' ? opRanking : poRanking;
+
+  const filteredLeaderboard = useMemo(() => {
+    if (!searchQuery.trim()) return activeLeaderboardData;
+    const q = searchQuery.toLowerCase();
+    return activeLeaderboardData.filter(o => o.name.toLowerCase().includes(q));
+  }, [activeLeaderboardData, searchQuery]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header Section */}
-      <div className="card-gradient p-8 rounded-3xl">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="badge badge-primary">
-                <Activity className="w-3 h-3" />
-                MONITORING PRODUKSI
-              </span>
-              <span className="text-xs text-slate-400">Real-time Job Status</span>
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Dashboard Overview
-            </h1>
-            <p className="text-slate-300">
-              Pantau seluruh pekerjaan aktif dan status produksi secara real-time
-            </p>
+    <div className="space-y-4 anim-in">
+      <div className="card p-5 bg-gradient-to-r from-slate-900 to-[#101c36] text-white flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="badge bg-cyan-400/20 text-cyan-300 font-bold">INTERNAL PREPRESS ANALYTICS</span>
+            <span className="text-xs text-slate-400">· {cfg.label} Focus Mode</span>
           </div>
-          
-          <div className="text-right">
-            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Periode</div>
-            <div className="text-lg font-bold text-white">{fmtPeriodRange(period?.from, period?.to)}</div>
-          </div>
+          <h2 className="font-display font-extrabold text-2xl mt-1.5">{cfg.label} Performance & Parameter Control</h2>
+          <p className="text-xs text-slate-300 mt-1 max-w-xl">
+            Audit mendalam efisiensi mesin expose/cetak, kategori JOP, performa shift, dan evaluasi performa individu Operator vs PO. Klik elemen kartu atau grafik untuk melihat data transaksi detail.
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Rentang Periode</div>
+          <div className="font-bold text-sm text-cyan-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+          <div className="text-xs text-slate-400 mt-0.5">{rows.length} Transaksi Teranalisis</div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Jobs */}
-        <div 
-          onClick={() => onOpenList?.('Seluruh Job Aktif', 'job_active', filtered)}
-          className="stat-card cursor-pointer group"
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 stagger">
+        <button
+          onClick={() => onOpenList?.(`Total Output ${cfg.label}`, activeKey, rows)}
+          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 text-left cursor-pointer hover:shadow-md transition"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="stat-card-icon">
-              <Activity className="w-6 h-6 text-indigo-400" />
-            </div>
-            <TrendingUp className="w-4 h-4 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider">TOTAL OUTPUT</span>
+            <Layers className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="stat-card-value">{filtered.length.toLocaleString('id-ID')}</div>
-          <div className="stat-card-label mt-2">Total Job Aktif</div>
-          <div className="text-xs text-slate-500 mt-1">Klik untuk detail</div>
-        </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">{kpi.output.toLocaleString('id-ID')}</div>
+          <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} diproses</div>
+        </button>
 
-        {/* In Progress */}
-        <div 
-          onClick={() => {
-            const inProg = filtered.filter(r => 
-              cell(r, cfg.i.status).toLowerCase().includes('progress') || 
-              cell(r, cfg.i.status).toLowerCase().includes('proses')
-            );
-            onOpenList?.('Job In Progress', 'job_active', inProg);
-          }}
-          className="stat-card cursor-pointer group"
+        <button
+          onClick={() => onOpenList?.(`Good Output ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.baik]) > 0))}
+          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 text-left cursor-pointer hover:shadow-md transition"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="stat-card-icon" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-              <PlayCircle className="w-6 h-6 text-emerald-400" />
-            </div>
-            <span className="badge badge-success">Active</span>
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider">GOOD</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="stat-card-value">{inProgressCount.toLocaleString('id-ID')}</div>
-          <div className="stat-card-label mt-2">In Progress</div>
-          <div className="text-xs text-slate-500 mt-1">Sedang dikerjakan</div>
-        </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">{kpi.good.toLocaleString('id-ID')}</div>
+          <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} lolos QC</div>
+        </button>
 
-        {/* Queue */}
-        <div 
-          onClick={() => {
-            const pending = filtered.filter(r => 
-              cell(r, cfg.i.status).toLowerCase().includes('queue') || 
-              cell(r, cfg.i.status).toLowerCase().includes('pending') || 
-              cell(r, cfg.i.status).toLowerCase().includes('antri')
-            );
-            onOpenList?.('Job Queue', 'job_active', pending);
-          }}
-          className="stat-card cursor-pointer group"
+        <button
+          onClick={() => onOpenList?.(`Reject / Rusak ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.rusak]) > 0))}
+          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-rose-500 text-left cursor-pointer hover:shadow-md transition"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="stat-card-icon" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.2) 100%)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-              <Clock className="w-6 h-6 text-amber-400" />
-            </div>
-            <span className="badge badge-warning">Waiting</span>
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider">REJECT</span>
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
           </div>
-          <div className="stat-card-value">{queueCount.toLocaleString('id-ID')}</div>
-          <div className="stat-card-label mt-2">In Queue</div>
-          <div className="text-xs text-slate-500 mt-1">Menunggu giliran</div>
-        </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-rose-600">{kpi.reject.toLocaleString('id-ID')}</div>
+          <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} rusak / loss</div>
+        </button>
 
-        {/* Categories */}
-        <div className="stat-card">
-          <div className="flex items-start justify-between mb-4">
-            <div className="stat-card-icon" style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)', borderColor: 'rgba(139, 92, 246, 0.3)' }}>
-              <Layers className="w-6 h-6 text-purple-400" />
-            </div>
-            <CheckCircle2 className="w-4 h-4 text-purple-400" />
+        <button
+          onClick={() => onOpenList?.(`Replace / Ganti ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.ganti]) > 0))}
+          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 text-left cursor-pointer hover:shadow-md transition"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider">REPLACE</span>
+            <RotateCcw className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="stat-card-value">{Object.keys(stats.categoryCount).length}</div>
-          <div className="stat-card-label mt-2">Kategori</div>
-          <div className="text-xs text-slate-500 mt-1">Divisi proses</div>
-        </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">{kpi.replace.toLocaleString('id-ID')}</div>
+          <div className="text-[10px] text-slate-400 mt-1">{cfg.unit} diproduksi ulang</div>
+        </button>
+
+        <button
+          onClick={() => onOpenList?.(`Audit Loss Rate ${cfg.label}`, activeKey, rows.filter(r => num(r[cfg.i.rusak]) > 0))}
+          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 text-left cursor-pointer hover:shadow-md transition"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider">LOSS RATE</span>
+            <Percent className="w-4 h-4 text-purple-500" />
+          </div>
+          <div className={`mt-2 font-display font-extrabold text-2xl ${kpi.lossRate > 1.0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+            {kpi.lossRate.toFixed(1)}%
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">Toleransi Max &le; 1.0%</div>
+        </button>
+
+        <button
+          onClick={() => onOpenList?.(`Semua Data ${cfg.label}`, activeKey, rows)}
+          className="card card-h p-4 bg-white dark:bg-slate-900 border-l-4 border-l-cyan-500 text-left cursor-pointer hover:shadow-md transition"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider">SCORE</span>
+            <Award className="w-4 h-4 text-cyan-500" />
+          </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-cyan-600">{kpi.perfScore.toFixed(0)}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Indeks Kinerja (0-100)</div>
+        </button>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Distribution */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card p-5 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-lg font-bold text-white mb-1">Distribusi Kategori</h3>
-              <p className="text-xs text-slate-400">Klik segmen untuk detail</p>
+              <h3 className="card-title">Breakdown: {paramData.label}</h3>
+              <p className="text-xs text-slate-500">Klik batang grafik untuk melihat detail transaksi</p>
             </div>
+            <span className="badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">{paramData.labels.length} Kategori</span>
           </div>
-          <div className="h-72 flex items-center justify-center">
-            {Object.keys(stats.categoryCount).length === 0 ? (
-              <div className="text-center">
-                <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-sm text-slate-500">Tidak ada data kategori</p>
-              </div>
-            ) : (
-              <Doughnut
-                data={{
-                  labels: Object.keys(stats.categoryCount),
-                  datasets: [{
-                    data: Object.values(stats.categoryCount),
-                    backgroundColor: [
-                      '#6366f1', '#8b5cf6', '#10b981', '#f59e0b', 
-                      '#ec4899', '#06b6d4', '#64748b'
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                  }]
-                }}
-                options={{
-                  maintainAspectRatio: false,
-                  cutout: '65%',
-                  onClick: handleDoughnutClick,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 15,
-                        font: { size: 11 },
-                        color: '#94a3b8'
-                      }
-                    }
-                  }
-                }}
-              />
-            )}
+          <div className="h-64">
+            <Bar
+              data={{
+                labels: paramData.labels,
+                datasets: [
+                  { label: 'Good', data: paramData.good, backgroundColor: '#10b981', borderRadius: 4 },
+                  { label: 'Reject', data: paramData.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
+                ]
+              }}
+              options={{
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } },
+                onClick: (e, els) => {
+                  if (!els.length || paramData.colIdx === -1) return;
+                  const cat = paramData.labels[els[0].index];
+                  onOpenList?.(`${paramData.label}: ${cat}`, activeKey, rows.filter(r => cell(r, paramData.colIdx) === cat));
+                }
+              }}
+            />
           </div>
         </div>
 
-        {/* Status Distribution */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="card p-5 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-lg font-bold text-white mb-1">Status Pengerjaan</h3>
-              <p className="text-xs text-slate-400">Klik bar untuk detail</p>
+              <h3 className="card-title">Evaluasi Kategori JOP</h3>
+              <p className="text-xs text-slate-500">Klik batang grafik untuk melihat rincian pekerjaan</p>
             </div>
           </div>
-          <div className="h-72">
-            {Object.keys(stats.statusCount).length === 0 ? (
-              <div className="text-center h-full flex items-center justify-center">
-                <div>
-                  <Activity className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-sm text-slate-500">Tidak ada data status</p>
-                </div>
-              </div>
-            ) : (
+          <div className="h-64">
+            <Bar
+              data={{
+                labels: jopData.labels,
+                datasets: [
+                  { label: 'Good', data: jopData.good, backgroundColor: '#6366f1', borderRadius: 4 },
+                  { label: 'Reject', data: jopData.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
+                ]
+              }}
+              options={{
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } },
+                onClick: (e, els) => {
+                  if (!els.length) return;
+                  const cat = jopData.labels[els[0].index];
+                  onOpenList?.(`Kategori JOP: ${cat}`, activeKey, rows.filter(r => jopCat(cell(r, cfg.i.nojop)) === cat));
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {secondaryParamData && (
+          <div className="card p-5 bg-white dark:bg-slate-900">
+            <h3 className="card-title mb-1">{secondaryParamData.title}</h3>
+            <p className="text-xs text-slate-500 mb-3">Klik batang grafik untuk melihat daftar record</p>
+            <div className="h-64">
               <Bar
                 data={{
-                  labels: Object.keys(stats.statusCount),
-                  datasets: [{
-                    label: 'Jumlah Job',
-                    data: Object.values(stats.statusCount),
-                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                    borderRadius: 8,
-                    borderSkipped: false
-                  }]
+                  labels: secondaryParamData.labels,
+                  datasets: [
+                    { label: 'Good', data: secondaryParamData.good, backgroundColor: '#06b6d4', borderRadius: 4 },
+                    { label: 'Reject', data: secondaryParamData.reject, backgroundColor: '#f43f5e', borderRadius: 4 }
+                  ]
                 }}
                 options={{
                   maintainAspectRatio: false,
-                  onClick: handleBarClick,
-                  plugins: {
-                    legend: { display: false }
-                  },
-                  scales: {
-                    x: {
-                      grid: { display: false },
-                      ticks: { color: '#94a3b8', font: { size: 11 } }
-                    },
-                    y: {
-                      grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                      ticks: { color: '#94a3b8', font: { size: 11 } }
-                    }
+                  scales: { x: { stacked: true }, y: { stacked: true } },
+                  onClick: (e, els) => {
+                    if (!els.length) return;
+                    const cat = secondaryParamData.labels[els[0].index];
+                    onOpenList?.(`${secondaryParamData.title}: ${cat}`, activeKey, rows.filter(r => cell(r, secondaryParamData.colIdx) === cat));
                   }
                 }}
               />
-            )}
+            </div>
+          </div>
+        )}
+
+        <div className={`card p-5 bg-white dark:bg-slate-900 ${secondaryParamData ? '' : 'md:col-span-2'}`}>
+          <h3 className="card-title mb-1">Performa Shift</h3>
+          <p className="text-xs text-slate-500 mb-3">Klik segmen donat untuk melihat detail transaksi per shift</p>
+          <div className="h-64 flex items-center justify-center">
+            <Doughnut
+              data={{
+                labels: shiftData.labels,
+                datasets: [
+                  {
+                    data: shiftData.good,
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#64748b']
+                  }
+                ]
+              }}
+              options={{
+                maintainAspectRatio: false,
+                onClick: (e, els) => {
+                  if (!els.length) return;
+                  const sh = shiftData.labels[els[0].index];
+                  onOpenList?.(`Detail Shift: ${sh}`, activeKey, rows.filter(r => {
+                    let s = cell(r, cfg.i.shift).toUpperCase().trim();
+                    if (!s || s === '-' || s === 'UNDEFINED') s = 'NON-SHIFT';
+                    return s === sh;
+                  }));
+                }
+              }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Jobs Table */}
-      <div className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="card p-5 bg-white dark:bg-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">Daftar Job Aktif</h2>
-            <p className="text-sm text-slate-400">
-              Menampilkan <span className="text-white font-semibold">{sorted.length}</span> pekerjaan
-            </p>
+            <div className="flex items-center gap-2">
+              {activeLeaderboardTab === 'OP' ? (
+                <Users className="w-5 h-5 text-indigo-600" />
+              ) : (
+                <Briefcase className="w-5 h-5 text-amber-600" />
+              )}
+              <h3 className="card-title">
+                {activeLeaderboardTab === 'OP' ? 'Leaderboard Performa Operator' : 'Leaderboard Performa PO (Customer)'}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500">Klik baris nama untuk melihat detail seluruh transaksi individu</p>
           </div>
-          
+
           <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
-              className="select text-xs"
-            >
-              <option value="ALL">Semua Kategori</option>
-              {distinctCategories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="select text-xs"
-            >
-              <option value="ALL">Semua Status</option>
-              {distinctStatuses.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+              <button
+                onClick={() => { setActiveLeaderboardTab('OP'); setSearchQuery(''); }}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition ${
+                  activeLeaderboardTab === 'OP' ? 'bg-white dark:bg-slate-700 shadow text-indigo-700 dark:text-white' : 'text-slate-500'
+                }`}
+              >
+                Operator
+              </button>
+              <button
+                onClick={() => { setActiveLeaderboardTab('PO'); setSearchQuery(''); }}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition ${
+                  activeLeaderboardTab === 'PO' ? 'bg-white dark:bg-slate-700 shadow text-amber-700 dark:text-white' : 'text-slate-500'
+                }`}
+              >
+                PO
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 w-full sm:w-56">
+              <Search className="w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Cari job..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="input pl-10 text-xs w-56"
+                placeholder={activeLeaderboardTab === 'OP' ? 'Cari Operator...' : 'Cari PO...'}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="bg-transparent text-xs outline-none w-full text-slate-700 dark:text-slate-200"
               />
             </div>
           </div>
         </div>
 
-        <div className="table-container">
-          <table className="table">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr>
-                <th className="w-12">No</th>
-                {(cfg.headers || []).map((h, i) => (
-                  <th
-                    key={i}
-                    onClick={() => handleSort(i)}
-                    className="cursor-pointer hover:text-white transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{h.replace(/_/g, ' ').toUpperCase()}</span>
-                      <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </th>
-                ))}
+              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="py-2.5 px-3">Rank</th>
+                <th className="py-2.5 px-3">{activeLeaderboardTab === 'OP' ? 'Nama Operator' : 'Nama PO'}</th>
+                <th className="py-2.5 px-3">Total Output</th>
+                <th className="py-2.5 px-3">Good</th>
+                <th className="py-2.5 px-3">Reject</th>
+                <th className="py-2.5 px-3">Replace</th>
+                <th className="py-2.5 px-3">Loss Rate</th>
               </tr>
             </thead>
-            <tbody>
-              {paginatedRows.map((row, idx) => (
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filteredLeaderboard.map((o, idx) => (
                 <tr
-                  key={idx}
-                  onClick={() => onSelectRow?.('job_active', row)}
-                  className="cursor-pointer"
+                  key={o.name}
+                  onClick={() => onOpenList?.(`Rekap Transaksi: ${o.name}`, activeKey, o.rowList)}
+                  className="hover:bg-indigo-50/50 dark:hover:bg-slate-800/60 transition cursor-pointer"
                 >
-                  <td className="text-slate-500 font-mono">{(page - 1) * pageSize + idx + 1}</td>
-                  {(cfg.headers || []).map((_, colIdx) => {
-                    const val = row[colIdx];
-                    if (colIdx === cfg.i.status) {
-                      const isDone = String(val).toLowerCase().includes('selesai') || String(val).toLowerCase().includes('done');
-                      const isInProg = String(val).toLowerCase().includes('progress') || String(val).toLowerCase().includes('proses');
-                      
-                      return (
-                        <td key={colIdx}>
-                          <span className={`badge ${
-                            isDone ? 'badge-success' : 
-                            isInProg ? 'badge-info' : 
-                            'badge-warning'
-                          }`}>
-                            {val || '-'}
-                          </span>
-                        </td>
-                      );
-                    }
-                    return (
-                      <td key={colIdx}>
-                        {colIdx === cfg.i.date ? fmtDate(val) : (val ?? '-')}
-                      </td>
-                    );
-                  })}
+                  <td className="py-2 px-3 font-bold text-slate-400">#{idx + 1}</td>
+                  <td className="py-2 px-3 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    {o.name}
+                    <span className="text-[10px] text-slate-400">→</span>
+                  </td>
+                  <td className="py-2 px-3 font-bold">{o.output.toLocaleString('id-ID')}</td>
+                  <td className="py-2 px-3 text-emerald-600 font-semibold">{o.good.toLocaleString('id-ID')}</td>
+                  <td className="py-2 px-3 text-rose-600 font-semibold">{o.reject.toLocaleString('id-ID')}</td>
+                  <td className="py-2 px-3 text-amber-600">{o.replace.toLocaleString('id-ID')}</td>
+                  <td className="py-2 px-3 font-bold">{o.lossRate.toFixed(1)}%</td>
                 </tr>
               ))}
-              
-              {paginatedRows.length === 0 && (
-                <tr>
-                  <td colSpan={cfg.headers.length + 1} className="text-center py-12">
-                    <div className="flex flex-col items-center">
-                      <Activity className="w-12 h-12 text-slate-600 mb-3" />
-                      <p className="text-sm text-slate-500">Tidak ada pekerjaan yang cocok</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
-          <span className="text-sm text-slate-400">
-            Halaman <span className="text-white font-semibold">{page}</span> dari <span className="text-white font-semibold">{totalPages}</span>
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-              className="btn-icon disabled:opacity-40"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
-              className="btn-icon disabled:opacity-40"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -3195,12 +3034,27 @@ function mapRowToMatrix(key, row) {
   if (!row) return [];
   if (Array.isArray(row)) return row;
 
-  // Helper pencari nilai kolom yang fleksibel (case-insensitive & abaikan underscore/spasi)
+  const aliases = {
+    job_name: ['job_name', 'nama_pekerjaan', 'jop', 'nama_job', 'job', 'nama', 'pekerjaan'],
+    job_no: ['job_no', 'no_jop', 'nojop', 'no_spk', 'spk', 'nomor_jop'],
+    file_no: ['file_no', 'no_file', 'file', 'kd_file', 'kode_file'],
+    status: ['status', 'stts', 'state', 'kondisi'],
+    start_time: ['start_time', 'jam_mulai', 'mulai', 'waktu', 'time'],
+    date: ['date', 'tgl', 'tanggal', 'created_at'],
+    category: ['category', 'kategori', 'divisi', 'tipe', 'cat']
+  };
+
   const findVal = (field) => {
     if (!field) return '';
     if (row[field] !== undefined && row[field] !== null) return row[field];
-    
-    const targetClean = field.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const targetKey = field.toLowerCase();
+    const aliasList = aliases[targetKey] || [targetKey];
+    for (const a of aliasList) {
+      if (row[a] !== undefined && row[a] !== null) return row[a];
+    }
+
+    const targetClean = targetKey.replace(/[^a-z0-9]/g, '');
     for (const k of Object.keys(row)) {
       if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean) {
         return row[k];
@@ -3218,7 +3072,7 @@ function mapRowToMatrix(key, row) {
     ];
   }
 
-  const schema = SHEETS[key];
+  const schema = SHEETS[key] || SHEETS.job_active;
   if (!schema || !schema.headers) {
     return Object.values(row);
   }
@@ -3387,6 +3241,455 @@ export default function Header({
 
       </div>
     </header>
+  );
+}
+</file>
+
+<file path="src/components/views/OverviewView.jsx">
+import React, { useState, useMemo } from 'react';
+import { SHEETS } from '../../constants/schema';
+import { cell, parseDateVal, startOfDay, endOfDay, fmtDate, fmtPeriodRange } from '../../utils/formatters';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
+import { Activity, Clock, PlayCircle, Layers, Search, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+
+export default function OverviewView({ data = {}, period, onOpenList, onSelectRow }) {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [sortCol, setSortCol] = useState(0);
+  const [sortAsc, setSortAsc] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
+
+  const cfg = SHEETS.job_active || {
+    headers: ['id', 'job_name', 'job_no', 'file_no', 'status', 'start_time', 'date', 'category'],
+    i: { id: 0, job_name: 1, jop: 1, job_no: 2, nojop: 2, file_no: 3, status: 4, start_time: 5, date: 6, category: 7 }
+  };
+
+  const rawRows = data?.job_active || [];
+
+  const filtered = useMemo(() => {
+    const fromTime = period?.from ? startOfDay(period.from)?.getTime() : null;
+    const toTime = period?.to ? endOfDay(period.to)?.getTime() : null;
+    const q = search.trim().toLowerCase();
+
+    return rawRows.filter((r) => {
+      if (!r || !r.length) return false;
+
+      const idVal = cell(r, cfg.i.id, '').trim();
+      const jobName = cell(r, cfg.i.job_name, '').trim();
+      const jobNo = cell(r, cfg.i.job_no, '').trim();
+      
+      if (!idVal && !jobName && !jobNo) return false;
+
+      const d = parseDateVal(r[cfg.i.date]);
+      if (d && fromTime && toTime) {
+        const t = d.getTime();
+        if (t < fromTime || t > toTime) return false;
+      }
+
+      const st = cell(r, cfg.i.status, '').trim();
+      if (statusFilter !== 'ALL' && st && st.toLowerCase() !== statusFilter.toLowerCase()) return false;
+
+      const cat = cell(r, cfg.i.category, '').trim();
+      if (categoryFilter !== 'ALL' && cat && cat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
+
+      if (q) {
+        return r.some((c) => String(c || '').toLowerCase().includes(q));
+      }
+      return true;
+    });
+  }, [rawRows, period, search, statusFilter, categoryFilter, cfg]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const valA = a[sortCol] ?? '';
+      const valB = b[sortCol] ?? '';
+      if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
+        return sortAsc ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
+      }
+      return sortAsc
+        ? String(valA).localeCompare(String(valB))
+        : String(valB).localeCompare(String(valA));
+    });
+  }, [filtered, sortCol, sortAsc]);
+
+  const totalPages = Math.ceil(sorted.length / pageSize) || 1;
+  const paginatedRows = sorted.slice((page - 1) * pageSize, page * pageSize);
+
+  const stats = useMemo(() => {
+    const statusCount = {};
+    const categoryCount = {};
+    const categoryRows = {};
+    const statusRows = {};
+
+    filtered.forEach((r) => {
+      const st = cell(r, cfg.i.status, '').trim() || 'Pending';
+      const cat = cell(r, cfg.i.category, '').trim() || 'General';
+
+      statusCount[st] = (statusCount[st] || 0) + 1;
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+
+      if (!statusRows[st]) statusRows[st] = [];
+      statusRows[st].push(r);
+
+      if (!categoryRows[cat]) categoryRows[cat] = [];
+      categoryRows[cat].push(r);
+    });
+
+    return { statusCount, categoryCount, statusRows, categoryRows };
+  }, [filtered, cfg]);
+
+  const distinctCategories = useMemo(() => {
+    return Array.from(new Set(rawRows.map((r) => cell(r, cfg.i.category, '').trim()).filter(Boolean)));
+  }, [rawRows, cfg]);
+
+  const distinctStatuses = useMemo(() => {
+    return Array.from(new Set(rawRows.map((r) => cell(r, cfg.i.status, '').trim()).filter(Boolean)));
+  }, [rawRows, cfg]);
+
+  const handleSort = (idx) => {
+    if (sortCol === idx) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortCol(idx);
+      setSortAsc(true);
+    }
+  };
+
+  const inProgressCount = useMemo(() => {
+    return filtered.filter((r) => {
+      const s = cell(r, cfg.i.status, '').toLowerCase();
+      return s.includes('progress') || s.includes('proses') || s.includes('jalan');
+    }).length;
+  }, [filtered, cfg]);
+
+  const inQueueCount = useMemo(() => {
+    return filtered.filter((r) => {
+      const s = cell(r, cfg.i.status, '').toLowerCase();
+      return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
+    }).length;
+  }, [filtered, cfg]);
+
+  return (
+    <div className="space-y-5 anim-in">
+      <div className="card p-5 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="badge bg-sky-400/20 text-sky-300 font-bold">MONITORING PRODUKSI</span>
+            <span className="text-xs text-slate-300">· Real-time Job Status</span>
+          </div>
+          <h2 className="font-display font-extrabold text-2xl mt-1 text-white">
+            Dashboard Overview — Job Aktif (WIP)
+          </h2>
+          <p className="text-xs text-slate-300 mt-0.5">
+            Daftar seluruh pekerjaan yang sedang dalam antrean atau proses pembuatan di Prepress
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-[11px] text-slate-400 uppercase font-semibold">Periode</div>
+          <div className="font-bold text-sm text-sky-300 mt-0.5">{fmtPeriodRange(period?.from, period?.to)}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div
+          onClick={() => onOpenList?.('Seluruh Job Aktif Terfilter', 'job_active', filtered)}
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-sky-500 cursor-pointer hover:shadow-md transition"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase">TOTAL JOB AKTIF</span>
+            <Activity className="w-4 h-4 text-sky-500" />
+          </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-slate-800 dark:text-white">
+            {filtered.length.toLocaleString('id-ID')}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">Klik untuk lihat seluruh antrean</div>
+        </div>
+
+        <div
+          onClick={() => {
+            const inProg = filtered.filter((r) => {
+              const s = cell(r, cfg.i.status, '').toLowerCase();
+              return s.includes('progress') || s.includes('proses') || s.includes('jalan');
+            });
+            onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
+          }}
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 cursor-pointer hover:shadow-md transition"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase">IN PROGRESS</span>
+            <PlayCircle className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-emerald-600">
+            {inProgressCount.toLocaleString('id-ID')}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">Sedang dikerjakan mesin/operator</div>
+        </div>
+
+        <div
+          onClick={() => {
+            const pending = filtered.filter((r) => {
+              const s = cell(r, cfg.i.status, '').toLowerCase();
+              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
+            });
+            onOpenList?.('Job Dalam Antrean (Queue)', 'job_active', pending);
+          }}
+          className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 cursor-pointer hover:shadow-md transition"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase">IN QUEUE / ANTREAN</span>
+            <Clock className="w-4 h-4 text-amber-500" />
+          </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-amber-600">
+            {inQueueCount.toLocaleString('id-ID')}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran mesin</div>
+        </div>
+
+        <div className="card p-4 bg-white dark:bg-slate-900 border-l-4 border-l-indigo-500">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-bold uppercase">KATEGORI PROSES</span>
+            <Layers className="w-4 h-4 text-indigo-500" />
+          </div>
+          <div className="mt-2 font-display font-extrabold text-2xl text-indigo-600">
+            {Object.keys(stats.categoryCount).length}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan pemohon</div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card p-5 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="card-title">Porsi Job Berdasarkan Kategori</h3>
+            <span className="text-[10px] text-slate-400">Klik grafik untuk rincian</span>
+          </div>
+          <div className="h-64 flex items-center justify-center">
+            {Object.keys(stats.categoryCount).length === 0 ? (
+              <span className="text-xs text-slate-400">Tidak ada data kategori</span>
+            ) : (
+              <Doughnut
+                data={{
+                  labels: Object.keys(stats.categoryCount),
+                  datasets: [
+                    {
+                      data: Object.values(stats.categoryCount),
+                      backgroundColor: ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b']
+                    }
+                  ]
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  onClick: (e, els) => {
+                    if (!els.length) return;
+                    const catName = Object.keys(stats.categoryCount)[els[0].index];
+                    if (catName && stats.categoryRows[catName]) {
+                      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="card p-5 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="card-title">Distribusi Status Pengerjaan</h3>
+            <span className="text-[10px] text-slate-400">Klik bar untuk rincian</span>
+          </div>
+          <div className="h-64">
+            {Object.keys(stats.statusCount).length === 0 ? (
+              <span className="text-xs text-slate-400">Tidak ada data status</span>
+            ) : (
+              <Bar
+                data={{
+                  labels: Object.keys(stats.statusCount),
+                  datasets: [
+                    {
+                      label: 'Jumlah Job',
+                      data: Object.values(stats.statusCount),
+                      backgroundColor: '#0284c7',
+                      borderRadius: 4
+                    }
+                  ]
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  onClick: (e, els) => {
+                    if (!els.length) return;
+                    const statusName = Object.keys(stats.statusCount)[els[0].index];
+                    if (statusName && stats.statusRows[statusName]) {
+                      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card p-5 bg-white dark:bg-slate-900 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display font-extrabold text-lg text-slate-800 dark:text-white">
+              Daftar Antrean & Eksekusi Job Aktif
+            </h2>
+            <p className="text-xs text-slate-500">
+              Menampilkan <b>{sorted.length.toLocaleString('id-ID')} pekerjaan</b> · Klik baris untuk detail lengkap
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
+              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="ALL">Semua Kategori</option>
+              {distinctCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="inp text-xs py-1.5 px-2.5 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="ALL">Semua Status</option>
+              {distinctStatuses.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Cari Job, No SPK, File..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="inp !pl-8 text-xs py-1.5 w-48 sm:w-56 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+              <tr>
+                <th className="py-2.5 px-3">No</th>
+                {(cfg.headers || []).map((h, i) => (
+                  <th
+                    key={i}
+                    onClick={() => handleSort(i)}
+                    className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>{h.replace(/_/g, ' ')}</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {paginatedRows.map((row, idx) => (
+                <tr
+                  key={idx}
+                  onClick={() => onSelectRow?.('job_active', row)}
+                  className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
+                >
+                  <td className="py-2.5 px-3 text-slate-400">{(page - 1) * pageSize + idx + 1}</td>
+                  {(cfg.headers || []).map((_, colIdx) => {
+                    const val = row[colIdx];
+                    if (colIdx === cfg.i.status) {
+                      const stStr = String(val || '').toLowerCase();
+                      const isDone = stStr.includes('selesai') || stStr.includes('done');
+                      const isInProg = stStr.includes('progress') || stStr.includes('proses') || stStr.includes('jalan');
+                      return (
+                        <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              isDone
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                : isInProg
+                                ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                            }`}
+                          >
+                            {val || 'Pending'}
+                          </span>
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={colIdx} className="py-2.5 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
+                        {colIdx === cfg.i.date ? fmtDate(val) : (val || '-')}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              {paginatedRows.length === 0 && (
+                <tr>
+                  <td colSpan={cfg.headers.length + 1} className="text-center py-8 text-slate-400">
+                    Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian/filter.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
+          <span>
+            Halaman <b>{page}</b> dari <b>{totalPages}</b>
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 </file>
@@ -4438,6 +4741,140 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
 }
 </file>
 
+<file path="src/utils/formatters.js">
+// Nilai aman pembacaan cell dari baris array
+export const cell = (row, idx, fallback = '-') => {
+  if (!row || idx === undefined || idx === null || idx < 0) return fallback;
+  const val = row[idx];
+  if (val === undefined || val === null || String(val).trim() === '') return fallback;
+  return String(val);
+};
+
+// Parsing angka aman
+export const num = (val, fallback = 0) => {
+  if (val === undefined || val === null || val === '') return fallback;
+  if (typeof val === 'number') return isNaN(val) ? fallback : val;
+  const clean = String(val).replace(/[^\d.-]/g, '');
+  const parsed = parseFloat(clean);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
+// Format Angka Ribuan Indonesia
+export const fmtNum = (n) => {
+  if (n === null || n === undefined) return '0';
+  return Number(n).toLocaleString('id-ID');
+};
+
+// Format Persentase
+export const fmtPct = (n) => {
+  const val = Number(n) || 0;
+  return `${(val * 100).toFixed(1)}%`;
+};
+
+// Hex to RGBA generator
+export const hexA = (hex, alpha = 0.2) => {
+  if (!hex || typeof hex !== 'string') return `rgba(100, 116, 139, ${alpha})`;
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const numVal = parseInt(c, 16);
+  if (isNaN(numVal)) return `rgba(100, 116, 139, ${alpha})`;
+  return `rgba(${(numVal >> 16) & 255}, ${(numVal >> 8) & 255}, ${numVal & 255}, ${alpha})`;
+};
+
+// Deteksi Kategori JOP
+export const jopCat = (str = '') => {
+  const s = String(str).toUpperCase();
+  if (s.includes('FLEXO')) return 'FLEXO';
+  if (s.includes('SCREEN') || s.includes('SAB') || s.includes('POLY')) return 'SCREEN';
+  if (s.includes('ETCH') || s.includes('EMBOSS') || s.includes('FOIL')) return 'ETCHING';
+  if (s.includes('SAMPLE') || s.includes('PROTOTYPE')) return 'SAMPLE';
+  if (s.includes('REPRINT') || s.includes('ULANG')) return 'REPRINT';
+  return 'O';
+};
+
+// Agregasi Penghitung (Count By)
+export const countBy = (arr = [], keyFn = (x) => x) => {
+  const counts = {};
+  arr.forEach((item) => {
+    const k = typeof keyFn === 'function' ? keyFn(item) : item[keyFn];
+    if (k !== undefined && k !== null && String(k).trim() !== '') {
+      counts[k] = (counts[k] || 0) + 1;
+    }
+  });
+  return counts;
+};
+
+// Parser Tanggal yang Andal (Format ISO, Timestamp, YYYY-MM-DD, DD/MM/YYYY)
+export const parseDateVal = (val) => {
+  if (!val) return null;
+  if (val instanceof Date && !isNaN(val)) return val;
+  const s = String(val).trim();
+
+  // Tangani format timestamp Supabase: 2026-01-05 00:00:00+00 atau 2026-01-05T...
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const datePart = s.slice(0, 10);
+    const parts = datePart.split('-');
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Tangani format DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) {
+    const parts = s.split('/');
+    const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const parsed = new Date(s);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+// Format Date ke String ISO (YYYY-MM-DD)
+export const iso = (d) => {
+  if (!d) return '';
+  const parsed = parseDateVal(d);
+  if (!parsed) return '';
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+export const startOfDay = (d) => {
+  if (!d) return null;
+  const date = parseDateVal(d);
+  if (!date) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+export const endOfDay = (d) => {
+  if (!d) return null;
+  const date = parseDateVal(d);
+  if (!date) return null;
+  date.setHours(23, 59, 59, 999);
+  return date;
+};
+
+// Format Tanggal Tampilan Indonesia (05 Jan 2026)
+export const fmtDate = (d) => {
+  if (!d) return '-';
+  const parsed = parseDateVal(d);
+  if (!parsed) return String(d);
+  return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+// Format Rentang Periode
+export const fmtPeriodRange = (start, end) => {
+  if (!start && !end) return 'Semua Periode';
+  if (start && !end) return `Mulai ${fmtDate(start)}`;
+  if (!start && end) return `Sampai ${fmtDate(end)}`;
+  return `${fmtDate(start)} – ${fmtDate(end)}`;
+};
+
+export const fmtDateRange = fmtPeriodRange;
+</file>
+
 <file path="src/constants/schema.js">
 export const SHEETS = {
   job_active: {
@@ -4661,6 +5098,34 @@ export const SHEETS = {
   }
 };
 
+export const FORMS = [
+  {
+    key: 'rec_ctcp',
+    label: 'CTCP Offset',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-ctcp-example/viewform'
+  },
+  {
+    key: 'rec_ctp',
+    label: 'CTP Thermal',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-ctp-example/viewform'
+  },
+  {
+    key: 'rec_screen',
+    label: 'Screen Printing',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-screen-example/viewform'
+  },
+  {
+    key: 'rec_flexo',
+    label: 'Flexography',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-flexo-example/viewform'
+  },
+  {
+    key: 'rec_etching',
+    label: 'Etching Plate',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-etching-example/viewform'
+  }
+];
+
 export const JOP_CATS = [
   ['O', 'Offset'],
   ['FLEXO', 'Flexo'],
@@ -4684,142 +5149,8 @@ export const ALL_KEYS = ['job_active', ...PROD_KEYS, 'master_user'];
 export const TABLE_NAMES = ALL_KEYS;
 </file>
 
-<file path="src/utils/formatters.js">
-// Nilai aman pembacaan cell dari baris array
-export const cell = (row, idx, fallback = '-') => {
-  if (!row || idx === undefined || idx === null || idx < 0) return fallback;
-  const val = row[idx];
-  if (val === undefined || val === null || String(val).trim() === '') return fallback;
-  return String(val);
-};
-
-// Parsing angka aman
-export const num = (val, fallback = 0) => {
-  if (val === undefined || val === null || val === '') return fallback;
-  if (typeof val === 'number') return isNaN(val) ? fallback : val;
-  const clean = String(val).replace(/[^\d.-]/g, '');
-  const parsed = parseFloat(clean);
-  return isNaN(parsed) ? fallback : parsed;
-};
-
-// Format Angka Ribuan Indonesia
-export const fmtNum = (n) => {
-  if (n === null || n === undefined) return '0';
-  return Number(n).toLocaleString('id-ID');
-};
-
-// Format Persentase
-export const fmtPct = (n) => {
-  const val = Number(n) || 0;
-  return `${(val * 100).toFixed(1)}%`;
-};
-
-// Hex to RGBA generator
-export const hexA = (hex, alpha = 0.2) => {
-  if (!hex || typeof hex !== 'string') return `rgba(100, 116, 139, ${alpha})`;
-  let c = hex.replace('#', '');
-  if (c.length === 3) c = c.split('').map(x => x + x).join('');
-  const numVal = parseInt(c, 16);
-  if (isNaN(numVal)) return `rgba(100, 116, 139, ${alpha})`;
-  return `rgba(${(numVal >> 16) & 255}, ${(numVal >> 8) & 255}, ${numVal & 255}, ${alpha})`;
-};
-
-// Deteksi Kategori JOP
-export const jopCat = (str = '') => {
-  const s = String(str).toUpperCase();
-  if (s.includes('FLEXO')) return 'FLEXO';
-  if (s.includes('SCREEN') || s.includes('SAB') || s.includes('POLY')) return 'SCREEN';
-  if (s.includes('ETCH') || s.includes('EMBOSS') || s.includes('FOIL')) return 'ETCHING';
-  if (s.includes('SAMPLE') || s.includes('PROTOTYPE')) return 'SAMPLE';
-  if (s.includes('REPRINT') || s.includes('ULANG')) return 'REPRINT';
-  return 'O';
-};
-
-// Agregasi Penghitung (Count By)
-export const countBy = (arr = [], keyFn = (x) => x) => {
-  const counts = {};
-  arr.forEach((item) => {
-    const k = typeof keyFn === 'function' ? keyFn(item) : item[keyFn];
-    if (k !== undefined && k !== null && String(k).trim() !== '') {
-      counts[k] = (counts[k] || 0) + 1;
-    }
-  });
-  return counts;
-};
-
-// Parser Tanggal yang Andal (Format ISO, Timestamp, YYYY-MM-DD, DD/MM/YYYY)
-export const parseDateVal = (val) => {
-  if (!val) return null;
-  if (val instanceof Date && !isNaN(val)) return val;
-  const s = String(val).trim();
-
-  // Tangani format timestamp Supabase: 2026-01-05 00:00:00+00 atau 2026-01-05T...
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    const datePart = s.slice(0, 10);
-    const parts = datePart.split('-');
-    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  // Tangani format DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) {
-    const parts = s.split('/');
-    const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const parsed = new Date(s);
-  return isNaN(parsed.getTime()) ? null : parsed;
-};
-
-// Format Date ke String ISO (YYYY-MM-DD)
-export const iso = (d) => {
-  if (!d) return '';
-  const parsed = parseDateVal(d);
-  if (!parsed) return '';
-  const y = parsed.getFullYear();
-  const m = String(parsed.getMonth() + 1).padStart(2, '0');
-  const day = String(parsed.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-export const startOfDay = (d) => {
-  if (!d) return null;
-  const date = parseDateVal(d);
-  if (!date) return null;
-  date.setHours(0, 0, 0, 0);
-  return date;
-};
-
-export const endOfDay = (d) => {
-  if (!d) return null;
-  const date = parseDateVal(d);
-  if (!date) return null;
-  date.setHours(23, 59, 59, 999);
-  return date;
-};
-
-// Format Tanggal Tampilan Indonesia (05 Jan 2026)
-export const fmtDate = (d) => {
-  if (!d) return '-';
-  const parsed = parseDateVal(d);
-  if (!parsed) return String(d);
-  return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-};
-
-// Format Rentang Periode
-export const fmtPeriodRange = (start, end) => {
-  if (!start && !end) return 'Semua Periode';
-  if (start && !end) return `Mulai ${fmtDate(start)}`;
-  if (!start && end) return `Sampai ${fmtDate(end)}`;
-  return `${fmtDate(start)} – ${fmtDate(end)}`;
-};
-
-export const fmtDateRange = fmtPeriodRange;
-</file>
-
 <file path="src/App.jsx">
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useProductionData } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -4834,8 +5165,7 @@ import OperatorShiftView from './components/views/OperatorShiftView';
 import LeaderboardView from './components/views/LeaderboardView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
 import PersonalKpiView from './components/views/PersonalKpiView';
-import { SHEETS } from './constants/schema';
-import { num, startOfDay } from './utils/formatters';
+import FormsView from './components/views/FormsView';
 
 export default function App() {
   const { data, loading, serverStatus, reload } = useProductionData();
@@ -4849,32 +5179,57 @@ export default function App() {
   });
 
   const [currentMenu, setCurrentMenu] = useState('overview');
+  const [activeTabKey, setActiveTabKey] = useState('rec_ctcp');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedProcessKey, setSelectedProcessKey] = useState('rec_ctcp');
   const [modalState, setModalState] = useState(null);
-  const [modalHistory, setModalHistory] = useState([]);
 
-  // Theme State
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('prism_theme') || 'dark';
+  // State Rentang Periode Global
+  const [period, setPeriod] = useState(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    return { from: firstDay, to: today };
   });
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('dark', 'light');
-    root.classList.add(theme);
-    localStorage.setItem('prism_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  const handleOpenList = (title, key, rows) => {
+    setModalState({ type: 'list', title, key, rows });
   };
 
-  const [period, setPeriod] = useState({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date()
-  });
+  const handleSelectRow = (key, row) => {
+    setModalState({ type: 'detail', title: 'Detail Data', key, row });
+  };
+
+  const handleOpenMetric = (key, metric, rows) => {
+    setModalState({
+      type: 'metric',
+      title: `Rincian Metrik: ${metric.toUpperCase()}`,
+      key,
+      rows,
+      metric,
+      valLabel: metric.toUpperCase(),
+      valFn: (r) => {
+        const cfg = { rec_ctcp: { i: { baik: 11, rusak: 12, ganti: 10 } } }[key] || { i: { baik: 11, rusak: 12, ganti: 10 } };
+        if (metric === 'baik') return Number(r[cfg.i.baik] || 0);
+        if (metric === 'rusak') return Number(r[cfg.i.rusak] || 0);
+        if (metric === 'ganti') return Number(r[cfg.i.ganti] || 0);
+        return 0;
+      }
+    });
+  };
+
+  const handleOpenDayModal = (key, timestamp) => {
+    const dateObj = new Date(timestamp);
+    const dateStr = dateObj.toLocaleDateString('id-ID');
+    const filteredRows = (data[key] || []).filter((r) => {
+      const d = new Date(r[4] || r[6] || r[8] || r[9]);
+      return d.toDateString() === dateObj.toDateString();
+    });
+    setModalState({
+      type: 'list',
+      title: `Data Harian: ${dateStr}`,
+      key,
+      rows: filteredRows
+    });
+  };
 
   const handleLogin = (u) => {
     setCurrentUser(u);
@@ -4885,101 +5240,6 @@ export default function App() {
     sessionStorage.removeItem('pf_session');
     setCurrentUser(null);
   };
-
-  // Modal Handlers Global
-  const openListModal = (title, key, rows, subtitle = '') => {
-    setModalHistory([]);
-    setModalState({ type: 'list', title, key, rows, subtitle });
-  };
-
-  const openMetricModal = (key, metric, rows) => {
-    const cfg = SHEETS[key];
-    if (!cfg) return;
-    setModalHistory([]);
-    let filtered = rows;
-    let valFn = () => 0;
-    let valLabel = 'QTY';
-    let causeIdx = null;
-
-    if (metric === 'baik') {
-      filtered = rows.filter((r) => num(r[cfg.i.baik]) > 0);
-      valFn = (r) => num(r[cfg.i.baik]);
-      valLabel = 'QTY BAIK';
-    } else if (metric === 'rusak') {
-      filtered = rows.filter((r) => num(r[cfg.i.rusak]) > 0);
-      valFn = (r) => num(r[cfg.i.rusak]);
-      valLabel = 'QTY RUSAK';
-      causeIdx = cfg.i.defect_reason ?? cfg.i.penyRusak;
-    } else if (metric === 'ganti') {
-      filtered = rows.filter((r) => num(r[cfg.i.ganti]) > 0);
-      valFn = (r) => num(r[cfg.i.ganti]);
-      valLabel = 'QTY GANTI';
-      causeIdx = cfg.i.replace_reason ?? cfg.i.penyGanti;
-    } else if (metric === 'pakai') {
-      valFn = (r) => num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
-      valLabel = 'TOTAL PAKAI';
-    } else if (metric === 'pct') {
-      filtered = rows.filter((r) => num(r[cfg.i.rusak]) > 0);
-      valFn = (r) => {
-        const p = num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
-        return p > 0 ? (num(r[cfg.i.rusak]) / p) * 100 : 0;
-      };
-      valLabel = 'LOSS %';
-      causeIdx = cfg.i.defect_reason ?? cfg.i.penyRusak;
-    }
-
-    setModalState({
-      type: 'metric',
-      title: `Detail Metrik: ${metric.toUpperCase()} (${cfg.label})`,
-      key,
-      rows: filtered,
-      valFn,
-      valLabel,
-      causeIdx,
-      metric
-    });
-  };
-
-  const openDayModal = (key, timestamp) => {
-    const cfg = SHEETS[key];
-    const dTarget = new Date(timestamp);
-    const dayStart = startOfDay(dTarget).getTime();
-    const rows = (data[key] || []).filter((r) => {
-      const d = r[cfg.i.date] ? new Date(r[cfg.i.date]) : null;
-      return d && startOfDay(d).getTime() === dayStart;
-    });
-
-    openListModal(`Detail Harian: ${dTarget.toLocaleDateString('id-ID')}`, key, rows);
-  };
-
-  const handleSelectRow = (key, row) => {
-    if (modalState && modalState.type !== 'detail') {
-      setModalHistory((prev) => [...prev, modalState]);
-    }
-    setModalState({
-      type: 'detail',
-      title: `Detail Transaksi — ${cell(row, SHEETS[key]?.i?.id || 0)}`,
-      key,
-      row,
-      withBack: modalHistory.length > 0 || (modalState && modalState.type !== 'detail')
-    });
-  };
-
-  const handleModalBack = () => {
-    if (modalHistory.length > 0) {
-      const prev = modalHistory[modalHistory.length - 1];
-      setModalHistory((h) => h.slice(0, -1));
-      setModalState(prev);
-    } else {
-      setModalState(null);
-    }
-  };
-
-  function cell(r, idx) {
-    return r && r[idx] !== undefined && r[idx] !== null ? String(r[idx]) : '-';
-  }
-
-  const triggerPrint = () => window.print();
 
   if (!currentUser) {
     return (
@@ -4994,87 +5254,50 @@ export default function App() {
   }
 
   const renderView = () => {
+    const commonProps = {
+      tabKey: activeTabKey,
+      onTabChange: setActiveTabKey,
+      data,
+      period,
+      onSelectRow: handleSelectRow,
+      onOpenList: handleOpenList,
+      onOpenMetric: handleOpenMetric,
+      onOpenDayModal: handleOpenDayModal,
+      onGoToData: (k) => {
+        if (k) setActiveTabKey(k);
+        setCurrentMenu('data');
+      },
+      onMenuChange: setCurrentMenu
+    };
+
     switch (currentMenu) {
       case 'overview':
-        return (
-          <OverviewView
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-            onSelectRow={handleSelectRow}
-            onMenuChange={setCurrentMenu}
-          />
-        );
+        return <OverviewView {...commonProps} />;
       case 'production':
-        return (
-          <ProductionView
-            tabKey={selectedProcessKey}
-            onTabChange={setSelectedProcessKey}
-            data={data}
-            period={period}
-            onSelectRow={handleSelectRow}
-            onOpenList={openListModal}
-            onOpenMetric={openMetricModal}
-            onOpenDayModal={openDayModal}
-            onGoToData={() => setCurrentMenu('data')}
-            onOpenPrint={triggerPrint}
-          />
-        );
+        return <ProductionView {...commonProps} />;
       case 'comparison':
-        return <CompareView data={data} />;
+        return <CompareView data={data} onToast={(msg) => alert(msg)} />;
       case 'data':
-        return (
-          <DataTableView
-            tabKey={selectedProcessKey}
-            onTabChange={setSelectedProcessKey}
-            data={data}
-            period={period}
-            onSelectRow={handleSelectRow}
-            user={currentUser}
-            onOpenPrint={triggerPrint}
-          />
-        );
+        return <DataTableView tabKey={activeTabKey} {...commonProps} user={currentUser} />;
       case 'analytics':
-        return (
-          <ProcessAnalyticsView
-            tabKey={selectedProcessKey}
-            onTabChange={setSelectedProcessKey}
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-            onOpenPrint={triggerPrint}
-          />
-        );
+        return <ProcessAnalyticsView tabKey={activeTabKey} {...commonProps} />;
       case 'team':
         return <OperatorShiftView data={data} period={period} />;
       case 'leaderboard':
         return <LeaderboardView data={data} period={period} />;
       case 'executive':
-        return (
-          <ExecutiveOverallView
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-          />
-        );
+        return <ExecutiveOverallView {...commonProps} />;
       case 'personal':
         return <PersonalKpiView data={data} user={currentUser} period={period} />;
+      case 'forms':
+        return <FormsView onToast={(msg) => alert(msg)} />;
       default:
-        return (
-          <OverviewView
-            data={data}
-            period={period}
-            onOpenList={openListModal}
-            onSelectRow={handleSelectRow}
-            onMenuChange={setCurrentMenu}
-          />
-        );
+        return <OverviewView {...commonProps} />;
     }
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-x-hidden w-full">
-      {/* Sidebar Responsive */}
+    <div className="min-h-screen bg-[#060a12] text-slate-100 flex">
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -5082,51 +5305,36 @@ export default function App() {
         onLogout={handleLogout}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Content Area (Fluid di Mobile, Responsive di Desktop) */}
-      <div
-        className={`flex-1 flex flex-col min-h-screen w-full transition-all duration-300
-          ${/* Di mobile tidak memakai padding kiri agar pas di layar HP */ ''}
-          pl-0
-          ${/* Di desktop baru menerapkan offset sidebar */ ''}
-          ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}
-        `}
-      >
+      <div className={`flex-1 transition-all flex flex-col min-h-screen ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
         <Header
           period={period}
           onPeriodChange={setPeriod}
           onReset={reload}
-          onOpenPrint={triggerPrint}
-          onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
-          theme={theme}
-          onToggleTheme={toggleTheme}
+          onOpenPrint={() => window.print()}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        <main className="p-3 sm:p-5 lg:p-6 flex-1 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
+        <main className="p-6 flex-1 space-y-6">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 space-y-3">
-              <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
-              <p className="text-cyan-400 text-xs font-mono uppercase tracking-widest">Sinkronisasi Data...</p>
+            <div className="flex items-center justify-center py-32 text-slate-400 text-sm font-semibold">
+              Sinkronisasi data sistem...
             </div>
           ) : (
             renderView()
           )}
         </main>
 
-        <footer className="p-4 border-t border-white/10 text-center text-xs opacity-60 font-mono bg-black/10 backdrop-blur-md">
-          &copy; 2026 PRISM &bull; Integrated System & Monitoring
+        <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
+          &copy; 2026 PRISM V1.0 (Prepress Integrated System & Monitoring) &bull; Aether Code
         </footer>
       </div>
 
-      {/* Global Modal Detail */}
       <Modal
         modalState={modalState}
         onClose={() => setModalState(null)}
         onSelectRow={handleSelectRow}
-        onBack={handleModalBack}
       />
     </div>
   );
