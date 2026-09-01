@@ -56,7 +56,7 @@ export default function Sidebar({
           <div className="p-4 border-b border-slate-700/70 flex items-center justify-between shrink-0 bg-slate-950/40">
             {(!collapsed || mobileOpen) ? (
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 p-1.5 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 p-1.5 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
                   <img
                     src={LOGO_URL}
                     alt="PRISM Logo"
@@ -74,10 +74,10 @@ export default function Sidebar({
                 </div>
               </div>
             ) : (
-              <div className="w-8 h-8 mx-auto rounded-xl bg-cyan-500/10 border border-cyan-400/30 p-1 flex items-center justify-center overflow-hidden">
+              <div className="w-10 h-10 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-400/40 p-1.5 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
                 <img
                   src={LOGO_URL}
-                  alt="PRISM"
+                  alt="PRISM Logo"
                   className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />

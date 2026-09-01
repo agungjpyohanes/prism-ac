@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS } from '../../constants/schema';
-import { cell, fmtDate, jopCat } from '../../utils/formatters';
+import { cell, fmtDate, jopCat, getStatusBadgeClass, getCategoryBadgeClass } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -174,7 +174,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
       {/* 4 Kartu KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div
-          onClick={() => onOpenList?.('Seluruh Job Aktif', 'job_active', filtered)}
+          onClick={() => onOpenList?.('Seluruh Job Aktif (WIP)', 'job_active', filtered)}
           className="card p-4 sm:p-5 border-l-4 border-l-cyan-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
@@ -184,7 +184,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
           <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-white">
             {filtered.length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Seluruh pekerjaan dalam sistem</div>
+          <div className="text-[10px] text-slate-400 mt-1">Seluruh pekerjaan dalam sistem &bull; Klik untuk detail</div>
         </div>
 
         <div
@@ -207,7 +207,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
               return s.includes('progress') || s.includes('proses') || s.includes('screen') || s.includes('hdi');
             }).length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Sedang dikerjakan mesin/operator</div>
+          <div className="text-[10px] text-slate-400 mt-1">Sedang dikerjakan &bull; Klik untuk detail</div>
         </div>
 
         <div
@@ -230,10 +230,13 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
               return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
             }).length.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran / kelengkapan</div>
+          <div className="text-[10px] text-slate-400 mt-1">Menunggu giliran &bull; Klik untuk detail</div>
         </div>
 
-        <div className="card p-4 sm:p-5 border-l-4 border-l-indigo-500">
+        <div
+          onClick={() => onOpenList?.('Daftar Job Aktif Berdasarkan Kategori', 'job_active', filtered)}
+          className="card p-4 sm:p-5 border-l-4 border-l-indigo-500 cursor-pointer hover:scale-[1.02] transition"
+        >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">KATEGORI PROSES</span>
             <Layers className="w-4 h-4 text-indigo-400" />
@@ -241,7 +244,7 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
           <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-indigo-300">
             {Object.keys(stats.categoryCount).length}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Divisi percetakan aktif</div>
+          <div className="text-[10px] text-slate-400 mt-1">Divisi aktif &bull; Klik untuk detail</div>
         </div>
       </div>
 
@@ -409,29 +412,21 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow }) {
                     if (colIdx === cfg.i.category) {
                       const displayCat = val && val !== '-' && String(val).toUpperCase() !== 'NULL' ? val : getRowCategory(row);
                       return (
-                        <td key={colIdx} className="whitespace-nowrap font-bold text-cyan-300">
-                          {displayCat}
+                        <td key={colIdx} className="whitespace-nowrap">
+                          <span className={`badge ${getCategoryBadgeClass(displayCat)} font-bold`}>
+                            {displayCat}
+                          </span>
                         </td>
                       );
                     }
 
                     // Status Badge
                     if (colIdx === cfg.i.status) {
-                      const str = String(val || '').toLowerCase();
-                      const isDone = str.includes('selesai') || str.includes('done');
-                      const isInProg = str.includes('progress') || str.includes('proses') || str.includes('screen') || str.includes('hdi');
+                      const str = String(val || 'ANTRI');
                       return (
                         <td key={colIdx} className="whitespace-nowrap">
-                          <span
-                            className={`badge ${
-                              isDone
-                                ? 'badge-success'
-                                : isInProg
-                                ? 'badge-info'
-                                : 'badge-warning'
-                            }`}
-                          >
-                            {val || 'ANTRI'}
+                          <span className={`badge ${getStatusBadgeClass(str)} font-bold`}>
+                            {str}
                           </span>
                         </td>
                       );

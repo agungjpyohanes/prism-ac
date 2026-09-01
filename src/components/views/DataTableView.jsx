@@ -1,15 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
 import { parseDateVal, fmtDate } from '../../utils/formatters';
-import { Search, Printer, Database } from 'lucide-react';
+import { Search, Database } from 'lucide-react';
 
 export default function DataTableView({
   tabKey = 'rec_ctcp',
   onTabChange,
   data,
   period,
-  onSelectRow,
-  onOpenPrint
+  onSelectRow
 }) {
   const activeKey = tabKey || 'rec_ctcp';
   const cfg = SHEETS[activeKey] || SHEETS.rec_ctcp;
@@ -102,16 +101,6 @@ export default function DataTableView({
             );
           })}
         </div>
-
-        {/* Tombol Print / PDF di Header Menu */}
-        <button
-          type="button"
-          onClick={onOpenPrint || (() => window.print())}
-          className="btn-primary text-xs py-2 px-3.5 sm:px-4 flex items-center gap-1.5 rounded-xl shadow-md"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          <span>Print / PDF {cfg.label}</span>
-        </button>
       </div>
 
       {/* Main Table Card */}

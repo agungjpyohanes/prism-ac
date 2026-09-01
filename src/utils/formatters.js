@@ -129,3 +129,123 @@ export const fmtPeriodRange = (start, end) => {
 };
 
 export const fmtDateRange = fmtPeriodRange;
+
+// Preset Filter Tanggal Cepat
+export const DATE_PRESETS = [
+  {
+    id: 'today',
+    label: 'Hari Ini',
+    fullLabel: 'Hari Ini',
+    getRange: () => {
+      const today = new Date();
+      return { from: startOfDay(today), to: endOfDay(today) };
+    }
+  },
+  {
+    id: '7days',
+    label: '7 Hari',
+    fullLabel: '7 Hari Terakhir',
+    getRange: () => {
+      const today = new Date();
+      const from = new Date(today);
+      from.setDate(today.getDate() - 6);
+      return { from: startOfDay(from), to: endOfDay(today) };
+    }
+  },
+  {
+    id: '30days',
+    label: '30 Hari',
+    fullLabel: '30 Hari Terakhir',
+    getRange: () => {
+      const today = new Date();
+      const from = new Date(today);
+      from.setDate(today.getDate() - 29);
+      return { from: startOfDay(from), to: endOfDay(today) };
+    }
+  },
+  {
+    id: 'thisMonth',
+    label: 'Bulan Ini',
+    fullLabel: 'Bulan Ini',
+    getRange: () => {
+      const today = new Date();
+      const from = new Date(today.getFullYear(), today.getMonth(), 1);
+      return { from: startOfDay(from), to: endOfDay(today) };
+    }
+  },
+  {
+    id: 'lastMonth',
+    label: 'Bulan Lalu',
+    fullLabel: 'Bulan Lalu',
+    getRange: () => {
+      const today = new Date();
+      const from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const to = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999);
+      return { from: startOfDay(from), to: to };
+    }
+  }
+];
+
+// Inisialisasi Default Period (Awal bulan berjalan s.d. hari ini)
+export const getDefaultPeriod = () => {
+  const today = new Date();
+  const from = new Date(today.getFullYear(), today.getMonth(), 1);
+  return { from: startOfDay(from), to: endOfDay(today) };
+};
+
+// Cek preset yang aktif
+export const getActivePresetId = (period) => {
+  if (!period || !period.from || !period.to) return null;
+  const fromStr = iso(period.from);
+  const toStr = iso(period.to);
+  for (const p of DATE_PRESETS) {
+    const range = p.getRange();
+    if (iso(range.from) === fromStr && iso(range.to) === toStr) {
+      return p.id;
+    }
+  }
+  return null;
+};
+
+// Pewarnaan Dinamis Status Badge
+export const getStatusBadgeClass = (statusStr = '') => {
+  const s = String(statusStr || '').toUpperCase().trim();
+  if (s.includes('SELESAI') || s.includes('OK') || s.includes('DONE') || s.includes('GOOD')) {
+    return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+  }
+  if (s.includes('REJECT') || s.includes('ERROR') || s.includes('RUSAK') || s.includes('DEFECT')) {
+    return 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
+  }
+  if (s.includes('WASHING') || s.includes('EXPOSE')) {
+    return 'bg-purple-500/20 text-purple-300 border border-purple-500/40';
+  }
+  if (s.includes('HDI') || s.includes('PROGRESS') || s.includes('PROSES') || s.includes('RUNNING')) {
+    return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+  }
+  if (s.includes('TUNGGU') || s.includes('INFO') || s.includes('FILE') || s.includes('PENDING') || s.includes('HOLD')) {
+    return 'bg-orange-500/20 text-orange-300 border border-orange-500/40';
+  }
+  // Default: ANTRI / QUEUE
+  return 'bg-amber-500/20 text-amber-300 border border-amber-500/40';
+};
+
+// Pewarnaan Dinamis Category Badge
+export const getCategoryBadgeClass = (categoryStr = '') => {
+  const c = String(categoryStr || '').toUpperCase().trim();
+  if (c.includes('CTCP')) {
+    return 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
+  }
+  if (c.includes('CTP')) {
+    return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+  }
+  if (c.includes('FLEXO')) {
+    return 'bg-teal-500/20 text-teal-300 border border-teal-500/30';
+  }
+  if (c.includes('SCREEN')) {
+    return 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30';
+  }
+  if (c.includes('ETCHING') || c.includes('ETCH')) {
+    return 'bg-amber-600/20 text-amber-200 border border-amber-600/30';
+  }
+  return 'bg-slate-700/30 text-slate-300 border border-slate-600/40';
+};

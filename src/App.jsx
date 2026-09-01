@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProductionData } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -14,12 +14,43 @@ import LeaderboardView from './components/views/LeaderboardView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
 import PersonalKpiView from './components/views/PersonalKpiView';
 import FormsView from './components/views/FormsView';
+import { SHEETS } from './constants/schema';
+import { getDefaultPeriod, num, parseDateVal } from './utils/formatters';
 
 export default function App() {
   const { data, loading, serverStatus, reload } = useProductionData();
+  
+  // Theme State (Dark / Light) dengan persistensi localStorage
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('prism_theme') || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('prism_theme', theme);
+    } catch {
+      /* ignore storage errors */
+    }
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const s = sessionStorage.getItem('pf_session');
+      const s = sessionStorage.getItem('prism_session') || sessionStorage.getItem('pf_session');
       return s ? JSON.parse(s) : null;
     } catch {
       return null;
@@ -32,49 +63,74 @@ export default function App() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [modalState, setModalState] = useState(null);
 
-  // State Rentang Periode Global
-  const [period, setPeriod] = useState(() => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    return { from: firstDay, to: today };
-  });
+  // State Rentang Periode Global (Default: Awal Bulan Berjalan / 30 Hari Terakhir s.d. Hari Ini)
+  const [period, setPeriod] = useState(getDefaultPeriod);
 
-  const handleOpenList = (title, key, rows) => {
-    setModalState({ type: 'list', title, key, rows });
+  const handleOpenList = (title, key, rows, subtitle) => {
+    setModalState({ type: 'list', title, key, rows, subtitle });
   };
 
   const handleSelectRow = (key, row) => {
-    setModalState({ type: 'detail', title: 'Detail Data', key, row });
+    setModalState({ type: 'detail', title: 'Detail Data Transaksi', key, row });
   };
 
   const handleOpenMetric = (key, metric, rows) => {
+    const cfg = SHEETS[key] || SHEETS.rec_ctcp;
+    let filteredRows = rows || [];
+    let label = metric.toUpperCase();
+
+    if (metric === 'baik') {
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i.baik]) > 0);
+      label = cfg.cards?.baik || 'PLATE BAIK';
+    } else if (metric === 'rusak') {
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i.rusak]) > 0);
+      label = cfg.cards?.rusak || 'PLATE RUSAK / DEFECT';
+    } else if (metric === 'ganti') {
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i.ganti]) > 0);
+      label = cfg.cards?.ganti || 'PLATE GANTI / REPRINT';
+    } else if (metric === 'pakai') {
+      filteredRows = (rows || []).filter((r) => (num(r[cfg.i.baik]) + num(r[cfg.i.rusak])) > 0);
+      label = cfg.cards?.pakai || 'TOTAL PLATE DIPROSES';
+    } else if (metric === 'pct') {
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i.rusak]) > 0);
+      label = 'DEFECT RATE & RECORD LOSS';
+    }
+
     setModalState({
       type: 'metric',
-      title: `Rincian Metrik: ${metric.toUpperCase()}`,
+      title: `Detail Data: ${label} (${cfg.label})`,
+      subtitle: `Menampilkan ${filteredRows.length} baris transaksi spesifik pada periode aktif`,
       key,
-      rows,
+      rows: filteredRows,
       metric,
-      valLabel: metric.toUpperCase(),
+      valLabel: label,
       valFn: (r) => {
-        const cfg = { rec_ctcp: { i: { baik: 11, rusak: 12, ganti: 10 } } }[key] || { i: { baik: 11, rusak: 12, ganti: 10 } };
-        if (metric === 'baik') return Number(r[cfg.i.baik] || 0);
-        if (metric === 'rusak') return Number(r[cfg.i.rusak] || 0);
-        if (metric === 'ganti') return Number(r[cfg.i.ganti] || 0);
+        if (metric === 'baik') return num(r[cfg.i.baik]);
+        if (metric === 'rusak') return num(r[cfg.i.rusak]);
+        if (metric === 'ganti') return num(r[cfg.i.ganti]);
+        if (metric === 'pakai') return num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
+        if (metric === 'pct') {
+          const p = num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
+          return p > 0 ? (num(r[cfg.i.rusak]) / p) * 100 : 0;
+        }
         return 0;
-      }
+      },
+      causeIdx: metric === 'rusak' ? cfg.i.penyRusak : (metric === 'ganti' ? cfg.i.penyGanti : null)
     });
   };
 
   const handleOpenDayModal = (key, timestamp) => {
+    const cfg = SHEETS[key] || SHEETS.rec_ctcp;
     const dateObj = new Date(timestamp);
-    const dateStr = dateObj.toLocaleDateString('id-ID');
+    const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     const filteredRows = (data[key] || []).filter((r) => {
-      const d = new Date(r[4] || r[6] || r[8] || r[9]);
-      return d.toDateString() === dateObj.toDateString();
+      const d = parseDateVal(r[cfg.i.date]);
+      return d && d.toDateString() === dateObj.toDateString();
     });
     setModalState({
       type: 'list',
-      title: `Data Harian: ${dateStr}`,
+      title: `Data Produksi Harian: ${dateStr} (${cfg.label})`,
+      subtitle: `Menampilkan ${filteredRows.length} transaksi pada tanggal ${dateStr}`,
       key,
       rows: filteredRows
     });
@@ -82,10 +138,11 @@ export default function App() {
 
   const handleLogin = (u) => {
     setCurrentUser(u);
-    sessionStorage.setItem('pf_session', JSON.stringify(u));
+    sessionStorage.setItem('prism_session', JSON.stringify(u));
   };
 
   const handleLogout = () => {
+    sessionStorage.removeItem('prism_session');
     sessionStorage.removeItem('pf_session');
     setCurrentUser(null);
   };
@@ -146,7 +203,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060a14] text-slate-100 flex overflow-x-hidden">
+    <div className="min-h-screen bg-[#060a14] dark:bg-[#060a14] text-slate-100 dark:text-slate-100 flex overflow-x-hidden transition-colors">
       <Sidebar
         currentMenu={currentMenu}
         onMenuChange={setCurrentMenu}
@@ -163,7 +220,8 @@ export default function App() {
           period={period}
           onPeriodChange={setPeriod}
           onReset={reload}
-          onOpenPrint={() => window.print()}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
           onToggleSidebar={() => {
             if (window.innerWidth < 1024) {
               setMobileSidebarOpen(!mobileSidebarOpen);
@@ -183,8 +241,8 @@ export default function App() {
           )}
         </main>
 
-        <footer className="p-4 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono">
-          &copy; 2026 PRISM V2.5 (Prepress Integrated System & Monitoring) &bull; Aether Code
+        <footer className="p-4 border-t border-slate-800/80 dark:border-slate-800/80 text-center text-xs text-slate-500 dark:text-slate-400 font-mono">
+          &copy; 2026 PRISM Integrated System & Monitoring V2.5 &bull; Aether Code
         </footer>
       </div>
 

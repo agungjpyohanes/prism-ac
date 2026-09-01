@@ -76,7 +76,43 @@ export default function CompareView({ data = {}, onToast }) {
 
   const handleLastMonth = () => {
     setPeriods(defaultPeriods());
-    onToast?.('Reset ke: Bulan Lalu vs Bulan Ini', 'info');
+    onToast?.('Preset: Bulan Lalu vs Bulan Ini', 'info');
+  };
+
+  const handleLast30Days = () => {
+    const today = new Date();
+    const p2To = today;
+    const p2From = new Date(today);
+    p2From.setDate(today.getDate() - 29);
+
+    const p1To = new Date(today);
+    p1To.setDate(today.getDate() - 30);
+    const p1From = new Date(today);
+    p1From.setDate(today.getDate() - 59);
+
+    setPeriods({
+      p1: { from: iso(p1From), to: iso(p1To) },
+      p2: { from: iso(p2From), to: iso(p2To) }
+    });
+    onToast?.('Preset: 30 Hari Sebelumnya vs 30 Hari Terakhir', 'info');
+  };
+
+  const handleLast7Days = () => {
+    const today = new Date();
+    const p2To = today;
+    const p2From = new Date(today);
+    p2From.setDate(today.getDate() - 6);
+
+    const p1To = new Date(today);
+    p1To.setDate(today.getDate() - 7);
+    const p1From = new Date(today);
+    p1From.setDate(today.getDate() - 13);
+
+    setPeriods({
+      p1: { from: iso(p1From), to: iso(p1To) },
+      p2: { from: iso(p2From), to: iso(p2To) }
+    });
+    onToast?.('Preset: 7 Hari Sebelumnya vs 7 Hari Terakhir', 'info');
   };
 
   return (
@@ -87,7 +123,7 @@ export default function CompareView({ data = {}, onToast }) {
             <GitCompare className="w-5 h-5" />
           </span>
           <div>
-            <h3 className="card-title text-base sm:text-lg">Dashboard Komparasi</h3>
+            <h3 className="card-title text-base sm:text-lg">Dashboard Komparasi Capaian</h3>
             <p className="text-xs text-slate-400">Bandingkan capaian antar periode untuk menganalisis tren efisiensi produksi</p>
           </div>
         </div>
@@ -104,20 +140,20 @@ export default function CompareView({ data = {}, onToast }) {
           <div>
             <label className="text-xs font-semibold text-slate-400 mb-1 block">Periode 1 (Pembanding)</label>
             <div className="space-y-1.5">
-              <input type="date" value={periods.p1.from} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp w-full" />
-              <input type="date" value={periods.p1.to} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp w-full" />
+              <input type="date" value={periods.p1.from} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, from: e.target.value } })} className="inp w-full [color-scheme:dark]" />
+              <input type="date" value={periods.p1.to} onChange={e => setPeriods({ ...periods, p1: { ...periods.p1, to: e.target.value } })} className="inp w-full [color-scheme:dark]" />
             </div>
           </div>
           <div className="sm:col-span-2 md:col-span-1">
             <label className="text-xs font-semibold text-slate-400 mb-1 block">Periode 2 (Dibandingkan)</label>
             <div className="space-y-1.5">
-              <input type="date" value={periods.p2.from} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp w-full" />
-              <input type="date" value={periods.p2.to} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp w-full" />
+              <input type="date" value={periods.p2.from} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, from: e.target.value } })} className="inp w-full [color-scheme:dark]" />
+              <input type="date" value={periods.p2.to} onChange={e => setPeriods({ ...periods, p2: { ...periods.p2, to: e.target.value } })} className="inp w-full [color-scheme:dark]" />
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4 flex-wrap">
+        <div className="flex gap-2 mt-4 flex-wrap items-center">
           <button onClick={() => onToast?.('Komparasi diperbarui', 'ok')} className="btn-primary text-xs py-2 px-4 rounded-xl">
             <Check className="w-4 h-4 mr-1" /> Terapkan Komparasi
           </button>
@@ -126,6 +162,12 @@ export default function CompareView({ data = {}, onToast }) {
           </button>
           <button onClick={handleLastMonth} className="btn-ghost text-xs py-2 px-3 rounded-xl">
             Bulan Lalu vs Bulan Ini
+          </button>
+          <button onClick={handleLast30Days} className="btn-ghost text-xs py-2 px-3 rounded-xl">
+            30 Hari Lalu vs 30 Hari Ini
+          </button>
+          <button onClick={handleLast7Days} className="btn-ghost text-xs py-2 px-3 rounded-xl">
+            7 Hari Lalu vs 7 Hari Ini
           </button>
         </div>
       </div>

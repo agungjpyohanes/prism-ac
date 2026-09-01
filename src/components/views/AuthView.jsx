@@ -88,8 +88,8 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
 
           <div className="max-w-lg">
             <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
-              Prepress Integrated<br />
-              <span className="gradient-text">System & Monitoring</span>
+              PRISM<br />
+              <span className="gradient-text">Integrated System & Monitoring</span>
             </h2>
             <p className="text-lg text-slate-300 mb-8 leading-relaxed">
               Pusat kendali data prepress modern — monitoring plate CTCP & CTP, screen, flexo, dan etching dalam satu dashboard terintegrasi yang powerful.

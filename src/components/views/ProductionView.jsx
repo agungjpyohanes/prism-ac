@@ -13,7 +13,7 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
-import { Check, AlertTriangle, RotateCcw, Layers, Percent, Printer } from 'lucide-react';
+import { Check, AlertTriangle, RotateCcw, Layers, Percent } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -26,8 +26,7 @@ export default function ProductionView({
   onOpenList,
   onOpenMetric,
   onOpenDayModal,
-  onGoToData,
-  onOpenPrint
+  onGoToData
 }) {
   const activeKey = tabKey || 'rec_ctcp';
   const cfg = SHEETS[activeKey] || SHEETS.rec_ctcp;
@@ -123,17 +122,10 @@ export default function ProductionView({
           <button
             type="button"
             onClick={() => onGoToData?.(activeKey)}
-            className="btn-ghost text-xs py-2 px-3 rounded-xl"
+            className="btn-primary text-xs py-2 px-4 rounded-xl shadow-md flex items-center gap-1.5"
           >
-            Lihat Tabel Data &rarr;
-          </button>
-          <button
-            type="button"
-            onClick={onOpenPrint || (() => window.print())}
-            className="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 rounded-xl shadow-md"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print / PDF</span>
+            <span>Lihat Tabel Data {cfg.label}</span>
+            <span>&rarr;</span>
           </button>
         </div>
       </div>
