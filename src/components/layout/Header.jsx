@@ -74,7 +74,7 @@ export default function Header({
             
             <div className="flex items-center gap-2.5">
               <img
-                src="/prism-logo.png"
+                src="/favicon.png"
                 alt="PRISM Logo"
                 className="w-8 h-8 object-contain shrink-0"
               />

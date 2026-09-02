@@ -49,7 +49,7 @@ export default function Sidebar({
             {(!collapsed || mobileOpen) ? (
               <div className="flex items-center gap-3">
                 <img
-                  src="/prism-logo.png"
+                  src="/favicon.png"
                   alt="PRISM Logo"
                   className="w-9 h-9 object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] shrink-0"
                 />
@@ -69,7 +69,7 @@ export default function Sidebar({
               </div>
             ) : (
               <img
-                src="/prism-logo.png"
+                src="/favicon.png"
                 alt="PRISM Logo"
                 className="w-9 h-9 mx-auto object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]"
               />

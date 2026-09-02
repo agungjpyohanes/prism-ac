@@ -247,7 +247,7 @@ export default function App() {
             <div className="flex flex-col items-center justify-center py-28 space-y-4">
               <div className="relative w-16 h-16 rounded-3xl bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-400/30 p-2.5 flex items-center justify-center shadow-lg shadow-cyan-500/20 animate-pulse overflow-hidden">
                 <img
-                  src="/prism-logo.png"
+                  src="/favicon.png"
                   alt="PRISM Logo"
                   className="w-full h-full object-contain"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}

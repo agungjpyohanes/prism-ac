@@ -205,9 +205,9 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
           {/* Large Visual Logo Panel */}
           <div className="text-center mb-6">
             <img
-              src="/prism-logo.png"
+              src="/favicon.png"
               alt="PRISM Logo"
-              className="w-48 h-48 mx-auto object-contain drop-shadow-[0_0_25px_rgba(56,189,248,0.45)] mb-6"
+              className="w-40 h-40 object-contain mx-auto drop-shadow-[0_0_20px_rgba(56,189,248,0.45)] mb-6"
             />
             <h1 className="font-display font-black text-4xl tracking-wider text-white">
               PRISM
@@ -292,7 +292,7 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
           {/* Logo Mobile */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
             <img
-              src="/prism-logo.png"
+              src="/favicon.png"
               alt="PRISM Logo"
               className="w-10 h-10 object-contain"
             />
@@ -313,7 +313,7 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
             {/* Top Card Branding Logo Header */}
             <div className="flex items-center gap-3.5 mb-6 pb-4 border-b border-slate-800">
               <img
-                src="/prism-logo.png"
+                src="/favicon.png"
                 alt="PRISM Logo"
                 className="w-10 h-10 object-contain shrink-0"
               />
