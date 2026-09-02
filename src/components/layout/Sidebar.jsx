@@ -1,5 +1,5 @@
-import React from 'react';
-import { MENUS } from '../../constants/navigation';
+import React, { useState } from 'react';
+import { MENUS, hasMenuAccess } from '../../constants/navigation';
 import { LogOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 export default function Sidebar({
@@ -12,14 +12,10 @@ export default function Sidebar({
   mobileOpen,
   onCloseMobile
 }) {
-  const userRole = String(user?.ROLE || user?.role || 'guest').toLowerCase().trim();
-  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
+  const userRole = String(user?.ROLE || user?.role || 'tamu').toLowerCase().trim();
 
-  const availableMenus = MENUS.filter((m) => {
-    if (!m.roles || m.roles.length === 0) return true;
-    if (userRole === 'admin' || userRole === 'manager' || userRole === 'manajemen') return true;
-    return m.roles.includes(userRole);
-  });
+  // Filter 5 menu utama sesuai matriks role permissions
+  const availableMenus = MENUS.filter((m) => hasMenuAccess(userRole, m.id));
 
   const handleMenuClick = (id) => {
     onMenuChange(id);
@@ -52,32 +48,31 @@ export default function Sidebar({
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-[#090d16]">
             {(!collapsed || mobileOpen) ? (
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-400/40 p-1.5 flex items-center justify-center shadow-sm dark:shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
-                  <img
-                    src={LOGO_URL}
-                    alt="PRISM Logo"
-                    className="w-full h-full object-contain"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
+                <img
+                  src="/prism-logo.png"
+                  alt="PRISM Logo"
+                  className="w-9 h-9 object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] shrink-0"
+                />
                 <div className="min-w-0">
-                  <h2 className="font-display font-black text-base tracking-wider text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-cyan-300 dark:via-sky-200 dark:to-indigo-300">
-                    PRISM
-                  </h2>
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="font-display font-black text-base tracking-wider text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-cyan-300 dark:to-indigo-300">
+                      PRISM
+                    </h2>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-cyan-500/20 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-400/30">
+                      V2.5
+                    </span>
+                  </div>
                   <p className="text-[9px] font-mono text-blue-600 dark:text-cyan-400 font-bold truncate">
-                    Integrated System & Monitoring
+                    Integrated System
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="w-10 h-10 mx-auto rounded-2xl bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-400/40 p-1.5 flex items-center justify-center shadow-sm dark:shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0 overflow-hidden">
-                <img
-                  src={LOGO_URL}
-                  alt="PRISM Logo"
-                  className="w-full h-full object-contain"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
+              <img
+                src="/prism-logo.png"
+                alt="PRISM Logo"
+                className="w-9 h-9 mx-auto object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]"
+              />
             )}
 
             {/* Mobile Close Button & Desktop Toggle */}
@@ -102,7 +97,7 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Menu Items */}
+          {/* Menu Items (5 Menu Utama yang Tersaring) */}
           <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
             {availableMenus.map((m) => {
               const Icon = m.icon;
@@ -136,7 +131,7 @@ export default function Sidebar({
               </div>
               <div className="truncate">
                 <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{user?.USER || user?.username || 'User'}</p>
-                <p className="text-[10px] font-mono text-blue-600 dark:text-cyan-300 font-bold uppercase">{user?.ROLE || user?.role || 'OPERATOR'}</p>
+                <p className="text-[10px] font-mono text-blue-600 dark:text-cyan-300 font-bold uppercase">{user?.ROLE || user?.role || 'tamu'}</p>
               </div>
             </div>
           )}
@@ -144,7 +139,7 @@ export default function Sidebar({
             type="button"
             onClick={onLogout}
             title="Keluar / Logout"
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-xl transition shrink-0 ml-auto border border-transparent hover:border-rose-200 dark:hover:border-rose-500/30"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-xl transition border border-transparent hover:border-rose-200 dark:hover:border-rose-500/30 shrink-0 ml-auto"
           >
             <LogOut className="w-4 h-4" />
           </button>

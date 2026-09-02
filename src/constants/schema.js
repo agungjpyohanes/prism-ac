@@ -217,34 +217,80 @@ export const SHEETS = {
     },
     cards: { baik: 'Plate Baik', rusak: 'Plate Rusak', ganti: 'Plate Ganti', pakai: 'Total Plate' },
     charts: { daily: 'Output Etching Harian', extra: { title: 'Tipe Plate', col: 4, kind: 'doughnut' } }
+  },
+  master_user: {
+    label: 'Master Pengguna',
+    headers: ['id', 'username', 'role', 'password_hash'],
+    dataCols: [0, 1, 2, 3],
+    i: { id: 0, username: 1, role: 2, password_hash: 3 }
   }
 };
 
 export const FORMS = [
   {
     key: 'rec_ctcp',
-    label: 'CTCP Offset',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-ctcp-example/viewform'
+    id: 'ctcp',
+    label: 'CTCP',
+    title: 'CTCP Offset (UV-CTCP)',
+    badge: 'UV-CTCP Offset',
+    desc: 'Form permintaan pembuatan plate CTCP Offset (UV-CTCP) untuk mesin cetak offset.',
+    url: 'https://forms.gle/sjXvX1mQLmfconpaA',
+    iconType: 'printer',
+    color: '#8b5cf6',
+    borderClass: 'border-violet-500/40 hover:border-violet-500',
+    bgBadge: 'bg-violet-50 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
   },
   {
     key: 'rec_ctp',
-    label: 'CTP Thermal',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-ctp-example/viewform'
+    id: 'ctp',
+    label: 'CTP',
+    title: 'CTP Thermal Plate',
+    badge: 'Thermal CTP',
+    desc: 'Form permintaan pembuatan plate CTP Thermal berpresisi tinggi tanpa proses kimia basah.',
+    url: 'https://forms.gle/Y2iumgVVMk8Ph8Ez8',
+    iconType: 'file-text',
+    color: '#10b981',
+    borderClass: 'border-emerald-500/40 hover:border-emerald-500',
+    bgBadge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
   },
   {
     key: 'rec_screen',
-    label: 'Screen Printing',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-screen-example/viewform'
+    id: 'screen',
+    label: 'SCREEN',
+    title: 'Screen Printing / Sablon',
+    badge: 'Screen Sablon',
+    desc: 'Form permintaan afdruk, perbaikan, dan pembuatan master kain Screen Sablon.',
+    url: 'https://forms.gle/KUBCCpbE9ocRKUgC9',
+    iconType: 'frame',
+    color: '#06b6d4',
+    borderClass: 'border-cyan-500/40 hover:border-cyan-500',
+    bgBadge: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300'
   },
   {
     key: 'rec_flexo',
-    label: 'Flexography',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-flexo-example/viewform'
+    id: 'flexo',
+    label: 'FLEXO',
+    title: 'Flexography Photopolymer',
+    badge: 'Flexo Plate',
+    desc: 'Form permintaan pembuatan plate Polimer Flexography kemasan & label sticker.',
+    url: 'https://forms.gle/yux9WXnftA4isDW77',
+    iconType: 'package',
+    color: '#6366f1',
+    borderClass: 'border-indigo-500/40 hover:border-indigo-500',
+    bgBadge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
   },
   {
     key: 'rec_etching',
-    label: 'Etching Plate',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLSe-etching-example/viewform'
+    id: 'etching',
+    label: 'ETCHING',
+    title: 'Etching Plate / Emboss / Foil',
+    badge: 'Magnesium / Zinc Etch',
+    desc: 'Form permintaan pembuatan plat logam Etching untuk foil emas, emboss, dan deboss.',
+    url: 'https://forms.gle/JLu6gVW3qcCv5xvR8',
+    iconType: 'sparkles',
+    color: '#f59e0b',
+    borderClass: 'border-amber-500/40 hover:border-amber-500',
+    bgBadge: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
   }
 ];
 

@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useProductionData } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Modal from './components/common/Modal';
 import AuthView from './components/views/AuthView';
 import OverviewView from './components/views/OverviewView';
-import ProductionView from './components/views/ProductionView';
-import CompareView from './components/views/CompareView';
-import DataTableView from './components/views/DataTableView';
 import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
-import OperatorShiftView from './components/views/OperatorShiftView';
-import LeaderboardView from './components/views/LeaderboardView';
+import DataTableView from './components/views/DataTableView';
+import TeamKpiView from './components/views/TeamKpiView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
-import PersonalKpiView from './components/views/PersonalKpiView';
-import FormsView from './components/views/FormsView';
 import { SHEETS } from './constants/schema';
+import { hasMenuAccess } from './constants/navigation';
 import { getDefaultPeriod, num, parseDateVal } from './utils/formatters';
 
 export default function App() {
@@ -66,6 +62,30 @@ export default function App() {
   // State Rentang Periode Global (Default: Awal Bulan Berjalan / 30 Hari Terakhir s.d. Hari Ini)
   const [period, setPeriod] = useState(getDefaultPeriod);
 
+  const userRole = String(currentUser?.ROLE || currentUser?.role || 'tamu').toLowerCase().trim();
+
+  // ==========================================
+  // ROUTE GUARD: Proteksi Akses Menu Berdasarkan Role
+  // Matriks:
+  // - developer, prepress, manager : Akses menu 1, 2, 3, 4, 5
+  // - tamu, user, staff           : Hanya menu 1 (overview) dan 3 (data)
+  // ==========================================
+  const handleMenuChange = useCallback((menuId) => {
+    if (!hasMenuAccess(userRole, menuId)) {
+      alert(`Akses Terbatas: Role "${userRole.toUpperCase()}" tidak memiliki izin untuk membuka menu ini.`);
+      setCurrentMenu('overview');
+      return;
+    }
+    setCurrentMenu(menuId);
+  }, [userRole]);
+
+  useEffect(() => {
+    if (currentUser && !hasMenuAccess(userRole, currentMenu)) {
+      alert(`Akses Terbatas: Role "${userRole.toUpperCase()}" dialihkan kembali ke Dashboard Overview.`);
+      setCurrentMenu('overview');
+    }
+  }, [currentUser, userRole, currentMenu]);
+
   const handleOpenList = (title, key, rows, subtitle) => {
     setModalState({ type: 'list', title, key, rows, subtitle });
   };
@@ -80,19 +100,19 @@ export default function App() {
     let label = metric.toUpperCase();
 
     if (metric === 'baik') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i.baik]) > 0);
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.baik]) > 0);
       label = cfg.cards?.baik || 'PLATE BAIK';
     } else if (metric === 'rusak') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i.rusak]) > 0);
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.rusak]) > 0);
       label = cfg.cards?.rusak || 'PLATE RUSAK / DEFECT';
     } else if (metric === 'ganti') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i.ganti]) > 0);
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.ganti]) > 0);
       label = cfg.cards?.ganti || 'PLATE GANTI / REPRINT';
     } else if (metric === 'pakai') {
-      filteredRows = (rows || []).filter((r) => (num(r[cfg.i.baik]) + num(r[cfg.i.rusak])) > 0);
+      filteredRows = (rows || []).filter((r) => (num(r[cfg.i?.baik]) + num(r[cfg.i?.rusak])) > 0);
       label = cfg.cards?.pakai || 'TOTAL PLATE DIPROSES';
     } else if (metric === 'pct') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i.rusak]) > 0);
+      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.rusak]) > 0);
       label = 'DEFECT RATE & RECORD LOSS';
     }
 
@@ -105,17 +125,17 @@ export default function App() {
       metric,
       valLabel: label,
       valFn: (r) => {
-        if (metric === 'baik') return num(r[cfg.i.baik]);
-        if (metric === 'rusak') return num(r[cfg.i.rusak]);
-        if (metric === 'ganti') return num(r[cfg.i.ganti]);
-        if (metric === 'pakai') return num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
+        if (metric === 'baik') return num(r[cfg.i?.baik]);
+        if (metric === 'rusak') return num(r[cfg.i?.rusak]);
+        if (metric === 'ganti') return num(r[cfg.i?.ganti]);
+        if (metric === 'pakai') return num(r[cfg.i?.baik]) + num(r[cfg.i?.rusak]);
         if (metric === 'pct') {
-          const p = num(r[cfg.i.baik]) + num(r[cfg.i.rusak]);
-          return p > 0 ? (num(r[cfg.i.rusak]) / p) * 100 : 0;
+          const p = num(r[cfg.i?.baik]) + num(r[cfg.i?.rusak]);
+          return p > 0 ? (num(r[cfg.i?.rusak]) / p) * 100 : 0;
         }
         return 0;
       },
-      causeIdx: metric === 'rusak' ? cfg.i.penyRusak : (metric === 'ganti' ? cfg.i.penyGanti : null)
+      causeIdx: metric === 'rusak' ? cfg.i?.penyRusak : (metric === 'ganti' ? cfg.i?.penyGanti : null)
     });
   };
 
@@ -124,7 +144,7 @@ export default function App() {
     const dateObj = new Date(timestamp);
     const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     const filteredRows = (data[key] || []).filter((r) => {
-      const d = parseDateVal(r[cfg.i.date]);
+      const d = parseDateVal(r[cfg.i?.date]);
       return d && d.toDateString() === dateObj.toDateString();
     });
     setModalState({
@@ -171,32 +191,23 @@ export default function App() {
       onOpenDayModal: handleOpenDayModal,
       onGoToData: (k) => {
         if (k) setActiveTabKey(k);
-        setCurrentMenu('data');
+        handleMenuChange('data');
       },
-      onMenuChange: setCurrentMenu
+      onMenuChange: handleMenuChange,
+      onToast: (msg) => alert(msg)
     };
 
     switch (currentMenu) {
       case 'overview':
         return <OverviewView {...commonProps} />;
-      case 'production':
-        return <ProductionView {...commonProps} />;
-      case 'comparison':
-        return <CompareView data={data} onToast={(msg) => alert(msg)} />;
+      case 'analytics':
+        return <ProcessAnalyticsView {...commonProps} />;
       case 'data':
         return <DataTableView tabKey={activeTabKey} {...commonProps} user={currentUser} />;
-      case 'analytics':
-        return <ProcessAnalyticsView tabKey={activeTabKey} {...commonProps} />;
-      case 'team':
-        return <OperatorShiftView data={data} period={period} />;
-      case 'leaderboard':
-        return <LeaderboardView data={data} period={period} />;
+      case 'team_kpi':
+        return <TeamKpiView data={data} user={currentUser} period={period} onOpenList={handleOpenList} />;
       case 'executive':
         return <ExecutiveOverallView {...commonProps} />;
-      case 'personal':
-        return <PersonalKpiView data={data} user={currentUser} period={period} />;
-      case 'forms':
-        return <FormsView onToast={(msg) => alert(msg)} />;
       default:
         return <OverviewView {...commonProps} />;
     }
@@ -206,7 +217,7 @@ export default function App() {
     <div className="min-h-screen bg-[#f1f5f9] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex overflow-x-hidden transition-colors duration-200">
       <Sidebar
         currentMenu={currentMenu}
-        onMenuChange={setCurrentMenu}
+        onMenuChange={handleMenuChange}
         user={currentUser}
         onLogout={handleLogout}
         collapsed={sidebarCollapsed}
@@ -233,8 +244,24 @@ export default function App() {
 
         <main className="p-3 sm:p-5 lg:p-6 flex-1 space-y-5 sm:space-y-6 overflow-x-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-32 text-slate-500 dark:text-slate-400 text-sm font-semibold">
-              Sinkronisasi data sistem...
+            <div className="flex flex-col items-center justify-center py-28 space-y-4">
+              <div className="relative w-16 h-16 rounded-3xl bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-400/30 p-2.5 flex items-center justify-center shadow-lg shadow-cyan-500/20 animate-pulse overflow-hidden">
+                <img
+                  src="/prism-logo.png"
+                  alt="PRISM Logo"
+                  className="w-full h-full object-contain"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              </div>
+              <div className="text-center">
+                <h3 className="font-display font-black text-sm tracking-wider text-slate-900 dark:text-white">
+                  PRISM V2.5
+                </h3>
+                <p className="text-xs font-mono text-blue-600 dark:text-cyan-400 font-semibold mt-1 flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  Sinkronisasi data sistem live...
+                </p>
+              </div>
             </div>
           ) : (
             renderView()
@@ -242,7 +269,7 @@ export default function App() {
         </main>
 
         <footer className="p-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 font-mono bg-white dark:bg-[#090d16]">
-          &copy; 2026 PRISM Integrated System & Monitoring V2.5 &bull; Aether Code
+          &copy; 2026 PRISM Integrated System &amp; Monitoring V2.5 &bull; Aether Code
         </footer>
       </div>
 

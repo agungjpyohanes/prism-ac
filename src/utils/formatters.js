@@ -218,26 +218,97 @@ export const getActivePresetId = (period) => {
   return null;
 };
 
-// Pewarnaan Dinamis Status Badge (Light Mode & Dark Mode Optimized)
+// Map Evaluasi Kategori Job Berdasarkan Karakter Pertama Kolom job_no (0-9)
+export const JOB_CATEGORY_MAP = {
+  '0': 'Sticker Flexo',
+  '1': 'School Supply',
+  '2': 'Office Supply',
+  '3': 'Kertas Surat',
+  '4': 'Envelope',
+  '5': 'Gift Wrap',
+  '6': 'Others',
+  '7': 'Jasa',
+  '8': 'Export',
+  '9': 'Carton Box'
+};
+
+export const getJobCategoryByNo = (jobNo) => {
+  if (jobNo === undefined || jobNo === null) return 'Uncategorized';
+  const clean = String(jobNo).trim();
+  if (!clean) return 'Uncategorized';
+  const firstChar = clean.charAt(0);
+  return JOB_CATEGORY_MAP[firstChar] || 'Uncategorized';
+};
+
+// Pewarnaan Dinamis Status Badge Berdasarkan Tahapan Proses (Light Mode & Dark Mode Optimized)
 export const getStatusBadgeClass = (statusStr = '') => {
-  const s = String(statusStr || '').toUpperCase().trim();
-  if (s.includes('SELESAI') || s.includes('OK') || s.includes('DONE') || s.includes('GOOD')) {
-    return 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40';
+  const s = String(statusStr || '').toLowerCase().trim();
+  if (!s) {
+    return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
   }
-  if (s.includes('REJECT') || s.includes('ERROR') || s.includes('RUSAK') || s.includes('DEFECT')) {
-    return 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40';
+
+  // 1. Antri / Antrean
+  if (s === 'antri' || s === 'antrean' || s.includes('queue') || s === 'pending') {
+    return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
   }
-  if (s.includes('WASHING') || s.includes('EXPOSE')) {
-    return 'bg-purple-50 text-purple-800 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40';
+  // 2. Tunggu File
+  if (s.includes('tunggu file')) {
+    return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40';
   }
-  if (s.includes('HDI') || s.includes('PROGRESS') || s.includes('PROSES') || s.includes('RUNNING')) {
-    return 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40';
+  // 3. Tunggu Info
+  if (s.includes('tunggu info')) {
+    return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-500/40';
   }
-  if (s.includes('TUNGGU') || s.includes('INFO') || s.includes('FILE') || s.includes('PENDING') || s.includes('HOLD')) {
-    return 'bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40';
+  // 4. Film & File
+  if (s.includes('film & file') || s.includes('film and file') || s === 'film' || s === 'file') {
+    return 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/40';
   }
-  // Default: ANTRI / QUEUE
-  return 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40';
+  // 5. Layout
+  if (s.includes('layout')) {
+    return 'bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/40';
+  }
+  // 6. HDI
+  if (s.includes('hdi')) {
+    return 'bg-violet-100 text-violet-800 border-violet-300 dark:bg-violet-500/20 dark:text-violet-300 dark:border-violet-500/40';
+  }
+  // 7. Main Expose
+  if (s.includes('main expose')) {
+    return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/40';
+  }
+  // 8. Expose
+  if (s.includes('expose')) {
+    return 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40';
+  }
+  // 9. Washing
+  if (s.includes('washing') || s.includes('wash') || s.includes('cuci')) {
+    return 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/40';
+  }
+  // 10. Drying
+  if (s.includes('drying') || s.includes('dry') || s.includes('kering')) {
+    return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40';
+  }
+  // 11. Gerinda
+  if (s.includes('gerinda') || s.includes('grind')) {
+    return 'bg-zinc-200 text-zinc-800 border-zinc-400 dark:bg-zinc-700/40 dark:text-zinc-200 dark:border-zinc-600';
+  }
+  // 12. Hapus Screen
+  if (s.includes('hapus screen') || s.includes('hapus') || s.includes('afdruuk') || s.includes('afdruk')) {
+    return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40';
+  }
+  // 13. Poles
+  if (s.includes('poles') || s.includes('polish')) {
+    return 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40';
+  }
+  // 14. Keraskan
+  if (s.includes('keraskan') || s.includes('hard') || s.includes('hardening')) {
+    return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40';
+  }
+  // 15. Lem Screen
+  if (s.includes('lem screen') || s.includes('lem') || s.includes('glue')) {
+    return 'bg-lime-100 text-lime-800 border-lime-300 dark:bg-lime-500/20 dark:text-lime-300 dark:border-lime-500/40';
+  }
+  // 16. Selesai / OK / Done / Default
+  return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40';
 };
 
 // Pewarnaan Dinamis Category Badge (Light Mode & Dark Mode Optimized)

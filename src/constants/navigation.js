@@ -1,68 +1,65 @@
 import {
   LayoutDashboard,
-  Factory,
-  GitCompare,
-  Database,
   TrendingUp,
+  Database,
   Users,
-  Trophy,
-  Briefcase,
-  User
+  Briefcase
 } from 'lucide-react';
 
+// Matriks Hak Akses Menu:
+// - developer, prepress, manager : Akses menu 1, 2, 3, 4, 5
+// - tamu, user, staff           : Akses terbatas hanya menu 1 dan 3
+export const ROLE_PERMISSIONS = {
+  developer: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  prepress: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  manager: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  tamu: ['overview', 'data'],
+  user: ['overview', 'data'],
+  staff: ['overview', 'data'],
+
+  // Legacy / Aliases support
+  admin: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  manajemen: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  operator: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  guest: ['overview', 'data']
+};
+
+export const hasMenuAccess = (role, menuId) => {
+  const r = String(role || 'tamu').toLowerCase().trim();
+  const allowed = ROLE_PERMISSIONS[r] || ROLE_PERMISSIONS.tamu;
+  return allowed.includes(menuId);
+};
+
+// 5 Menu Utama PRISM
 export const MENUS = [
   { 
     id: 'overview', 
     label: 'Dashboard Overview', 
-    icon: LayoutDashboard, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor', 'operator', 'guest'] 
-  },
-  { 
-    id: 'production', 
-    label: 'Dashboard Produksi', 
-    icon: Factory, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor', 'operator'] 
-  },
-  { 
-    id: 'comparison', 
-    label: 'Dashboard Komparasi', 
-    icon: GitCompare, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor'] 
-  },
-  { 
-    id: 'data', 
-    label: 'Data Produksi', 
-    icon: Database, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor', 'operator'] 
+    icon: LayoutDashboard,
+    order: 1
   },
   { 
     id: 'analytics', 
     label: 'Analitik Prepress', 
-    icon: TrendingUp, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor'] 
+    icon: TrendingUp,
+    order: 2
   },
   { 
-    id: 'team', 
-    label: 'Pengawasan Tim', 
-    icon: Users, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor'] 
+    id: 'data', 
+    label: 'Data Produksi', 
+    icon: Database,
+    order: 3
   },
   { 
-    id: 'leaderboard', 
-    label: 'KPI Leaderboard', 
-    icon: Trophy, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor', 'operator'] 
+    id: 'team_kpi', 
+    label: 'Kinerja Tim & KPI', 
+    icon: Users,
+    order: 4
   },
   { 
     id: 'executive', 
     label: 'Management Executive', 
-    icon: Briefcase, 
-    roles: ['admin', 'manager', 'manajemen'] 
-  },
-  { 
-    id: 'personal', 
-    label: 'KPI Personal', 
-    icon: User, 
-    roles: ['admin', 'manager', 'manajemen', 'supervisor', 'operator'] 
+    icon: Briefcase,
+    order: 5
   }
 ];

@@ -124,7 +124,7 @@ export default function Modal({ modalState, onClose, onSelectRow, onBack }) {
                       <th>NO</th>
                       <th>ID</th>
                       <th>JOB NAME</th>
-                      <th>JOB NO / SPK</th>
+                      <th>JOB NO / JOP</th>
                       <th>PLATE / FILE NO</th>
                       <th>MESIN</th>
                       <th>OPERATOR</th>

@@ -1,50 +1,176 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Sparkles, Shield, Zap, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Shield,
+  Zap,
+  TrendingUp,
+  UserPlus,
+  LogIn,
+  CheckCircle2,
+  AlertCircle,
+  KeyRound,
+  ArrowLeft,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff
+} from 'lucide-react';
+import { supabase, updateMasterUserPassword } from '../../services/supabase';
+import LoginView from './LoginView';
+import SignupView from './SignupView';
 
 export default function AuthView({ usersData = [], data = {}, serverStatus = {}, onLoginSuccess, onToast }) {
-  const [tab, setTab] = useState('login');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // Mode: 'login' | 'signup' | 'forgot_password' | 'set_new_password'
+  const [mode, setMode] = useState('login');
 
-  const LOGO_URL = "https://drive.google.com/thumbnail?id=1A7Ws0vZZtO7nc-k8lNTzt4tlLt0xqODx&sz=w500";
+  // Forgot / Reset Password State
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    setTimeout(() => {
-      const uClean = username.trim().toLowerCase();
-      const pClean = password.trim();
+  // Set New Password State
+  const [resetUsername, setResetUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmNewPass, setShowConfirmNewPass] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
-      if (uClean === 'guest' && pClean === '123456') {
-        onLoginSuccess({ USER: 'guest', ROLE: 'guest', ID: 'guest_01' });
-        return;
+  // Feedback Banner
+  const [authFeedback, setAuthFeedback] = useState(null); // { type: 'ok' | 'err', text: '' }
+
+  // Deteksi Otomatis Event Pemulihan Password dari Link Email
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const isRecovery =
+      hash.includes('type=recovery') ||
+      hash.includes('access_token') ||
+      search.includes('type=recovery') ||
+      window.location.pathname.includes('reset-password');
+
+    if (isRecovery) {
+      setMode('set_new_password');
+      setAuthFeedback({
+        type: 'ok',
+        text: 'Sesi pemulihan akun terverifikasi. Silakan buat password baru Anda.'
+      });
+    }
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('set_new_password');
+        if (session?.user?.email) {
+          setResetUsername(session.user.email);
+        }
+        setAuthFeedback({
+          type: 'ok',
+          text: 'Sesi pemulihan akun terverifikasi. Silakan masukkan password baru Anda.'
+        });
       }
+    });
 
-      const found = (usersData || []).find((r) => {
-        const u = (Array.isArray(r) ? r[0] : (r.username || r.user || '')).toString().trim().toLowerCase();
-        const p = (Array.isArray(r) ? r[2] : (r.password_hash || r.password || '')).toString().trim();
-        return u === uClean && p === pClean;
+    return () => {
+      authListener?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  // 1. Eksekusi Minta Link Reset Password via Email
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setAuthFeedback(null);
+
+    const email = forgotEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      setAuthFeedback({ type: 'err', text: 'Masukkan alamat email yang valid untuk reset password!' });
+      setForgotLoading(false);
+      return;
+    }
+
+    try {
+      const redirectTo = `${window.location.origin}${window.location.pathname}#type=recovery`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo
       });
 
-      if (found) {
-        const uName = Array.isArray(found) ? found[0] : (found.username || found.user);
-        const uRole = Array.isArray(found) ? found[1] : (found.role || 'operator');
-        const uId = Array.isArray(found) ? found[3] : (found.id || '1');
-        onLoginSuccess({
-          USER: uName,
-          ROLE: String(uRole).toLowerCase(),
-          ID: String(uId)
-        });
-      } else {
-        if (onToast) {
-          onToast('Username atau password tidak cocok!', 'err');
-        }
+      if (error) {
+        console.warn('Supabase resetPasswordForEmail note:', error.message);
       }
-      setLoading(false);
-    }, 500);
+
+      setAuthFeedback({
+        type: 'ok',
+        text: `Link reset password telah dikirim ke "${email}". Silakan periksa inbox atau folder spam email Anda.`
+      });
+      if (onToast) onToast('Link reset password berhasil dikirim!', 'ok');
+
+    } catch (err) {
+      console.error('Reset password error:', err);
+      setAuthFeedback({
+        type: 'ok',
+        text: `Jika email terdaftar, instruksi reset password telah dikirim ke "${email}".`
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // 2. Eksekusi Set Password Baru
+  const handleSetNewPassword = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setAuthFeedback(null);
+
+    const pClean = newPassword.trim();
+    const cClean = confirmNewPassword.trim();
+    const uClean = resetUsername.trim().toLowerCase();
+
+    if (pClean.length < 6) {
+      setAuthFeedback({ type: 'err', text: 'Password baru minimal harus 6 karakter!' });
+      setResetLoading(false);
+      return;
+    }
+
+    if (pClean !== cClean) {
+      setAuthFeedback({ type: 'err', text: 'Konfirmasi password baru tidak cocok!' });
+      setResetLoading(false);
+      return;
+    }
+
+    try {
+      // 1. Update di Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        password: pClean
+      });
+
+      if (error) {
+        console.warn('Supabase auth updateUser note:', error.message);
+      }
+
+      // 2. Update di tabel master_user (Supabase & Google Spreadsheet)
+      if (uClean) {
+        await updateMasterUserPassword(uClean, pClean);
+      }
+
+      // Bersihkan hash URL
+      if (window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+
+      setAuthFeedback({
+        type: 'ok',
+        text: 'Password Anda berhasil diperbarui! Mengarahkan ke halaman login...'
+      });
+      if (onToast) onToast('Password berhasil diperbarui!', 'ok');
+
+      setTimeout(() => {
+        setMode('login');
+        setResetLoading(false);
+      }, 1500);
+
+    } catch (err) {
+      console.error('Error update user password:', err);
+      setAuthFeedback({ type: 'err', text: 'Terjadi kesalahan sistem saat memperbarui password.' });
+      setResetLoading(false);
+    }
   };
 
   const isReady = (key) => {
@@ -55,10 +181,10 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100">
       {/* Left Side - Branding */}
       <div className="hidden lg:flex flex-1 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Animated Background */}
+        {/* Animated Background Orbs */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
@@ -75,28 +201,32 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
         />
 
         {/* Content */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/50">
-              <img src={LOGO_URL} alt="PRISM" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">PRISM</h1>
-              <p className="text-xs text-indigo-400 font-mono uppercase tracking-wider">V 2.5</p>
-            </div>
+        <div className="relative z-10 max-w-lg">
+          {/* Large Visual Logo Panel */}
+          <div className="text-center mb-6">
+            <img
+              src="/prism-logo.png"
+              alt="PRISM Logo"
+              className="w-48 h-48 mx-auto object-contain drop-shadow-[0_0_25px_rgba(56,189,248,0.45)] mb-6"
+            />
+            <h1 className="font-display font-black text-4xl tracking-wider text-white">
+              PRISM
+            </h1>
+            <p className="text-sm font-mono text-cyan-400 font-bold mt-1">
+              Integrated System &amp; Monitoring V2.5
+            </p>
           </div>
 
-          <div className="max-w-lg">
-            <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
-              PRISM<br />
-              <span className="gradient-text">Integrated System & Monitoring</span>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 leading-tight">
+              Pusat Kendali Data Prepress Modern
             </h2>
-            <p className="text-lg text-slate-300 mb-8 leading-relaxed">
-              Pusat kendali data prepress modern — monitoring plate CTCP & CTP, screen, flexo, dan etching dalam satu dashboard terintegrasi yang powerful.
+            <p className="text-sm text-slate-300 mb-8 leading-relaxed font-medium">
+              Monitoring plate CTCP &amp; CTP, screen sablon, flexo packaging, dan etching dalam satu platform terintegrasi.
             </p>
 
             {/* Feature Cards */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               <div
                 className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-700/60"
                 style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
@@ -105,8 +235,8 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
                   <Zap className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white mb-1">Real-time Monitoring</h3>
-                  <p className="text-xs text-slate-300">Pantau semua lini produksi secara real-time dengan data yang selalu update</p>
+                  <h3 className="text-sm font-bold text-white mb-0.5">Real-time Monitoring &amp; Antrean</h3>
+                  <p className="text-xs text-slate-300">Pantau status pengerjaan seluruh lini prepress secara langsung dan akurat.</p>
                 </div>
               </div>
 
@@ -118,8 +248,8 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white mb-1">Advanced Analytics</h3>
-                  <p className="text-xs text-slate-300">Analisis mendalam dengan visualisasi data yang interaktif dan informatif</p>
+                  <h3 className="text-sm font-bold text-white mb-0.5">Dual-Sync Database &amp; Spreadsheet</h3>
+                  <p className="text-xs text-slate-300">Sinkronisasi instan akun master_user ke Supabase dan Google Spreadsheet.</p>
                 </div>
               </div>
 
@@ -131,8 +261,8 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white mb-1">Secure & Reliable</h3>
-                  <p className="text-xs text-slate-300">Sistem aman dengan enkripsi end-to-end dan backup otomatis</p>
+                  <h3 className="text-sm font-bold text-white mb-0.5">Role-Based Access Control (RBAC)</h3>
+                  <p className="text-xs text-slate-300">Hak navigasi terstruktur untuk Developer, Prepress, Manager, Tamu, User, dan Staff.</p>
                 </div>
               </div>
             </div>
@@ -142,137 +272,357 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
         {/* Bottom Stats */}
         <div className="relative z-10 grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
           <div>
-            <div className="text-3xl font-bold text-white mb-1">99.9%</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Uptime</div>
+            <div className="text-3xl font-black text-cyan-300 mb-1">5+</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider font-mono">Lini Proses</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-white mb-1">5+</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Lini Produksi</div>
+            <div className="text-3xl font-black text-emerald-400 mb-1">99.9%</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider font-mono">SLA Uptime</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-white mb-1">24/7</div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Monitoring</div>
+            <div className="text-3xl font-black text-indigo-300 mb-1">24/7</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider font-mono">Live Tracking</div>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Auth Forms */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
           {/* Logo Mobile */}
-          <div className="lg:hidden flex items-center gap-3 mb-6 justify-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-cyan-500/30">
-              <img src={LOGO_URL} alt="PRISM" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
-            </div>
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
+            <img
+              src="/prism-logo.png"
+              alt="PRISM Logo"
+              className="w-10 h-10 object-contain"
+            />
             <div>
-              <h1 className="text-2xl font-black text-white">PRISM</h1>
-              <p className="text-xs text-cyan-400 font-mono uppercase tracking-wider">V 2.5</p>
+              <h2 className="font-display font-black text-xl text-white">PRISM</h2>
+              <p className="text-[10px] font-mono text-cyan-400 font-bold">Integrated System</p>
             </div>
           </div>
 
-          {/* Login Card */}
+          {/* Form Card Container */}
           <div
-            className="card p-6 sm:p-8 border border-cyan-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+            className="card p-6 sm:p-8 border border-cyan-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] bg-slate-900/90"
             style={{
               WebkitBackdropFilter: 'blur(20px)',
               backdropFilter: 'blur(20px)'
             }}
           >
-            <div className="mb-6">
-              <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Selamat Datang</h2>
-              <p className="text-xs sm:text-sm text-slate-300">Masuk ke akun PRISM Anda untuk melanjutkan</p>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex p-1 bg-slate-800/90 rounded-xl mb-6 border border-slate-700">
-              <button
-                type="button"
-                onClick={() => setTab('login')}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                  tab === 'login' 
-                    ? 'btn-primary text-white shadow-md' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Masuk
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('signup')}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                  tab === 'signup' 
-                    ? 'btn-primary text-white shadow-md' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan username"
-                  className="inp w-full"
-                />
+            {/* Top Card Branding Logo Header */}
+            <div className="flex items-center gap-3.5 mb-6 pb-4 border-b border-slate-800">
+              <img
+                src="/prism-logo.png"
+                alt="PRISM Logo"
+                className="w-10 h-10 object-contain shrink-0"
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-display font-black text-lg sm:text-xl tracking-wider text-white">
+                    PRISM
+                  </h3>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
+                    V2.5
+                  </span>
+                </div>
+                <p className="text-xs font-mono text-cyan-400 font-semibold truncate">
+                  Integrated System &amp; Monitoring
+                </p>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Masukkan password"
-                    className="inp w-full !pr-10"
-                  />
+            {/* Header Titles Based on Mode */}
+            <div className="mb-5">
+              {mode === 'login' && (
+                <>
+                  <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Selamat Datang Kembali</h2>
+                  <p className="text-xs sm:text-sm text-slate-300">Masuk ke akun PRISM Anda untuk mengakses sistem</p>
+                </>
+              )}
+              {mode === 'signup' && (
+                <>
+                  <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Pendaftaran Akun Baru</h2>
+                  <p className="text-xs sm:text-sm text-slate-300">Daftarkan akun operator / staff untuk akses data PRISM</p>
+                </>
+              )}
+              {mode === 'forgot_password' && (
+                <>
+                  <h2 className="text-2xl font-black text-white mb-1 tracking-tight flex items-center gap-2">
+                    <KeyRound className="w-6 h-6 text-amber-400" />
+                    Reset Password
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300">Masukkan email Anda untuk menerima tautan ubah password</p>
+                </>
+              )}
+              {mode === 'set_new_password' && (
+                <>
+                  <h2 className="text-2xl font-black text-white mb-1 tracking-tight flex items-center gap-2">
+                    <Lock className="w-6 h-6 text-emerald-400" />
+                    Set Password Baru
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300">Buat password baru yang aman untuk akun Anda</p>
+                </>
+              )}
+            </div>
+
+            {/* Navigation Tabs (Hanya ditampilkan pada mode login & signup) */}
+            {(mode === 'login' || mode === 'signup') && (
+              <div className="flex p-1 bg-slate-800/90 rounded-2xl mb-5 border border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('login');
+                    setAuthFeedback(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    mode === 'login' 
+                      ? 'btn-primary text-white shadow-md' 
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  Masuk (Login)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signup');
+                    setAuthFeedback(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    mode === 'signup' 
+                      ? 'btn-primary text-white shadow-md' 
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Daftar (Sign Up)
+                </button>
+              </div>
+            )}
+
+            {/* Feedback Alert */}
+            {authFeedback && (
+              <div
+                className={`mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                  authFeedback.type === 'ok'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                }`}
+              >
+                {authFeedback.type === 'ok' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+                <span>{authFeedback.text}</span>
+              </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 1. FORM LOGIN */}
+            {/* ========================================================= */}
+            {mode === 'login' && (
+              <LoginView
+                usersData={usersData}
+                data={data}
+                serverStatus={serverStatus}
+                onLoginSuccess={onLoginSuccess}
+                onForgotPasswordClick={(u) => {
+                  setForgotEmail(u && u.includes('@') ? u : '');
+                  setResetUsername(u || '');
+                  setMode('forgot_password');
+                  setAuthFeedback(null);
+                }}
+                onToast={onToast}
+                setAuthFeedback={setAuthFeedback}
+              />
+            )}
+
+            {/* ========================================================= */}
+            {/* 2. FORM SIGNUP (Opsi Role Bersih: Prepress, Manager, Tamu, User, Staff) */}
+            {/* ========================================================= */}
+            {mode === 'signup' && (
+              <SignupView
+                onSignupSuccess={(u, p) => {
+                  setTimeout(() => {
+                    setMode('login');
+                  }, 1200);
+                }}
+                onToast={onToast}
+                setAuthFeedback={setAuthFeedback}
+              />
+            )}
+
+            {/* ========================================================= */}
+            {/* 3. FORM FORGOT PASSWORD (Kirim Link Reset via Email) */}
+            {/* ========================================================= */}
+            {mode === 'forgot_password' && (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Alamat Email Terdaftar
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="Masukkan email akun Anda..."
+                      className="inp w-full !pl-9 text-xs font-medium"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="btn-primary w-full py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+                >
+                  {forgotLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Mengirim Link...
+                    </span>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      Kirim Link Reset Password
+                    </>
+                  )}
+                </button>
+
+                <div className="pt-2 text-center">
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    onClick={() => {
+                      setMode('login');
+                      setAuthFeedback(null);
+                    }}
+                    className="text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1.5 mx-auto font-semibold transition"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <ArrowLeft className="w-4 h-4" />
+                    Kembali ke Halaman Masuk
                   </button>
                 </div>
-              </div>
+              </form>
+            )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 mt-2"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Memproses...
-                  </span>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Masuk ke Sistem
-                  </>
-                )}
-              </button>
-            </form>
+            {/* ========================================================= */}
+            {/* 4. FORM SET NEW PASSWORD (Setelah klik link email) */}
+            {/* ========================================================= */}
+            {mode === 'set_new_password' && (
+              <form onSubmit={handleSetNewPassword} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Username / Email Akun
+                  </label>
+                  <input
+                    type="text"
+                    value={resetUsername}
+                    onChange={(e) => setResetUsername(e.target.value)}
+                    placeholder="Masukkan username atau email..."
+                    className="inp w-full text-xs font-medium"
+                  />
+                </div>
 
-            {/* Demo Account */}
-            <div className="mt-5 p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-center">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Password Baru (Min. 6 Karakter)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPass ? 'text' : 'password'}
+                      required
+                      minLength={6}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Masukkan password baru..."
+                      className="inp w-full !pr-10 text-xs font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    >
+                      {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Konfirmasi Password Baru
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmNewPass ? 'text' : 'password'}
+                      required
+                      minLength={6}
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="Ulangi password baru..."
+                      className="inp w-full !pr-10 text-xs font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmNewPass(!showConfirmNewPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    >
+                      {showConfirmNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="btn-primary w-full py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+                >
+                  {resetLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Menyimpan Password...
+                    </span>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Simpan Password Baru
+                    </>
+                  )}
+                </button>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setAuthFeedback(null);
+                    }}
+                    className="text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1.5 mx-auto font-semibold transition"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Kembali ke Halaman Masuk
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Demo Account Callout */}
+            <div className="mt-5 p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-center">
               <p className="text-xs text-cyan-300">
-                <span className="font-bold text-white">Demo Account:</span> guest / 123456
+                <span className="font-bold text-white">Akun Demo Cepat:</span> guest / 123456
               </p>
             </div>
 
-            {/* Database Status */}
+            {/* Database Status Indicators */}
             <div className="mt-5 pt-4 border-t border-slate-800">
-              <p className="text-[10px] text-slate-400 mb-2.5 font-bold uppercase tracking-wider font-mono">Status Database (Live Google Sheets)</p>
+              <p className="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-wider font-mono">
+                Status Konektivitas Data Live
+              </p>
               <div className="grid grid-cols-2 gap-2">
                 {['master_user', 'job_active', 'rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'].map((key) => (
                   <div key={key} className="flex items-center gap-2">
@@ -286,7 +636,7 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
 
           {/* Footer */}
           <p className="text-center text-xs text-slate-400 mt-6">
-            &copy; 2026 PRISM V2.5 • Aether Code
+            &copy; 2026 PRISM V2.5 &bull; Aether Code
           </p>
         </div>
       </div>

@@ -71,18 +71,26 @@ export default function Header({
             >
               <Menu className="w-5 h-5 text-blue-600 dark:text-cyan-300" />
             </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight tracking-wide">
-                  PRISM
-                </h1>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-cyan-500/20 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-400/30">
-                  V2.5
-                </span>
+            
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/prism-logo.png"
+                alt="PRISM Logo"
+                className="w-8 h-8 object-contain shrink-0"
+              />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight tracking-wide">
+                    PRISM
+                  </h1>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-cyan-500/20 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-400/30">
+                    V2.5
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-blue-600 dark:text-cyan-400 font-bold truncate max-w-[200px] sm:max-w-none">
+                  Integrated System &amp; Monitoring
+                </p>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-blue-600 dark:text-cyan-400 font-bold truncate max-w-[200px] sm:max-w-none">
-                Integrated System & Monitoring
-              </p>
             </div>
           </div>
 
@@ -110,7 +118,7 @@ export default function Header({
         {/* Right Side: Presets, Date Filter & Controls */}
         <div className="flex items-center justify-between lg:justify-end gap-2 flex-wrap sm:flex-nowrap">
           
-          {/* Quick Date Presets (Hari Ini, 7 Hari, 30 Hari, Bulan Ini, Bulan Lalu) */}
+          {/* Quick Date Presets */}
           <div
             className="flex items-center gap-1 bg-slate-100 dark:bg-[#090d16] p-1 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto max-w-full"
             style={{
@@ -200,7 +208,7 @@ export default function Header({
                   </div>
                 </div>
 
-                {/* Symmetrical Start & End Date Inputs */}
+                {/* Start & End Date Inputs */}
                 <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
                     Kustomisasi Periode (DD/MM/YYYY)
