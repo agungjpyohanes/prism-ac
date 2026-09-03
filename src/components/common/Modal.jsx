@@ -163,12 +163,12 @@ export default function Modal({ modalState, onClose, onSelectRow, onBack }) {
                           <td className="font-semibold text-slate-900 dark:text-slate-100 max-w-[200px] truncate" title={cell(r, cfg.i?.jop)}>
                             {cell(r, cfg.i?.jop) || '—'}
                           </td>
-                          <td className="whitespace-nowrap font-mono text-[11px] text-slate-700 dark:text-slate-300">{cell(r, cfg.i?.nojop) || '—'}</td>
+                          <td className="whitespace-nowrap font-mono text-[11px] text-slate-700 dark:text-slate-300">{cell(r, cfg?.i?.nojop) || '—'}</td>
                           <td className="whitespace-nowrap font-mono text-[11px] text-blue-600 dark:text-cyan-300">{getPlateNoVal(r)}</td>
                           <td className="whitespace-nowrap text-slate-700 dark:text-slate-300 text-[11px]">{getMachineVal(r)}</td>
                           <td className="whitespace-nowrap text-slate-800 dark:text-slate-200">{getOperatorVal(r)}</td>
-                          <td className="whitespace-nowrap text-center font-bold text-slate-700 dark:text-slate-300">{cell(r, cfg.i?.shift) || '—'}</td>
-                          <td className="whitespace-nowrap text-blue-600 dark:text-cyan-300 font-semibold">{fmtDate(parseDateVal(r[cfg.i?.date]))}</td>
+                          <td className="whitespace-nowrap text-center font-bold text-slate-700 dark:text-slate-300">{cell(r, cfg?.i?.shift) || '—'}</td>
+                          <td className="whitespace-nowrap text-blue-600 dark:text-cyan-300 font-semibold">{fmtDate(parseDateVal(cell(r, cfg?.i?.date, '')))}</td>
                           
                           {type === 'metric' ? (
                             <>

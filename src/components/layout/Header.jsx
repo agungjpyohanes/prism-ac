@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, RotateCcw, Calendar, Sun, Moon, ChevronDown, Check, X } from 'lucide-react';
-import { iso, parseDateVal, DATE_PRESETS, getActivePresetId, fmtDDMMYYYY, startOfDay, endOfDay } from '../../utils/formatters';
+import { iso, parseDateVal, DATE_PRESETS, getActivePresetId, fmtDDMMYYYY, startOfDay, endOfDay, formatYMD } from '../../utils/formatters';
 import DatePickerInput from '../ui/DatePickerInput';
 
 export default function Header({
@@ -36,15 +36,34 @@ export default function Header({
   const handleDateChange = (type, valStr) => {
     if (!onPeriodChange) return;
     const parsed = parseDateVal(valStr);
-    onPeriodChange((prev) => ({
-      ...prev,
-      [type]: type === 'to' ? endOfDay(parsed) : startOfDay(parsed)
-    }));
+    onPeriodChange((prev) => {
+      const next = {
+        ...prev,
+        [type]: type === 'to' ? endOfDay(parsed) : startOfDay(parsed)
+      };
+      console.log("Filter Range Active:", {
+        start: formatYMD(next.from),
+        end: formatYMD(next.to),
+        from: next.from,
+        to: next.to
+      });
+      return next;
+    });
   };
 
   const handleSelectPreset = (preset) => {
     if (!onPeriodChange) return;
     const range = preset.getRange();
+    const start = formatYMD(range.from);
+    const end = formatYMD(range.to);
+    console.log("Filter Range Active:", {
+      presetId: preset.id,
+      label: preset.label,
+      start,
+      end,
+      from: range.from,
+      to: range.to
+    });
     onPeriodChange(range);
   };
 

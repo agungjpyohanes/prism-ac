@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, startOfDay, getChartTheme } from '../../utils/formatters';
+import { parseDateVal, num, cell, startOfDay, getChartTheme, formatYMD, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -25,35 +25,35 @@ export default function OperatorShiftView({ data, period }) {
 
   // Ekstraksi seluruh baris dengan indeks kolom dinamis
   const allRows = useMemo(() => {
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
     const res = [];
     targetKeys.forEach(key => {
       const cfg = SHEETS[key];
       const raw = data[key] || [];
       const poCol = cfg?.i?.po ?? -1;
 
-      raw.forEach(r => {
-        const idVal = cell(r, cfg.i.id).trim();
-        const jopVal = cell(r, cfg.i.jop).trim();
-        const noJopVal = cell(r, cfg.i.nojop).trim();
-        if (!idVal || (!jopVal && !noJopVal)) return;
+      (raw || []).forEach(r => {
+        if (!r) return;
+        const idVal = cell(r, cfg?.i?.id, '').trim();
+        const jopVal = cell(r, cfg?.i?.jop, '').trim();
+        const noJopVal = cell(r, cfg?.i?.nojop, '').trim();
+        if (!idVal || idVal === '-' || (!jopVal && !noJopVal) || (jopVal === '-' && noJopVal === '-')) return;
 
-        const d = parseDateVal(r[cfg.i.date]);
-        if (d) {
-          const from = period?.from ? startOfDay(period.from).getTime() : null;
-          const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-          if (from && d.getTime() < from) return;
-          if (to && d.getTime() > to) return;
+        if (fromStr && toStr) {
+          const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+          if (itemDate && (itemDate < fromStr || itemDate > toStr)) return;
         }
 
         res.push({
           key,
-          process: cfg.label,
-          good: num(r[cfg.i.baik]),
-          reject: num(r[cfg.i.rusak]),
-          replace: num(r[cfg.i.ganti]),
-          operator: cell(r, cfg.i.op).trim() || 'Unassigned',
-          shift: cell(r, cfg.i.shift).toUpperCase().trim() || 'NON-SHIFT',
-          po: (poCol !== -1 && cell(r, poCol).trim()) || 'Tanpa PO'
+          process: cfg?.label || key,
+          good: getRowQtyGood(r, cfg),
+          reject: getRowQtyDefect(r, cfg),
+          replace: getRowQtyReplace(r, cfg),
+          operator: cell(r, cfg?.i?.op, '').trim() || 'Unassigned',
+          shift: cell(r, cfg?.i?.shift, '').toUpperCase().trim() || 'NON-SHIFT',
+          po: (poCol !== -1 && cell(r, poCol, '').trim()) || 'Tanpa PO'
         });
       });
     });

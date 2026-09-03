@@ -11,7 +11,7 @@ import TeamKpiView from './components/views/TeamKpiView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
 import { SHEETS } from './constants/schema';
 import { hasMenuAccess } from './constants/navigation';
-import { getDefaultPeriod, num, parseDateVal } from './utils/formatters';
+import { getDefaultPeriod, num, parseDateVal, cell, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from './utils/formatters';
 
 export default function App() {
   const { data, loading, serverStatus, reload } = useProductionData();
@@ -100,19 +100,19 @@ export default function App() {
     let label = metric.toUpperCase();
 
     if (metric === 'baik') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.baik]) > 0);
+      filteredRows = (rows || []).filter((r) => r && getRowQtyGood(r, cfg) > 0);
       label = cfg.cards?.baik || 'PLATE BAIK';
     } else if (metric === 'rusak') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.rusak]) > 0);
+      filteredRows = (rows || []).filter((r) => r && getRowQtyDefect(r, cfg) > 0);
       label = cfg.cards?.rusak || 'PLATE RUSAK / DEFECT';
     } else if (metric === 'ganti') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.ganti]) > 0);
+      filteredRows = (rows || []).filter((r) => r && getRowQtyReplace(r, cfg) > 0);
       label = cfg.cards?.ganti || 'PLATE GANTI / REPRINT';
     } else if (metric === 'pakai') {
-      filteredRows = (rows || []).filter((r) => (num(r[cfg.i?.baik]) + num(r[cfg.i?.rusak])) > 0);
+      filteredRows = (rows || []).filter((r) => r && (getRowQtyGood(r, cfg) + getRowQtyDefect(r, cfg)) > 0);
       label = cfg.cards?.pakai || 'TOTAL PLATE DIPROSES';
     } else if (metric === 'pct') {
-      filteredRows = (rows || []).filter((r) => num(r[cfg.i?.rusak]) > 0);
+      filteredRows = (rows || []).filter((r) => r && getRowQtyDefect(r, cfg) > 0);
       label = 'DEFECT RATE & RECORD LOSS';
     }
 
@@ -125,13 +125,17 @@ export default function App() {
       metric,
       valLabel: label,
       valFn: (r) => {
-        if (metric === 'baik') return num(r[cfg.i?.baik]);
-        if (metric === 'rusak') return num(r[cfg.i?.rusak]);
-        if (metric === 'ganti') return num(r[cfg.i?.ganti]);
-        if (metric === 'pakai') return num(r[cfg.i?.baik]) + num(r[cfg.i?.rusak]);
+        if (!r) return 0;
+        const b = getRowQtyGood(r, cfg);
+        const rk = getRowQtyDefect(r, cfg);
+        const g = getRowQtyReplace(r, cfg);
+        if (metric === 'baik') return b;
+        if (metric === 'rusak') return rk;
+        if (metric === 'ganti') return g;
+        if (metric === 'pakai') return b + rk;
         if (metric === 'pct') {
-          const p = num(r[cfg.i?.baik]) + num(r[cfg.i?.rusak]);
-          return p > 0 ? (num(r[cfg.i?.rusak]) / p) * 100 : 0;
+          const p = b + rk;
+          return p > 0 ? (rk / p) * 100 : 0;
         }
         return 0;
       },
@@ -144,7 +148,8 @@ export default function App() {
     const dateObj = new Date(timestamp);
     const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     const filteredRows = (data[key] || []).filter((r) => {
-      const d = parseDateVal(r[cfg.i?.date]);
+      if (!r) return false;
+      const d = parseDateVal(cell(r, cfg?.i?.date, ''));
       return d && d.toDateString() === dateObj.toDateString();
     });
     setModalState({

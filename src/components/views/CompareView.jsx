@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PROD_KEYS, SHEETS } from '../../constants/schema';
-import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso, getChartTheme } from '../../utils/formatters';
+import { parseDateVal, num, hexA, cell, fmtPeriodRange, iso, getChartTheme, formatYMD } from '../../utils/formatters';
 import { Bar } from 'react-chartjs-2';
 import { Check, RotateCcw, GitCompare } from 'lucide-react';
 import DatePickerInput from '../ui/DatePickerInput';
@@ -15,26 +15,31 @@ export default function CompareView({ data = {}, onToast }) {
     const p2From = new Date(today.getFullYear(), today.getMonth(), 1);
     const p1To = new Date(today.getFullYear(), today.getMonth(), 0);
     const p1From = new Date(p1To.getFullYear(), p1To.getMonth(), 1);
-    return { p1: { from: iso(p1From), to: iso(p1To) }, p2: { from: iso(p2From), to: iso(p2To) } };
+    return { p1: { from: formatYMD(p1From), to: formatYMD(p1To) }, p2: { from: formatYMD(p2From), to: formatYMD(p2To) } };
   };
 
   const [periods, setPeriods] = useState(defaultPeriods);
 
   const getMetrics = (fromStr, toStr) => {
-    const from = new Date(fromStr).setHours(0, 0, 0, 0);
-    const to = new Date(toStr).setHours(23, 59, 59, 999);
+    const fStr = formatYMD(fromStr);
+    const tStr = formatYMD(toStr);
     const rows = (data[key] || []).filter(r => {
-      const idVal = cell(r, cfg.i.id).trim();
+      if (!r) return false;
+      const idVal = cell(r, cfg?.i?.id, '').trim();
       if (!idVal || idVal === '-') return false;
-      const d = parseDateVal(r[cfg.i.date]);
-      return d && d.getTime() >= from && d.getTime() <= to;
+      if (fStr && tStr) {
+        const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+        if (itemDate && (itemDate < fStr || itemDate > tStr)) return false;
+      }
+      return true;
     });
 
     let baik = 0, rusak = 0, ganti = 0;
     rows.forEach(r => {
-      baik += num(r[cfg.i.baik]);
-      rusak += num(r[cfg.i.rusak]);
-      ganti += num(r[cfg.i.ganti]);
+      if (!r) return;
+      baik += num(cell(r, cfg?.i?.baik, 0));
+      rusak += num(cell(r, cfg?.i?.rusak, 0));
+      ganti += num(cell(r, cfg?.i?.ganti, 0));
     });
     return { pakai: baik + rusak, rusak, ganti, rows };
   };

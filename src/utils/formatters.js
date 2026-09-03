@@ -1,9 +1,24 @@
-// Nilai aman pembacaan cell dari baris array
+// Nilai aman pembacaan cell dari baris array atau object
 export const cell = (row, idx, fallback = '-') => {
-  if (!row || idx === undefined || idx === null || idx < 0) return fallback;
-  const val = row[idx];
-  if (val === undefined || val === null || String(val).trim() === '') return fallback;
-  return String(val);
+  if (!row || idx === undefined || idx === null) return fallback;
+  if (Array.isArray(row)) {
+    if (idx < 0 || idx >= row.length) return fallback;
+    const val = row[idx];
+    if (val === undefined || val === null || String(val).trim() === '') return fallback;
+    return String(val);
+  }
+  if (typeof row === 'object') {
+    if (typeof idx === 'string' && row[idx] !== undefined && row[idx] !== null) {
+      const val = row[idx];
+      if (String(val).trim() !== '') return String(val);
+    }
+    const vals = Object.values(row);
+    if (typeof idx === 'number' && idx >= 0 && idx < vals.length) {
+      const val = vals[idx];
+      if (val !== undefined && val !== null && String(val).trim() !== '') return String(val);
+    }
+  }
+  return fallback;
 };
 
 // Parsing angka aman
@@ -13,6 +28,37 @@ export const num = (val, fallback = 0) => {
   const clean = String(val).replace(/[^\d.-]/g, '');
   const parsed = parseFloat(clean);
   return isNaN(parsed) ? fallback : parsed;
+};
+
+// Helper Ekstraksi Kuantitas Fleksibel untuk Record Produksi (Object / Array)
+export const getRowQtyGood = (r, cfg) => {
+  if (!r) return 0;
+  if (typeof r === 'object' && !Array.isArray(r)) {
+    const v = r.qty_good ?? r.good ?? r.plate_baik ?? r.jml_baik ?? r.baik ?? r.qty_baik ?? r.total_good ?? r.hasil_baik;
+    if (v !== undefined && v !== null && v !== '') return num(v);
+  }
+  const idx = cfg?.i?.baik ?? cfg?.i?.qty_good;
+  return num(cell(r, idx, 0));
+};
+
+export const getRowQtyDefect = (r, cfg) => {
+  if (!r) return 0;
+  if (typeof r === 'object' && !Array.isArray(r)) {
+    const v = r.qty_defect ?? r.defect ?? r.plate_rusak ?? r.jml_rusak ?? r.rusak ?? r.qty_rusak ?? r.reject ?? r.qty_reject ?? r.total_defect;
+    if (v !== undefined && v !== null && v !== '') return num(v);
+  }
+  const idx = cfg?.i?.rusak ?? cfg?.i?.qty_defect;
+  return num(cell(r, idx, 0));
+};
+
+export const getRowQtyReplace = (r, cfg) => {
+  if (!r) return 0;
+  if (typeof r === 'object' && !Array.isArray(r)) {
+    const v = r.qty_replace ?? r.replace ?? r.qty_ganti ?? r.ganti ?? r.reprint ?? r.plate_ganti ?? r.jml_ganti ?? r.qty_reprint;
+    if (v !== undefined && v !== null && v !== '') return num(v);
+  }
+  const idx = cfg?.i?.ganti ?? cfg?.i?.qty_replace;
+  return num(cell(r, idx, 0));
 };
 
 // Format Angka Ribuan Indonesia
@@ -60,29 +106,40 @@ export const countBy = (arr = [], keyFn = (x) => x) => {
   return counts;
 };
 
-// Parser Tanggal yang Andal (Format ISO, Timestamp, YYYY-MM-DD, DD/MM/YYYY)
+// Parser Tanggal yang Andal (Format ISO, Timestamp, YYYY-MM-DD, DD/MM/YYYY, D/M/YYYY)
 export const parseDateVal = (val) => {
   if (!val) return null;
   if (val instanceof Date && !isNaN(val)) return val;
   const s = String(val).trim();
 
-  // Tangani format timestamp Supabase: 2026-01-05 00:00:00+00 atau 2026-01-05T...
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    const datePart = s.slice(0, 10);
-    const parts = datePart.split('-');
+  // Tangani format timestamp / ISO: 2026-01-05 00:00:00+00 atau 2026-01-05T... atau 2026/1/5
+  if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(s)) {
+    const sep = s.includes('/') ? '/' : '-';
+    const datePart = s.split(/[ T]/)[0];
+    const parts = datePart.split(sep);
     const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     return isNaN(d.getTime()) ? null : d;
   }
 
-  // Tangani format DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) {
-    const parts = s.split('/');
+  // Tangani format DD/MM/YYYY atau DD-MM-YYYY atau D/M/YYYY atau D-M-YYYY
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/.test(s)) {
+    const sep = s.includes('/') ? '/' : '-';
+    const datePart = s.split(/[ T]/)[0];
+    const parts = datePart.split(sep);
     const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
     return isNaN(d.getTime()) ? null : d;
   }
 
   const parsed = new Date(s);
   return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+// Helper Pencocokan Fleksibel Lini Mesin (Case-insensitive & Partial Match)
+export const matchLini = (itemLini, selectedTab) => {
+  if (!selectedTab || selectedTab === 'Semua' || selectedTab === 'ALL') return true;
+  const a = String(itemLini || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const b = String(selectedTab || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return a.includes(b) || b.includes(a);
 };
 
 // Format Date ke String ISO (YYYY-MM-DD)
@@ -132,6 +189,21 @@ export const fmtDDMMYYYY = (d) => {
 };
 
 // Format Rentang Periode
+// Format YYYY-MM-DD berbasis zona waktu lokal
+export const formatYMD = (val) => {
+  if (!val) return '';
+  if (typeof val === 'string') {
+    const s = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+  }
+  const parsed = parseDateVal(val);
+  if (!parsed || isNaN(parsed.getTime())) return '';
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const fmtPeriodRange = (start, end) => {
   if (!start && !end) return 'Semua Periode';
   if (start && !end) return `Mulai ${fmtDate(start)}`;
@@ -141,7 +213,7 @@ export const fmtPeriodRange = (start, end) => {
 
 export const fmtDateRange = fmtPeriodRange;
 
-// Preset Filter Tanggal Cepat
+// Preset Filter Tanggal Cepat (Standard YYYY-MM-DD)
 export const DATE_PRESETS = [
   {
     id: 'today',
@@ -177,17 +249,18 @@ export const DATE_PRESETS = [
   {
     id: 'thisMonth',
     label: 'Bulan Ini',
-    fullLabel: 'Bulan Ini',
+    fullLabel: 'Bulan Ini (1 s.d. Akhir Bulan)',
     getRange: () => {
       const today = new Date();
       const from = new Date(today.getFullYear(), today.getMonth(), 1);
-      return { from: startOfDay(from), to: endOfDay(today) };
+      const to = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { from: startOfDay(from), to: to };
     }
   },
   {
     id: 'lastMonth',
     label: 'Bulan Lalu',
-    fullLabel: 'Bulan Lalu',
+    fullLabel: 'Bulan Lalu (1 s.d. Akhir Bulan Lalu)',
     getRange: () => {
       const today = new Date();
       const from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -197,25 +270,41 @@ export const DATE_PRESETS = [
   }
 ];
 
-// Inisialisasi Default Period (Awal bulan berjalan s.d. hari ini)
+// Inisialisasi Default Period (Awal bulan berjalan s.d. akhir bulan berjalan)
 export const getDefaultPeriod = () => {
   const today = new Date();
   const from = new Date(today.getFullYear(), today.getMonth(), 1);
-  return { from: startOfDay(from), to: endOfDay(today) };
+  const to = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { from: startOfDay(from), to: to };
 };
 
 // Cek preset yang aktif
 export const getActivePresetId = (period) => {
   if (!period || !period.from || !period.to) return null;
-  const fromStr = iso(period.from);
-  const toStr = iso(period.to);
+  const fromStr = formatYMD(period.from);
+  const toStr = formatYMD(period.to);
   for (const p of DATE_PRESETS) {
     const range = p.getRange();
-    if (iso(range.from) === fromStr && iso(range.to) === toStr) {
+    if (formatYMD(range.from) === fromStr && formatYMD(range.to) === toStr) {
       return p.id;
     }
   }
   return null;
+};
+
+export const safeCategory = (jobNo) => {
+  if (!jobNo || typeof jobNo !== 'string') return 'Unknown';
+  return jobNo.trim().charAt(0) || 'Unknown';
+};
+
+export const safeDateStr = (dateVal) => {
+  if (!dateVal) return '';
+  try {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
 };
 
 // Map Evaluasi Kategori Job Berdasarkan Karakter Pertama Kolom job_no (0-9)
@@ -235,7 +324,7 @@ export const JOB_CATEGORY_MAP = {
 export const getJobCategoryByNo = (jobNo) => {
   if (jobNo === undefined || jobNo === null) return 'Uncategorized';
   const clean = String(jobNo).trim();
-  if (!clean) return 'Uncategorized';
+  if (!clean || clean === '-') return 'Uncategorized';
   const firstChar = clean.charAt(0);
   return JOB_CATEGORY_MAP[firstChar] || 'Uncategorized';
 };

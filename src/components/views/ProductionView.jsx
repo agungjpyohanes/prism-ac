@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, startOfDay, getChartTheme } from '../../utils/formatters';
+import { parseDateVal, num, cell, startOfDay, getChartTheme, formatYMD, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from '../../utils/formatters';
 import CountUp from '../common/CountUp';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -33,28 +33,32 @@ export default function ProductionView({
   const rawRows = data[activeKey] || [];
 
   const rows = useMemo(() => {
-    return rawRows.filter((r) => {
-      const idVal = cell(r, cfg.i.id).trim();
-      const jopVal = cell(r, cfg.i.jop).trim();
-      const noJopVal = cell(r, cfg.i.nojop).trim();
-      if (!idVal || (!jopVal && !noJopVal)) return false;
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
 
-      const d = parseDateVal(r[cfg.i.date]);
-      if (!d) return true;
-      const from = period?.from ? startOfDay(period.from).getTime() : null;
-      const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-      if (from && d.getTime() < from) return false;
-      if (to && d.getTime() > to) return false;
+    return (rawRows || []).filter((r) => {
+      if (!r) return false;
+      const idVal = cell(r, cfg?.i?.id, '').trim();
+      const jopVal = cell(r, cfg?.i?.jop, '').trim();
+      const noJopVal = cell(r, cfg?.i?.nojop, '').trim();
+      if (!idVal || idVal === '-' || (!jopVal && !noJopVal) || (jopVal === '-' && noJopVal === '-')) return false;
+
+      if (fromStr && toStr) {
+        const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+        if (itemDate && (itemDate < fromStr || itemDate > toStr)) return false;
+      }
+
       return true;
     });
   }, [rawRows, cfg, period]);
 
   const m = useMemo(() => {
     let baik = 0, rusak = 0, ganti = 0;
-    rows.forEach((r) => {
-      baik += num(r[cfg.i.baik]);
-      rusak += num(r[cfg.i.rusak]);
-      ganti += num(r[cfg.i.ganti]);
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      baik += getRowQtyGood(r, cfg);
+      rusak += getRowQtyDefect(r, cfg);
+      ganti += getRowQtyReplace(r, cfg);
     });
     const pakai = baik + rusak;
     const pct = pakai > 0 ? (rusak / pakai) * 100 : 0;
@@ -72,13 +76,14 @@ export default function ProductionView({
   // Daily Data
   const daily = useMemo(() => {
     const map = new Map();
-    rows.forEach((r) => {
-      const d = parseDateVal(r[cfg.i.date]);
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      const d = parseDateVal(cell(r, cfg?.i?.date, ''));
       if (!d) return;
       const k = startOfDay(d).getTime();
       const e = map.get(k) || { baik: 0, rusak: 0 };
-      e.baik += num(r[cfg.i.baik]);
-      e.rusak += num(r[cfg.i.rusak]);
+      e.baik += getRowQtyGood(r, cfg);
+      e.rusak += getRowQtyDefect(r, cfg);
       map.set(k, e);
     });
     const keys = [...map.keys()].sort((a, b) => a - b);
@@ -189,7 +194,7 @@ export default function ProductionView({
                     }
                   },
                   onClick: (e, els) => {
-                    if (!els.length) return;
+                    if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenDayModal) return;
                     onOpenDayModal(activeKey, daily.keys[els[0].index]);
                   }
                 }}

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, fmtPeriodRange, startOfDay, getChartTheme } from '../../utils/formatters';
+import { parseDateVal, num, cell, fmtPeriodRange, startOfDay, getChartTheme, formatYMD, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from '../../utils/formatters';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -17,30 +17,34 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export default function ExecutiveOverallView({ data, period, onOpenList }) {
   const summaryByProcess = useMemo(() => {
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
+
     return PROD_KEYS.map(k => {
       const cfg = SHEETS[k];
       const raw = data[k] || [];
 
-      const rows = raw.filter(r => {
-        const idVal = cell(r, cfg.i.id).trim();
-        const jopVal = cell(r, cfg.i.jop).trim();
-        const noJopVal = cell(r, cfg.i.nojop).trim();
-        if (!idVal || (!jopVal && !noJopVal)) return false;
+      const rows = (raw || []).filter(r => {
+        if (!r) return false;
+        const idVal = cell(r, cfg?.i?.id, '').trim();
+        const jopVal = cell(r, cfg?.i?.jop, '').trim();
+        const noJopVal = cell(r, cfg?.i?.nojop, '').trim();
+        if (!idVal || idVal === '-' || (!jopVal && !noJopVal) || (jopVal === '-' && noJopVal === '-')) return false;
 
-        const d = parseDateVal(r[cfg.i.date]);
-        if (!d) return true;
-        const from = period?.from ? startOfDay(period.from).getTime() : null;
-        const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-        if (from && d.getTime() < from) return false;
-        if (to && d.getTime() > to) return false;
+        if (fromStr && toStr) {
+          const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+          if (itemDate && (itemDate < fromStr || itemDate > toStr)) return false;
+        }
+
         return true;
       });
 
       let good = 0, reject = 0, replace = 0;
       rows.forEach(r => {
-        good += num(r[cfg.i.baik]);
-        reject += num(r[cfg.i.rusak]);
-        replace += num(r[cfg.i.ganti]);
+        if (!r) return;
+        good += getRowQtyGood(r, cfg);
+        reject += getRowQtyDefect(r, cfg);
+        replace += getRowQtyReplace(r, cfg);
       });
 
       const output = good + reject;
@@ -209,9 +213,9 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
                       }
                     },
                     onClick: (e, els) => {
-                      if (!els.length) return;
+                      if (!els || !Array.isArray(els) || !els.length || !els[0]) return;
                       const item = summaryByProcess[els[0].index];
-                      onOpenList?.(`Semua Transaksi ${item.label}`, item.key, item.rows);
+                      if (item) onOpenList?.(`Semua Transaksi ${item.label}`, item.key, item.rows);
                     }
                   }}
                 />
@@ -256,9 +260,9 @@ export default function ExecutiveOverallView({ data, period, onOpenList }) {
                       }
                     },
                     onClick: (e, els) => {
-                      if (!els.length) return;
+                      if (!els || !Array.isArray(els) || !els.length || !els[0]) return;
                       const item = summaryByProcess[els[0].index];
-                      onOpenList?.(`Reject Record ${item.label}`, item.key, item.rows.filter(r => num(r[SHEETS[item.key].i.rusak]) > 0));
+                      if (item) onOpenList?.(`Reject Record ${item.label}`, item.key, (item.rows || []).filter(r => r && num(cell(r, SHEETS[item.key]?.i?.rusak, 0)) > 0));
                     }
                   }}
                 />

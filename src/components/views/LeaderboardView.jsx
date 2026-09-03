@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, startOfDay, fmtPeriodRange } from '../../utils/formatters';
+import { parseDateVal, num, cell, startOfDay, fmtPeriodRange, formatYMD, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from '../../utils/formatters';
 import { Medal, Flame, Search, Crown } from 'lucide-react';
 
 export default function LeaderboardView({ data, period }) {
@@ -10,28 +10,29 @@ export default function LeaderboardView({ data, period }) {
   const targetKeys = selectedProcess === 'ALL' ? PROD_KEYS : [selectedProcess];
 
   const rankings = useMemo(() => {
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
     const map = new Map();
 
     targetKeys.forEach((key) => {
       const cfg = SHEETS[key];
       const rows = data[key] || [];
 
-      rows.forEach((r) => {
-        const idVal = cell(r, cfg.i.id).trim();
-        if (!idVal) return;
+      (rows || []).forEach((r) => {
+        if (!r) return;
+        const idVal = cell(r, cfg?.i?.id, '').trim();
+        if (!idVal || idVal === '-') return;
 
-        const d = parseDateVal(r[cfg.i.date]);
-        if (d && period?.from && period?.to) {
-          const from = startOfDay(period.from).getTime();
-          const to = new Date(period.to).setHours(23, 59, 59, 999);
-          if (d.getTime() < from || d.getTime() > to) return;
+        if (fromStr && toStr) {
+          const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+          if (itemDate && (itemDate < fromStr || itemDate > toStr)) return;
         }
 
-        const op = cell(r, cfg.i.op).trim() || 'Unassigned';
+        const op = cell(r, cfg?.i?.op, '').trim() || 'Unassigned';
         const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0 };
-        e.good += num(r[cfg.i.baik]);
-        e.reject += num(r[cfg.i.rusak]);
-        e.replace += num(r[cfg.i.ganti]);
+        e.good += getRowQtyGood(r, cfg);
+        e.reject += getRowQtyDefect(r, cfg);
+        e.replace += getRowQtyReplace(r, cfg);
         map.set(op, e);
       });
     });

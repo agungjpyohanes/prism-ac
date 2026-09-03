@@ -223,6 +223,18 @@ export const SHEETS = {
     headers: ['id', 'username', 'role', 'password_hash'],
     dataCols: [0, 1, 2, 3],
     i: { id: 0, username: 1, role: 2, password_hash: 3 }
+  },
+  rec_personil: {
+    label: 'Data Personil & Operator',
+    headers: ['id', 'nick_name', 'nama_lengkap', 'jabatan', 'divisi', 'lini_mesin', 'nik_lama', 'nik_baru', 'role_type'],
+    dataCols: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    i: { id: 0, nick_name: 1, nama_lengkap: 2, jabatan: 3, divisi: 4, lini_mesin: 5, nik_lama: 6, nik_baru: 7, role_type: 8 }
+  },
+  rec_absensi: {
+    label: 'Data Absensi & Kehadiran',
+    headers: ['id', 'date', 'nick_name', 'kode', 'keterangan', 'jam_masuk', 'jam_pulang'],
+    dataCols: [0, 1, 2, 3, 4, 5, 6],
+    i: { id: 0, date: 1, nick_name: 2, kode: 3, keterangan: 4, jam_masuk: 5, jam_pulang: 6 }
   }
 };
 
@@ -313,5 +325,5 @@ export const CAT_COLORS = {
 };
 
 export const PROD_KEYS = ['rec_ctcp', 'rec_ctp', 'rec_screen', 'rec_flexo', 'rec_etching'];
-export const ALL_KEYS = ['job_active', ...PROD_KEYS, 'master_user'];
+export const ALL_KEYS = ['job_active', ...PROD_KEYS, 'master_user', 'rec_personil', 'rec_absensi'];
 export const TABLE_NAMES = ALL_KEYS;

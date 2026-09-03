@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, FORMS } from '../../constants/schema';
-import { cell, fmtDate, jopCat, getStatusBadgeClass, getCategoryBadgeClass, getChartTheme } from '../../utils/formatters';
+import { cell, fmtDate, jopCat, getStatusBadgeClass, getCategoryBadgeClass, getChartTheme, formatYMD } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -34,7 +34,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-export default function OverviewView({ data = {}, onOpenList, onSelectRow, onToast }) {
+export default function OverviewView({ data = {}, period, onOpenList, onSelectRow, onToast }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -54,13 +54,13 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow, onToa
 
   // Helper cerdas deteksi Kategori jika kolom category di DB bernilai NULL
   const getRowCategory = (r) => {
-    const directCat = cell(r, cfg.i.category).trim();
+    const directCat = cell(r, cfg?.i?.category, '').trim();
     if (directCat && directCat !== '-' && directCat.toUpperCase() !== 'NULL') {
       return directCat.toUpperCase();
     }
     
     // Auto-detect dari prefix ID (FLX -> FLEXO, SCRN -> SCREEN, dst)
-    const idVal = cell(r, cfg.i.id).toUpperCase();
+    const idVal = cell(r, cfg?.i?.id, '').toUpperCase();
     if (idVal.startsWith('FLX')) return 'FLEXO';
     if (idVal.startsWith('SCRN')) return 'SCREEN';
     if (idVal.startsWith('CTP')) return 'CTP';
@@ -68,23 +68,33 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow, onToa
     if (idVal.startsWith('ETCH')) return 'ETCHING';
 
     // Auto-detect dari nama JOP
-    const jopName = cell(r, cfg.i.job_name || cfg.i.jop);
+    const jopName = cell(r, cfg?.i?.job_name || cfg?.i?.jop, '');
     return jopCat(jopName);
   };
 
   // Filter Baris Aktif
   const filtered = useMemo(() => {
-    return rawRows.filter((r) => {
-      const idVal = cell(r, cfg.i.id).trim();
-      const jopVal = cell(r, cfg.i.job_name || cfg.i.jop).trim();
-      const noJopVal = cell(r, cfg.i.job_no || cfg.i.nojop).trim();
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
+
+    return (rawRows || []).filter((r) => {
+      if (!r) return false;
+      const idVal = cell(r, cfg?.i?.id, '').trim();
+      const jopVal = cell(r, cfg?.i?.job_name || cfg?.i?.jop, '').trim();
+      const noJopVal = cell(r, cfg?.i?.job_no || cfg?.i?.nojop, '').trim();
 
       // Skip baris kosong
-      if (!idVal || (!jopVal && !noJopVal)) return false;
+      if (!idVal || idVal === '-' || (!jopVal && !noJopVal) || (jopVal === '-' && noJopVal === '-')) return false;
+
+      // Filter Tanggal Periode
+      if (fromStr && toStr) {
+        const itemDate = formatYMD(cell(r, cfg?.i?.date, '') || cell(r, cfg?.i?.start_time, ''));
+        if (itemDate && (itemDate < fromStr || itemDate > toStr)) return false;
+      }
 
       // Status Filter
       if (statusFilter !== 'ALL') {
-        const s = cell(r, cfg.i.status).trim();
+        const s = cell(r, cfg?.i?.status, '').trim();
         if (s !== statusFilter) return false;
       }
 
@@ -97,13 +107,13 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow, onToa
       // Search Query
       if (search.trim()) {
         const q = search.toLowerCase();
-        const combined = (cfg.headers || []).map((_, i) => cell(r, i)).join(' ').toLowerCase();
+        const combined = (cfg?.headers || []).map((_, i) => cell(r, i, '')).join(' ').toLowerCase();
         if (!combined.includes(q)) return false;
       }
 
       return true;
     });
-  }, [rawRows, cfg, statusFilter, categoryFilter, search]);
+  }, [rawRows, cfg, period, statusFilter, categoryFilter, search]);
 
   // Statistik & Agregasi
   const stats = useMemo(() => {
@@ -162,19 +172,21 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow, onToa
   };
 
   const handleDoughnutClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
+    if (!elements || !Array.isArray(elements) || elements.length === 0 || !elements[0]) return;
     const clickedIndex = elements[0].index;
-    const catName = Object.keys(stats.categoryCount)[clickedIndex];
-    if (catName && stats.categoryRows[catName]) {
+    const keys = Object.keys(stats?.categoryCount || {});
+    const catName = keys[clickedIndex];
+    if (catName && stats?.categoryRows?.[catName]) {
       onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
     }
   };
 
   const handleBarClick = (event, elements) => {
-    if (!elements || elements.length === 0) return;
+    if (!elements || !Array.isArray(elements) || elements.length === 0 || !elements[0]) return;
     const clickedIndex = elements[0].index;
-    const statusName = Object.keys(stats.statusCount)[clickedIndex];
-    if (statusName && stats.statusRows[statusName]) {
+    const keys = Object.keys(stats?.statusCount || {});
+    const statusName = keys[clickedIndex];
+    if (statusName && stats?.statusRows?.[statusName]) {
       onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
     }
   };
@@ -589,51 +601,56 @@ export default function OverviewView({ data = {}, onOpenList, onSelectRow, onToa
               </tr>
             </thead>
             <tbody>
-              {paginatedRows.map((row, idx) => (
-                <tr
-                  key={idx}
-                  onClick={() => onSelectRow?.('job_active', row)}
-                  className="cursor-pointer"
-                >
-                  <td className="text-slate-500 dark:text-slate-400 font-mono font-bold">{(page - 1) * pageSize + idx + 1}</td>
-                  {(cfg.headers || []).map((_, colIdx) => {
-                    const val = row[colIdx];
+              {(paginatedRows || []).map((row, idx) => {
+                if (!row) return null;
+                return (
+                  <tr
+                    key={idx}
+                    onClick={() => onSelectRow?.('job_active', row)}
+                    className="cursor-pointer"
+                  >
+                    <td className="text-slate-500 dark:text-slate-400 font-mono font-bold">{(page - 1) * pageSize + idx + 1}</td>
+                    {(cfg?.headers || []).map((hName, colIdx) => {
+                      const val = Array.isArray(row)
+                        ? (row[colIdx] !== undefined && row[colIdx] !== null ? row[colIdx] : '')
+                        : (row?.[colIdx] ?? (typeof hName === 'string' ? row?.[hName] : '') ?? '');
 
-                    // Kategori
-                    if (colIdx === cfg.i.category) {
-                      const displayCat = val && val !== '-' && String(val).toUpperCase() !== 'NULL' ? val : getRowCategory(row);
+                      // Kategori
+                      if (colIdx === cfg?.i?.category) {
+                        const displayCat = val && val !== '-' && String(val).toUpperCase() !== 'NULL' ? val : getRowCategory(row);
+                        return (
+                          <td key={colIdx} className="whitespace-nowrap">
+                            <span className={`badge ${getCategoryBadgeClass(displayCat)} font-bold`}>
+                              {displayCat}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      // Status Badge
+                      if (colIdx === cfg?.i?.status) {
+                        const str = String(val || 'ANTRI');
+                        return (
+                          <td key={colIdx} className="whitespace-nowrap">
+                            <span className={`badge ${getStatusBadgeClass(str)} font-bold`}>
+                              {str}
+                            </span>
+                          </td>
+                        );
+                      }
+
                       return (
-                        <td key={colIdx} className="whitespace-nowrap">
-                          <span className={`badge ${getCategoryBadgeClass(displayCat)} font-bold`}>
-                            {displayCat}
-                          </span>
+                        <td key={colIdx} className={`whitespace-nowrap ${colIdx === cfg?.i?.id ? 'font-bold text-slate-900 dark:text-white font-mono' : 'text-slate-800 dark:text-slate-200'}`}>
+                          {colIdx === cfg?.i?.date ? (val && String(val).toUpperCase() !== 'NULL' ? fmtDate(val) : '—') : (val !== '' && val !== null && val !== undefined ? String(val) : '—')}
                         </td>
                       );
-                    }
-
-                    // Status Badge
-                    if (colIdx === cfg.i.status) {
-                      const str = String(val || 'ANTRI');
-                      return (
-                        <td key={colIdx} className="whitespace-nowrap">
-                          <span className={`badge ${getStatusBadgeClass(str)} font-bold`}>
-                            {str}
-                          </span>
-                        </td>
-                      );
-                    }
-
-                    return (
-                      <td key={colIdx} className={`whitespace-nowrap ${colIdx === cfg.i.id ? 'font-bold text-slate-900 dark:text-white font-mono' : 'text-slate-800 dark:text-slate-200'}`}>
-                        {colIdx === cfg.i.date ? (val && String(val).toUpperCase() !== 'NULL' ? fmtDate(val) : '—') : (val ?? '—')}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              {paginatedRows.length === 0 && (
+                    })}
+                  </tr>
+                );
+              })}
+              {(!paginatedRows || paginatedRows.length === 0) && (
                 <tr>
-                  <td colSpan={cfg.headers.length + 1} className="text-center py-8 text-slate-500 dark:text-slate-400">
+                  <td colSpan={(cfg?.headers?.length || 0) + 1} className="text-center py-8 text-slate-500 dark:text-slate-400">
                     Tidak ada pekerjaan aktif yang cocok dengan kriteria pencarian/filter.
                   </td>
                 </tr>

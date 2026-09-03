@@ -10,7 +10,11 @@ import {
   startOfDay,
   iso,
   hexA,
-  getChartTheme
+  getChartTheme,
+  formatYMD,
+  getRowQtyGood,
+  getRowQtyDefect,
+  getRowQtyReplace
 } from '../../utils/formatters';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import {
@@ -80,31 +84,44 @@ export default function ProcessAnalyticsView({
 
   // Filter Baris berdasarkan rentang tanggal aktif
   const rows = useMemo(() => {
-    return rawRows.filter((r) => {
-      const idVal = cell(r, cfg.i?.id).trim();
-      const jopVal = cell(r, cfg.i?.jop).trim();
-      const noJopVal = cell(r, cfg.i?.nojop).trim();
-      if (!idVal || (!jopVal && !noJopVal)) return false;
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
 
-      const d = parseDateVal(r[cfg.i?.date]);
-      if (!d) return true;
-      const from = period?.from ? startOfDay(period.from).getTime() : null;
-      const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-      if (from && d.getTime() < from) return false;
-      if (to && d.getTime() > to) return false;
+    const res = (rawRows || []).filter((r) => {
+      if (!r) return false;
+      const idVal = cell(r, cfg?.i?.id, '').trim();
+      const jopVal = cell(r, cfg?.i?.jop, '').trim();
+      const noJopVal = cell(r, cfg?.i?.nojop, '').trim();
+      if (!idVal || idVal === '-' || (!jopVal && !noJopVal) || (jopVal === '-' && noJopVal === '-')) return false;
+
+      if (fromStr && toStr) {
+        const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+        if (itemDate && (itemDate < fromStr || itemDate > toStr)) return false;
+      }
       return true;
     });
-  }, [rawRows, cfg, period]);
+
+    console.log("Active Filter:", {
+      startDate: fromStr,
+      endDate: toStr,
+      activeLini: cfg?.label || activeKey,
+      rawCount: (rawRows || []).length,
+      filteredCount: res.length
+    });
+
+    return res;
+  }, [rawRows, cfg, period, activeKey]);
 
   // ==========================================
   // TAB 1: METRIK OVERVIEW PRODUKSI
   // ==========================================
   const overviewMetrics = useMemo(() => {
     let baik = 0, rusak = 0, ganti = 0;
-    rows.forEach((r) => {
-      baik += num(r[cfg.i?.baik]);
-      rusak += num(r[cfg.i?.rusak]);
-      ganti += num(r[cfg.i?.ganti]);
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      baik += getRowQtyGood(r, cfg);
+      rusak += getRowQtyDefect(r, cfg);
+      ganti += getRowQtyReplace(r, cfg);
     });
     const pakai = baik + rusak;
     const pct = pakai > 0 ? (rusak / pakai) * 100 : 0;
@@ -114,13 +131,14 @@ export default function ProcessAnalyticsView({
   // Data Tren Harian
   const dailyTrend = useMemo(() => {
     const map = new Map();
-    rows.forEach((r) => {
-      const d = parseDateVal(r[cfg.i?.date]);
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      const d = parseDateVal(cell(r, cfg?.i?.date, ''));
       if (!d) return;
       const k = startOfDay(d).getTime();
       const e = map.get(k) || { baik: 0, rusak: 0 };
-      e.baik += num(r[cfg.i?.baik]);
-      e.rusak += num(r[cfg.i?.rusak]);
+      e.baik += getRowQtyGood(r, cfg);
+      e.rusak += getRowQtyDefect(r, cfg);
       map.set(k, e);
     });
     const keys = [...map.keys()].sort((a, b) => a - b);
@@ -175,10 +193,11 @@ export default function ProcessAnalyticsView({
   // ==========================================
   const kpiAnalytics = useMemo(() => {
     let good = 0, reject = 0, replace = 0;
-    rows.forEach((r) => {
-      good += num(r[cfg.i?.baik]);
-      reject += num(r[cfg.i?.rusak]);
-      replace += num(r[cfg.i?.ganti]);
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      good += getRowQtyGood(r, cfg);
+      reject += getRowQtyDefect(r, cfg);
+      replace += getRowQtyReplace(r, cfg);
     });
     const output = good + reject;
     const lossRate = output > 0 ? (reject / output) * 100 : 0;
@@ -211,14 +230,15 @@ export default function ProcessAnalyticsView({
     const map = new Map();
     let totalAllOutput = 0;
 
-    rows.forEach((r) => {
-      let m = (machineCol !== -1 && cell(r, machineCol).trim()) || '';
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      let m = (machineCol !== -1 && cell(r, machineCol, '').trim()) || '';
       if (!m || m === '-' || m.toUpperCase() === 'NULL') m = 'Standard / Unassigned';
 
       const e = map.get(m) || { name: m, good: 0, reject: 0, replace: 0, count: 0, rowList: [] };
-      const g = num(r[cfg.i?.baik]);
-      const rj = num(r[cfg.i?.rusak]);
-      const rp = num(r[cfg.i?.ganti]);
+      const g = getRowQtyGood(r, cfg);
+      const rj = getRowQtyDefect(r, cfg);
+      const rp = getRowQtyReplace(r, cfg);
 
       e.good += g;
       e.reject += rj;
@@ -268,8 +288,9 @@ export default function ProcessAnalyticsView({
       });
     });
 
-    rows.forEach((r) => {
-      const jNo = cell(r, jobNoCol);
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      const jNo = cell(r, jobNoCol, '');
       const cat = getJobCategoryByNo(jNo);
       const e = map.get(cat) || {
         category: cat,
@@ -280,9 +301,9 @@ export default function ProcessAnalyticsView({
         rowList: []
       };
 
-      const g = num(r[cfg.i?.baik]);
-      const rj = num(r[cfg.i?.rusak]);
-      const rp = num(r[cfg.i?.ganti]);
+      const g = getRowQtyGood(r, cfg);
+      const rj = getRowQtyDefect(r, cfg);
+      const rp = getRowQtyReplace(r, cfg);
 
       e.volume += 1;
       e.good += g;
@@ -323,12 +344,13 @@ export default function ProcessAnalyticsView({
 
   const shiftData = useMemo(() => {
     const map = new Map();
-    rows.forEach((r) => {
-      let sh = cell(r, cfg.i?.shift).toUpperCase().trim();
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      let sh = cell(r, cfg?.i?.shift, '').toUpperCase().trim();
       if (!sh || sh === '-' || sh === 'UNDEFINED') sh = 'NON-SHIFT';
       const e = map.get(sh) || { good: 0, reject: 0 };
-      e.good += num(r[cfg.i?.baik]);
-      e.reject += num(r[cfg.i?.rusak]);
+      e.good += getRowQtyGood(r, cfg);
+      e.reject += getRowQtyDefect(r, cfg);
       map.set(sh, e);
     });
 
@@ -342,12 +364,13 @@ export default function ProcessAnalyticsView({
 
   const opRanking = useMemo(() => {
     const map = new Map();
-    rows.forEach((r) => {
-      const op = cell(r, cfg.i?.op).trim() || 'Unassigned';
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      const op = cell(r, cfg?.i?.op, '').trim() || 'Unassigned';
       const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0, rowList: [] };
-      e.good += num(r[cfg.i?.baik]);
-      e.reject += num(r[cfg.i?.rusak]);
-      e.replace += num(r[cfg.i?.ganti]);
+      e.good += getRowQtyGood(r, cfg);
+      e.reject += getRowQtyDefect(r, cfg);
+      e.replace += getRowQtyReplace(r, cfg);
       e.rowList.push(r);
       map.set(op, e);
     });
@@ -365,12 +388,13 @@ export default function ProcessAnalyticsView({
     const map = new Map();
     const poCol = cfg.i?.po_helper ?? -1;
 
-    rows.forEach((r) => {
-      const po = (poCol !== -1 && cell(r, poCol).trim()) || 'Tanpa PO';
+    (rows || []).forEach((r) => {
+      if (!r) return;
+      const po = (poCol !== -1 && cell(r, poCol, '').trim()) || 'Tanpa PO';
       const e = map.get(po) || { name: po, good: 0, reject: 0, replace: 0, rowList: [] };
-      e.good += num(r[cfg.i?.baik]);
-      e.reject += num(r[cfg.i?.rusak]);
-      e.replace += num(r[cfg.i?.ganti]);
+      e.good += getRowQtyGood(r, cfg);
+      e.reject += getRowQtyDefect(r, cfg);
+      e.replace += getRowQtyReplace(r, cfg);
       e.rowList.push(r);
       map.set(po, e);
     });
@@ -401,26 +425,31 @@ export default function ProcessAnalyticsView({
     const p2From = new Date(today.getFullYear(), today.getMonth(), 1);
     const p1To = new Date(today.getFullYear(), today.getMonth(), 0);
     const p1From = new Date(p1To.getFullYear(), p1To.getMonth(), 1);
-    return { p1: { from: iso(p1From), to: iso(p1To) }, p2: { from: iso(p2From), to: iso(p2To) } };
+    return { p1: { from: formatYMD(p1From), to: formatYMD(p1To) }, p2: { from: formatYMD(p2From), to: formatYMD(p2To) } };
   };
 
   const [comparePeriods, setComparePeriods] = useState(defaultPeriods);
 
   const getCompareMetrics = (fromStr, toStr) => {
-    const from = new Date(fromStr).setHours(0, 0, 0, 0);
-    const to = new Date(toStr).setHours(23, 59, 59, 999);
+    const fStr = formatYMD(fromStr);
+    const tStr = formatYMD(toStr);
     const compRows = (data[activeKey] || []).filter((r) => {
-      const idVal = cell(r, cfg.i?.id).trim();
+      if (!r) return false;
+      const idVal = cell(r, cfg?.i?.id, '').trim();
       if (!idVal || idVal === '-') return false;
-      const d = parseDateVal(r[cfg.i?.date]);
-      return d && d.getTime() >= from && d.getTime() <= to;
+      if (fStr && tStr) {
+        const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+        if (itemDate && (itemDate < fStr || itemDate > tStr)) return false;
+      }
+      return true;
     });
 
     let baik = 0, rusak = 0, ganti = 0;
     compRows.forEach((r) => {
-      baik += num(r[cfg.i?.baik]);
-      rusak += num(r[cfg.i?.rusak]);
-      ganti += num(r[cfg.i?.ganti]);
+      if (!r) return;
+      baik += getRowQtyGood(r, cfg);
+      rusak += getRowQtyDefect(r, cfg);
+      ganti += getRowQtyReplace(r, cfg);
     });
     return { pakai: baik + rusak, rusak, ganti, rows: compRows };
   };
@@ -816,7 +845,7 @@ export default function ProcessAnalyticsView({
                         }
                       },
                       onClick: (e, els) => {
-                        if (!els.length || !onOpenDayModal) return;
+                        if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenDayModal) return;
                         onOpenDayModal(activeKey, dailyTrend.keys[els[0].index]);
                       }
                     }}
@@ -975,7 +1004,7 @@ export default function ProcessAnalyticsView({
                           }
                         },
                         onClick: (e, els) => {
-                          if (!els.length || !onOpenList) return;
+                          if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenList) return;
                           const mName = machineBreakdown.labels[els[0].index];
                           const item = machineBreakdown.list.find((x) => x.name === mName);
                           if (item) onOpenList(`Detail Mesin: ${mName}`, activeKey, item.rowList);
@@ -1016,7 +1045,7 @@ export default function ProcessAnalyticsView({
                           }
                         },
                         onClick: (e, els) => {
-                          if (!els.length || !onOpenList) return;
+                          if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenList) return;
                           const mName = machineBreakdown.labels[els[0].index];
                           const item = machineBreakdown.list.find((x) => x.name === mName);
                           if (item) onOpenList(`Detail Mesin: ${mName}`, activeKey, item.rowList);
@@ -1129,7 +1158,7 @@ export default function ProcessAnalyticsView({
                           }
                         },
                         onClick: (e, els) => {
-                          if (!els.length || !onOpenList) return;
+                          if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenList) return;
                           const cName = jobCategoryEvaluation.labels[els[0].index];
                           const item = jobCategoryEvaluation.list.find((x) => x.category === cName);
                           if (item) onOpenList(`Detail Kategori: ${cName}`, activeKey, item.rowList);
@@ -1170,7 +1199,7 @@ export default function ProcessAnalyticsView({
                           }
                         },
                         onClick: (e, els) => {
-                          if (!els.length || !onOpenList) return;
+                          if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenList) return;
                           const cName = jobCategoryEvaluation.labels[els[0].index];
                           const item = jobCategoryEvaluation.list.find((x) => x.category === cName);
                           if (item) onOpenList(`Detail Kategori: ${cName}`, activeKey, item.rowList);
@@ -1263,13 +1292,14 @@ export default function ProcessAnalyticsView({
                           legend: { labels: { color: ct.legendColor, font: { size: 11, weight: 'bold' } } }
                         },
                         onClick: (e, els) => {
-                          if (!els.length || !onOpenList) return;
+                          if (!els || !Array.isArray(els) || !els.length || !els[0] || !onOpenList) return;
                           const sh = shiftData.labels[els[0].index];
                           onOpenList(
                             `Detail Shift: ${sh}`,
                             activeKey,
-                            rows.filter((r) => {
-                              let s = cell(r, cfg.i?.shift).toUpperCase().trim();
+                            (rows || []).filter((r) => {
+                              if (!r) return false;
+                              let s = cell(r, cfg?.i?.shift, '').toUpperCase().trim();
                               if (!s || s === '-' || s === 'UNDEFINED') s = 'NON-SHIFT';
                               return s === sh;
                             })

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, num, cell, fmtPeriodRange, startOfDay } from '../../utils/formatters';
+import { parseDateVal, num, cell, fmtPeriodRange, startOfDay, formatYMD, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from '../../utils/formatters';
 import { UserCheck, CheckCircle2, AlertTriangle, Sparkles, Award } from 'lucide-react';
 import StatCard from '../ui/StatCard';
 
@@ -8,6 +8,8 @@ export default function PersonalKpiView({ data, user, period }) {
   const currentUsername = String(user?.USER || user?.username || 'guest').trim().toLowerCase();
 
   const userStats = useMemo(() => {
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
     let good = 0, reject = 0, replace = 0, totalJob = 0;
     const records = [];
 
@@ -15,21 +17,21 @@ export default function PersonalKpiView({ data, user, period }) {
       const cfg = SHEETS[key];
       const rows = data[key] || [];
 
-      rows.forEach((r) => {
-        const idVal = cell(r, cfg.i.id).trim();
-        const opVal = cell(r, cfg.i.op).trim().toLowerCase();
-        if (!idVal || (currentUsername !== 'guest' && !opVal.includes(currentUsername))) return;
+      (rows || []).forEach((r) => {
+        if (!r) return;
+        const idVal = cell(r, cfg?.i?.id, '').trim();
+        const opVal = cell(r, cfg?.i?.op, '').trim().toLowerCase();
+        if (!idVal || idVal === '-' || (currentUsername !== 'guest' && !opVal.includes(currentUsername))) return;
 
-        const d = parseDateVal(r[cfg.i.date]);
-        if (d && period?.from && period?.to) {
-          const from = startOfDay(period.from).getTime();
-          const to = new Date(period.to).setHours(23, 59, 59, 999);
-          if (d.getTime() < from || d.getTime() > to) return;
+        const dateVal = cell(r, cfg?.i?.date, '');
+        if (fromStr && toStr) {
+          const itemDate = formatYMD(dateVal);
+          if (itemDate && (itemDate < fromStr || itemDate > toStr)) return;
         }
 
-        const g = num(r[cfg.i.baik]);
-        const rj = num(r[cfg.i.rusak]);
-        const rp = num(r[cfg.i.ganti]);
+        const g = getRowQtyGood(r, cfg);
+        const rj = getRowQtyDefect(r, cfg);
+        const rp = getRowQtyReplace(r, cfg);
 
         good += g;
         reject += rj;
@@ -38,9 +40,9 @@ export default function PersonalKpiView({ data, user, period }) {
 
         records.push({
           key,
-          process: cfg.label,
-          job: cell(r, cfg.i.jop) || cell(r, cfg.i.nojop),
-          date: r[cfg.i.date],
+          process: cfg?.label || key,
+          job: cell(r, cfg?.i?.jop) || cell(r, cfg?.i?.nojop),
+          date: dateVal,
           good: g,
           reject: rj
         });

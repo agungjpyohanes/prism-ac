@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
-import { parseDateVal, fmtDate } from '../../utils/formatters';
+import { parseDateVal, fmtDate, cell, formatYMD } from '../../utils/formatters';
 import { Search, Database } from 'lucide-react';
 
 export default function DataTableView({
@@ -22,24 +22,25 @@ export default function DataTableView({
 
   // Filter Periode & Pencarian
   const filteredRows = useMemo(() => {
-    return rawRows.filter((r) => {
-      const idVal = String(r[cfg.i.id] || '').trim();
-      const jopVal = String(r[cfg.i.jop] || '').trim();
-      const noJopVal = String(r[cfg.i.nojop] || '').trim();
-      if (!idVal || (!jopVal && !noJopVal)) return false;
+    const fromStr = period?.from ? formatYMD(period.from) : '';
+    const toStr = period?.to ? formatYMD(period.to) : '';
 
-      const d = parseDateVal(r[cfg.i.date]);
-      const from = period?.from ? new Date(period.from).setHours(0, 0, 0, 0) : null;
-      const to = period?.to ? new Date(period.to).setHours(23, 59, 59, 999) : null;
-      if (d) {
-        if (from && d.getTime() < from) return false;
-        if (to && d.getTime() > to) return false;
+    return (rawRows || []).filter((r) => {
+      if (!r) return false;
+      const idVal = cell(r, cfg?.i?.id, '').trim();
+      const jopVal = cell(r, cfg?.i?.jop, '').trim();
+      const noJopVal = cell(r, cfg?.i?.nojop, '').trim();
+      if (!idVal || idVal === '-' || (!jopVal && !noJopVal) || (jopVal === '-' && noJopVal === '-')) return false;
+
+      if (fromStr && toStr) {
+        const itemDate = formatYMD(cell(r, cfg?.i?.date, ''));
+        if (itemDate && (itemDate < fromStr || itemDate > toStr)) return false;
       }
 
       if (search.trim()) {
         const q = search.toLowerCase();
-        return (cfg.dataCols || cfg.headers.map((_, i) => i)).some((ci) =>
-          String(r[ci] || '').toLowerCase().includes(q)
+        return (cfg.dataCols || (cfg.headers || []).map((_, i) => i)).some((ci) =>
+          cell(r, ci, '').toLowerCase().includes(q)
         );
       }
       return true;
