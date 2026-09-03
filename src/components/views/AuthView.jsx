@@ -441,7 +441,7 @@ export default function AuthView({ usersData = [], data = {}, serverStatus = {},
             )}
 
             {/* ========================================================= */}
-            {/* 2. FORM SIGNUP (Opsi Role Bersih: Prepress, Manager, Tamu, User, Staff) */}
+            {/* 2. FORM SIGNUP (Opsi Role: Produksi, Staff, Tamu) */}
             {/* ========================================================= */}
             {mode === 'signup' && (
               <SignupView

@@ -2,13 +2,20 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, UserPlus, Info } from 'lucide-react';
 import { syncToMasterUser } from '../../services/supabase';
 
+// Definisi daftar role yang diizinkan untuk registrasi mandiri
+const ROLE_OPTIONS = [
+  { value: 'produksi', label: 'Produksi' },
+  { value: 'staff', label: 'Staff' },
+  { value: 'tamu', label: 'Tamu' }
+];
+
 export default function SignupView({
   onSignupSuccess,
   onToast,
   setAuthFeedback
 }) {
   const [username, setUsername] = useState('');
-  const [role, setRole] = useState('prepress');
+  const [role, setRole] = useState('produksi');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -92,7 +99,7 @@ export default function SignupView({
         />
       </div>
 
-      {/* Kolom Role dengan Opsi Bersih */}
+      {/* Kolom Role dengan 3 Opsi Terbatas (Produksi, Staff, Tamu) */}
       <div>
         <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
           Role / Peran Akses
@@ -102,11 +109,11 @@ export default function SignupView({
           onChange={(e) => setRole(e.target.value)}
           className="inp w-full text-xs font-semibold !py-2"
         >
-          <option value="prepress">Prepress</option>
-          <option value="manager">Manager</option>
-          <option value="staff">Staff</option>
-          <option value="user">User</option>
-          <option value="tamu">Tamu</option>
+          {ROLE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -117,10 +124,8 @@ export default function SignupView({
           <span>Panduan Role: <b className="text-cyan-300 capitalize">{role}</b></span>
         </div>
         <p className="text-[11px] leading-relaxed text-slate-300 pl-5">
-          {role === 'manager' && 'Khusus untuk jabatan Kasubag / Kagus atau Manager ke atas.'}
-          {role === 'prepress' && 'Khusus untuk seluruh personel divisi Prepress.'}
-          {role === 'staff' && 'Untuk semua staff administrasi di lingkungan perusahaan.'}
-          {role === 'user' && 'Untuk pengguna umum di seluruh departemen perusahaan di luar divisi Prepress.'}
+          {role === 'produksi' && 'Untuk seluruh personil & operator lini produksi.'}
+          {role === 'staff' && 'Untuk semua staff administrasi & operasional di lingkungan perusahaan.'}
           {role === 'tamu' && 'Akses monitoring peninjau terbatas (hanya Dashboard & Data Produksi).'}
         </p>
       </div>
