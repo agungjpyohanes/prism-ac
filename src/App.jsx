@@ -86,8 +86,8 @@ export default function App() {
     }
   }, [currentUser, userRole, currentMenu]);
 
-  const handleOpenList = (title, key, rows, subtitle) => {
-    setModalState({ type: 'list', title, key, rows, subtitle });
+  const handleOpenList = (title, key, rows, subtitle, extraOptions = {}) => {
+    setModalState({ type: 'list', title, key, rows, subtitle, ...extraOptions });
   };
 
   const handleSelectRow = (key, row) => {

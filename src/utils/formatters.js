@@ -94,6 +94,34 @@ export const jopCat = (str = '') => {
   return 'O';
 };
 
+// Helper cerdas deteksi Kategori Job Aktif dari record
+export const getRowJobCategory = (r) => {
+  const directCat = cell(r, 7, '').trim();
+  if (directCat && directCat !== '-' && directCat.toUpperCase() !== 'NULL') {
+    return directCat.toUpperCase();
+  }
+  const idVal = cell(r, 0, '').toUpperCase();
+  if (idVal.startsWith('FLX')) return 'FLEXO';
+  if (idVal.startsWith('SCRN')) return 'SCREEN';
+  if (idVal.startsWith('CTP')) return 'CTP';
+  if (idVal.startsWith('CTCP')) return 'CTCP';
+  if (idVal.startsWith('ETCH')) return 'ETCHING';
+  const jopName = cell(r, 1, '');
+  return jopCat(jopName);
+};
+
+// Format Jam / Timestamp Mulai (misal: "2026-09-03T10:51:40Z" -> "10:51")
+export const fmtStartTime = (val) => {
+  if (!val || val === '-' || String(val).toUpperCase() === 'NULL') return '—';
+  const s = String(val).trim();
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) return s.substring(0, 5);
+  const parsed = parseDateVal(val);
+  if (!parsed || isNaN(parsed.getTime())) return s;
+  const hours = String(parsed.getHours()).padStart(2, '0');
+  const minutes = String(parsed.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
 // Agregasi Penghitung (Count By)
 export const countBy = (arr = [], keyFn = (x) => x) => {
   const counts = {};

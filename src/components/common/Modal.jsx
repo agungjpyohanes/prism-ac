@@ -1,12 +1,28 @@
 import React from 'react';
 import { X, ArrowLeft } from 'lucide-react';
 import { SHEETS } from '../../constants/schema';
-import { fmtDate, parseDateVal, hexA, cell, getStatusBadgeClass, getCategoryBadgeClass } from '../../utils/formatters';
+import { fmtDate, fmtStartTime, parseDateVal, hexA, cell, getStatusBadgeClass, getCategoryBadgeClass } from '../../utils/formatters';
+import JobDetailModal from './JobDetailModal';
 
 export default function Modal({ modalState, onClose, onSelectRow, onBack }) {
   if (!modalState) return null;
   const { title, type, key, rows, row, subtitle, withBack } = modalState;
   const cfg = SHEETS[key] || SHEETS.rec_ctcp;
+
+  // Jika key adalah job_active dan tipe list/metric, gunakan JobDetailModal standar 9 kolom
+  if (key === 'job_active' && (type === 'list' || type === 'metric')) {
+    return (
+      <JobDetailModal
+        title={title}
+        subtitle={subtitle}
+        rows={rows}
+        initialCategory={modalState.initialCategory || 'SEMUA'}
+        showCategoryFilter={modalState.showCategoryFilter}
+        onClose={onClose}
+        onSelectRow={onSelectRow}
+      />
+    );
+  }
 
   const getMachineVal = (r) => {
     if (!cfg || !r) return '—';
@@ -93,11 +109,13 @@ export default function Modal({ modalState, onClose, onSelectRow, onBack }) {
               {cfg.headers.map((h, i) => {
                 const v = row[i];
                 const isDate = i === cfg.i?.date;
+                const isStartTime = i === cfg.i?.start_time;
                 const isStatus = i === cfg.i?.status;
                 const isCat = i === cfg.i?.category;
                 
                 let valDisplay = (v == null || v === '' || String(v).toUpperCase() === 'NULL') ? <span className="text-slate-400 dark:text-slate-500">—</span> : String(v);
                 if (isDate) valDisplay = fmtDate(parseDateVal(v));
+                if (isStartTime) valDisplay = fmtStartTime(v);
                 if (isStatus) valDisplay = <span className={`badge ${getStatusBadgeClass(v)} font-bold`}>{v || 'ANTRI'}</span>;
                 if (isCat) valDisplay = <span className={`badge ${getCategoryBadgeClass(v)} font-bold`}>{v}</span>;
 

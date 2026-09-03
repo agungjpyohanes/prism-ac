@@ -34,6 +34,27 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
+// Normalisasi string status
+const normalizeStatus = (status) => String(status || '').trim().toLowerCase();
+
+// Daftar status yang masuk kategori Menunggu / Antrean
+const QUEUE_STATUSES = ['antri', 'tunggu file', 'tunggu info'];
+
+// Helper untuk mengecek apakah status merupakan antrean
+const isQueueStatus = (status) => {
+  const st = normalizeStatus(status);
+  if (!st || st === '-' || st === 'null') return true; // Default jika kosong dianggap antri
+  return QUEUE_STATUSES.includes(st) || st.startsWith('tunggu') || st.includes('antri') || st.includes('queue') || st.includes('pending');
+};
+
+// Helper untuk mengecek apakah status merupakan proses teknis (In Progress)
+const isInProgressStatus = (status) => {
+  const st = normalizeStatus(status);
+  if (!st || st === '-' || st === 'null') return false;
+  if (st === 'selesai' || st === 'closed' || st === 'done' || st === 'finish') return false;
+  return !isQueueStatus(status);
+};
+
 export default function OverviewView({ data = {}, period, onOpenList, onSelectRow, onToast }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -115,7 +136,7 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
   }, [rawRows, cfg, period, statusFilter, categoryFilter, search]);
 
-  // Statistik & Agregasi
+  // Statistik & Agregasi Status & Kategori
   const stats = useMemo(() => {
     const statusCount = {};
     const categoryCount = {};
@@ -138,6 +159,36 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     });
 
     return { statusCount, categoryCount, statusRows, categoryRows };
+  }, [filtered, cfg]);
+
+  // Metrik Job Aktif (WIP, In Progress, In Queue) yang Akurat
+  const jobMetrics = useMemo(() => {
+    const inProgressRows = [];
+    const inQueueRows = [];
+
+    filtered.forEach((r) => {
+      const st = cell(r, cfg?.i?.status, '');
+      if (isInProgressStatus(st)) {
+        inProgressRows.push(r);
+      } else if (isQueueStatus(st)) {
+        inQueueRows.push(r);
+      } else {
+        const sNorm = normalizeStatus(st);
+        if (sNorm !== 'selesai' && sNorm !== 'closed') {
+          inProgressRows.push(r);
+        } else {
+          inQueueRows.push(r);
+        }
+      }
+    });
+
+    return {
+      totalAktif: filtered.length,
+      inProgressRows,
+      inQueueRows,
+      countInProgress: inProgressRows.length,
+      countInQueue: inQueueRows.length
+    };
   }, [filtered, cfg]);
 
   // Sorting
@@ -177,7 +228,13 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     const keys = Object.keys(stats?.categoryCount || {});
     const catName = keys[clickedIndex];
     if (catName && stats?.categoryRows?.[catName]) {
-      onOpenList?.(`Job Aktif Kategori: ${catName}`, 'job_active', stats.categoryRows[catName]);
+      onOpenList?.(
+        `Breakdown Job Aktif: ${catName}`,
+        'job_active',
+        stats.categoryRows[catName],
+        `Menampilkan ${stats.categoryRows[catName]?.length || 0} pekerjaan pada lini ${catName}`,
+        { initialCategory: catName, showCategoryFilter: true }
+      );
     }
   };
 
@@ -187,7 +244,12 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
     const keys = Object.keys(stats?.statusCount || {});
     const statusName = keys[clickedIndex];
     if (statusName && stats?.statusRows?.[statusName]) {
-      onOpenList?.(`Job Aktif Status: ${statusName}`, 'job_active', stats.statusRows[statusName]);
+      onOpenList?.(
+        `Job Aktif Status: ${statusName}`,
+        'job_active',
+        stats.statusRows[statusName],
+        `Menampilkan ${stats.statusRows[statusName]?.length || 0} pekerjaan dengan status ${statusName}`
+      );
     }
   };
 
@@ -266,8 +328,14 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
       {/* 2. 4 KARTU METRIC RINGKASAN */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        {/* KARTU 1: TOTAL JOB AKTIF */}
         <div
-          onClick={() => onOpenList?.('Seluruh Job Aktif (WIP)', 'job_active', filtered)}
+          onClick={() => onOpenList?.(
+            'Daftar Seluruh Job Aktif (WIP)',
+            'job_active',
+            filtered,
+            `Menampilkan ${jobMetrics.totalAktif.toLocaleString('id-ID')} pekerjaan aktif`
+          )}
           className="card p-4 sm:p-5 border-l-4 border-l-cyan-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
@@ -275,19 +343,19 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
             <Activity className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-slate-900 dark:text-white">
-            {filtered.length.toLocaleString('id-ID')}
+            {jobMetrics.totalAktif.toLocaleString('id-ID')}
           </div>
           <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Seluruh pekerjaan dalam sistem &bull; Klik detail</div>
         </div>
 
+        {/* KARTU 2: IN PROGRESS / PROSES */}
         <div
-          onClick={() => {
-            const inProg = filtered.filter((r) => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('screen') || s.includes('hdi');
-            });
-            onOpenList?.('Job Sedang Berjalan (In Progress)', 'job_active', inProg);
-          }}
+          onClick={() => onOpenList?.(
+            'Daftar Job Sedang Berjalan (In Progress)',
+            'job_active',
+            jobMetrics.inProgressRows,
+            `Menampilkan ${jobMetrics.countInProgress.toLocaleString('id-ID')} pekerjaan dalam tahapan teknis mesin/operator`
+          )}
           className="card p-4 sm:p-5 border-l-4 border-l-emerald-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
@@ -295,22 +363,19 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
             <PlayCircle className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-emerald-400">
-            {filtered.filter((r) => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('progress') || s.includes('proses') || s.includes('screen') || s.includes('hdi');
-            }).length.toLocaleString('id-ID')}
+            {jobMetrics.countInProgress.toLocaleString('id-ID')}
           </div>
           <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Sedang dikerjakan &bull; Klik detail</div>
         </div>
 
+        {/* KARTU 3: IN QUEUE / ANTREAN */}
         <div
-          onClick={() => {
-            const pending = filtered.filter((r) => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-            });
-            onOpenList?.('Job Dalam Antrean (Queue)', 'job_active', pending);
-          }}
+          onClick={() => onOpenList?.(
+            'Daftar Job Dalam Antrean (In Queue)',
+            'job_active',
+            jobMetrics.inQueueRows,
+            `Menampilkan ${jobMetrics.countInQueue.toLocaleString('id-ID')} pekerjaan menunggu giliran pengerjaan`
+          )}
           className="card p-4 sm:p-5 border-l-4 border-l-amber-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
@@ -318,16 +383,20 @@ export default function OverviewView({ data = {}, period, onOpenList, onSelectRo
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
           <div className="mt-2 font-display font-black text-2xl sm:text-3xl text-amber-400">
-            {filtered.filter((r) => {
-              const s = cell(r, cfg.i.status).toLowerCase();
-              return s.includes('queue') || s.includes('pending') || s.includes('antri') || s.includes('tunggu');
-            }).length.toLocaleString('id-ID')}
+            {jobMetrics.countInQueue.toLocaleString('id-ID')}
           </div>
           <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Menunggu giliran &bull; Klik detail</div>
         </div>
 
+        {/* KARTU 4: KATEGORI PROSES */}
         <div
-          onClick={() => onOpenList?.('Daftar Job Aktif Berdasarkan Kategori', 'job_active', filtered)}
+          onClick={() => onOpenList?.(
+            'Breakdown Job Aktif Berdasarkan Kategori Lini',
+            'job_active',
+            filtered,
+            `Menampilkan ${jobMetrics.totalAktif.toLocaleString('id-ID')} pekerjaan dari ${Object.keys(stats.categoryCount).length} divisi aktif`,
+            { showCategoryFilter: true }
+          )}
           className="card p-4 sm:p-5 border-l-4 border-l-indigo-500 cursor-pointer hover:scale-[1.02] transition"
         >
           <div className="flex items-center justify-between text-slate-400">
