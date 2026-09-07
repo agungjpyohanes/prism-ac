@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || process?.env?.VITE_SUPABASE_URL || 'https://saqkbolpvteusjbkkfur.supabase.co';
+const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || process?.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_2FF2H_NEjFkQH865UAIYKA_01V6_Ut1';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -49,7 +49,7 @@ export async function fetchAllRows(tableName) {
  * Sinkronisasi data user baru ke Google Spreadsheet via Webhook (Google Apps Script)
  */
 export async function syncUserToGoogleSheet(action, payload) {
-  const webhookUrl = import.meta.env.VITE_GAS_WEBHOOK_URL || import.meta.env.VITE_SHEETS_WEBHOOK_URL;
+  const webhookUrl = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GAS_WEBHOOK_URL || import.meta.env?.VITE_SHEETS_WEBHOOK_URL)) || process?.env?.VITE_GAS_WEBHOOK_URL || '';
   if (!webhookUrl) return;
 
   try {

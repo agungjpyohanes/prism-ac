@@ -3,25 +3,26 @@ import {
   TrendingUp,
   Database,
   Users,
-  Briefcase
+  Briefcase,
+  FileText
 } from 'lucide-react';
 
 // Matriks Hak Akses Menu:
-// - developer, prepress, manager : Akses menu 1, 2, 3, 4, 5
-// - tamu, user, staff           : Akses terbatas hanya menu 1 dan 3
+// - developer, prepress, manager : Akses semua menu (overview, analytics, data, work_request, team_kpi, executive)
+// - tamu, user, staff           : Akses terbatas (overview, data, work_request)
 export const ROLE_PERMISSIONS = {
-  developer: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  prepress: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  manager: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  tamu: ['overview', 'data'],
-  user: ['overview', 'data'],
-  staff: ['overview', 'data'],
+  developer: ['overview', 'analytics', 'data', 'work_request', 'team_kpi', 'executive'],
+  prepress: ['overview', 'analytics', 'data', 'work_request', 'team_kpi', 'executive'],
+  manager: ['overview', 'analytics', 'data', 'work_request', 'team_kpi', 'executive'],
+  tamu: ['overview', 'data', 'work_request'],
+  user: ['overview', 'data', 'work_request'],
+  staff: ['overview', 'data', 'work_request'],
 
   // Legacy / Aliases support
-  admin: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  manajemen: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  operator: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  guest: ['overview', 'data']
+  admin: ['overview', 'analytics', 'data', 'work_request', 'team_kpi', 'executive'],
+  manajemen: ['overview', 'analytics', 'data', 'work_request', 'team_kpi', 'executive'],
+  operator: ['overview', 'analytics', 'data', 'work_request', 'team_kpi', 'executive'],
+  guest: ['overview', 'data', 'work_request']
 };
 
 export const hasMenuAccess = (role, menuId) => {
@@ -30,7 +31,15 @@ export const hasMenuAccess = (role, menuId) => {
   return allowed.includes(menuId);
 };
 
-// 5 Menu Utama PRISM
+// Role yang memiliki hak akses mutasi data (Tambah & Edit): prepress, manager, developer
+export const MUTATION_ROLES = ['prepress', 'manager', 'developer'];
+
+export const canMutateData = (role) => {
+  const r = String(role || '').toLowerCase().trim();
+  return MUTATION_ROLES.includes(r);
+};
+
+// Menu Utama PRISM
 export const MENUS = [
   { 
     id: 'overview', 
@@ -51,15 +60,21 @@ export const MENUS = [
     order: 3
   },
   { 
+    id: 'work_request', 
+    label: 'Permintaan Pekerjaan', 
+    icon: FileText,
+    order: 4
+  },
+  { 
     id: 'team_kpi', 
     label: 'Kinerja Tim & KPI', 
     icon: Users,
-    order: 4
+    order: 5
   },
   { 
     id: 'executive', 
     label: 'Management Executive', 
     icon: Briefcase,
-    order: 5
+    order: 6
   }
 ];

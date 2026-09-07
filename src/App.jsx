@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useProductionData } from './hooks/useProductionData';
+import { useProductionData, mapRowToMatrix } from './hooks/useProductionData';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Modal from './components/common/Modal';
@@ -9,12 +9,14 @@ import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
 import DataTableView from './components/views/DataTableView';
 import TeamKpiView from './components/views/TeamKpiView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
+import WorkRequestView from './components/views/WorkRequestView';
 import { SHEETS } from './constants/schema';
 import { hasMenuAccess } from './constants/navigation';
 import { getDefaultPeriod, num, parseDateVal, cell, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from './utils/formatters';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export default function App() {
-  const { data, loading, serverStatus, reload } = useProductionData();
+  const { data, loading, serverStatus, reload, mutateDataRow } = useProductionData();
   
   // Theme State (Dark / Light) dengan persistensi localStorage
   const [theme, setTheme] = useState(() => {
@@ -61,6 +63,39 @@ export default function App() {
 
   // State Rentang Periode Global (Default: Awal Bulan Berjalan / 30 Hari Terakhir s.d. Hari Ini)
   const [period, setPeriod] = useState(getDefaultPeriod);
+
+  // Toast Notification State
+  const [toast, setToast] = useState(null); // { message, type: 'ok' | 'err' | 'info' }
+
+  const showToast = useCallback((msg, type = 'ok') => {
+    setToast({ message: msg, type });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Handler Mutasi Data Lokal (Reaktivitas UI Seketika tanpa reload)
+  const handleDataMutated = useCallback((key, action, recordOrRow) => {
+    if (mutateDataRow) {
+      mutateDataRow(key, action, recordOrRow);
+    }
+    // Jika modal detail sedang terbuka untuk baris ini, perbarui nilainya seketika
+    const matrixRow = Array.isArray(recordOrRow) ? recordOrRow : mapRowToMatrix(key, recordOrRow);
+    setModalState((prev) => {
+      if (!prev || prev.type !== 'detail' || prev.key !== key || !prev.row) return prev;
+      const cfg = SHEETS[key];
+      const idIdx = cfg?.i?.id ?? 0;
+      if (matrixRow[idIdx] === prev.row[idIdx]) {
+        return { ...prev, row: matrixRow };
+      }
+      return prev;
+    });
+  }, [mutateDataRow]);
 
   const userRole = String(currentUser?.ROLE || currentUser?.role || 'tamu').toLowerCase().trim();
 
@@ -179,7 +214,7 @@ export default function App() {
         data={data}
         serverStatus={serverStatus}
         onLoginSuccess={handleLogin}
-        onToast={(msg) => alert(msg)}
+        onToast={showToast}
       />
     );
   }
@@ -199,7 +234,8 @@ export default function App() {
         handleMenuChange('data');
       },
       onMenuChange: handleMenuChange,
-      onToast: (msg) => alert(msg)
+      onToast: showToast,
+      onDataMutated: handleDataMutated
     };
 
     switch (currentMenu) {
@@ -208,7 +244,17 @@ export default function App() {
       case 'analytics':
         return <ProcessAnalyticsView {...commonProps} />;
       case 'data':
-        return <DataTableView tabKey={activeTabKey} {...commonProps} user={currentUser} />;
+        return <DataTableView tabKey={activeTabKey} {...commonProps} user={currentUser} onDataMutated={handleDataMutated} onToast={showToast} />;
+      case 'work_request':
+        return (
+          <WorkRequestView
+            data={data}
+            user={currentUser}
+            onToast={showToast}
+            onDataMutated={handleDataMutated}
+            onMenuChange={handleMenuChange}
+          />
+        );
       case 'team_kpi':
         return <TeamKpiView data={data} user={currentUser} period={period} onOpenList={handleOpenList} />;
       case 'executive':
@@ -282,7 +328,40 @@ export default function App() {
         modalState={modalState}
         onClose={() => setModalState(null)}
         onSelectRow={handleSelectRow}
+        currentUser={currentUser}
+        data={data}
+        personilList={data?.rec_personil || []}
+        onDataMutated={handleDataMutated}
+        onToast={showToast}
       />
+
+      {/* Floating Toast Notification Banner */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-[9999] max-w-md anim-in pointer-events-auto">
+          <div
+            className={`p-4 rounded-2xl shadow-2xl border backdrop-blur-xl flex items-start gap-3 text-xs font-semibold ${
+              toast.type === 'ok'
+                ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
+                : toast.type === 'err'
+                ? 'bg-rose-950/90 border-rose-500/50 text-rose-200'
+                : 'bg-cyan-950/90 border-cyan-500/50 text-cyan-200'
+            }`}
+          >
+            {toast.type === 'ok' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />}
+            {toast.type === 'err' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />}
+            {toast.type === 'info' && <Info className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />}
+            <div className="flex-1 leading-relaxed">{toast.message}</div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="p-1 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition shrink-0"
+              title="Tutup notifikasi"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

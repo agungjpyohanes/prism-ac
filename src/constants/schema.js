@@ -296,7 +296,7 @@ export const FORMS = [
     id: 'etching',
     label: 'ETCHING',
     title: 'Etching Plate / Emboss / Foil',
-    badge: 'Magnesium / Zinc Etch',
+    badge: 'Etching Plate / Zinc Etch',
     desc: 'Form permintaan pembuatan plat logam Etching untuk foil emas, emboss, dan deboss.',
     url: 'https://forms.gle/JLu6gVW3qcCv5xvR8',
     iconType: 'sparkles',

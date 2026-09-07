@@ -1,10 +1,21 @@
 import React from 'react';
 import { X, ArrowLeft } from 'lucide-react';
-import { SHEETS } from '../../constants/schema';
+import { SHEETS, PROD_KEYS } from '../../constants/schema';
 import { fmtDate, fmtStartTime, parseDateVal, hexA, cell, getStatusBadgeClass, getCategoryBadgeClass } from '../../utils/formatters';
 import JobDetailModal from './JobDetailModal';
+import ProductionDetailModal from './ProductionDetailModal';
 
-export default function Modal({ modalState, onClose, onSelectRow, onBack }) {
+export default function Modal({
+  modalState,
+  onClose,
+  onSelectRow,
+  onBack,
+  currentUser,
+  data = {},
+  personilList = [],
+  onDataMutated,
+  onToast
+}) {
   if (!modalState) return null;
   const { title, type, key, rows, row, subtitle, withBack } = modalState;
   const cfg = SHEETS[key] || SHEETS.rec_ctcp;
@@ -20,6 +31,22 @@ export default function Modal({ modalState, onClose, onSelectRow, onBack }) {
         showCategoryFilter={modalState.showCategoryFilter}
         onClose={onClose}
         onSelectRow={onSelectRow}
+      />
+    );
+  }
+
+  // Jika tipe detail dan key merupakan salah satu tabel lini produksi atau job_active (Dashboard Overview)
+  if (type === 'detail' && (PROD_KEYS.includes(key) || key === 'job_active')) {
+    return (
+      <ProductionDetailModal
+        modalState={modalState}
+        currentUser={currentUser}
+        data={data}
+        personilList={personilList}
+        onClose={onClose}
+        onDataMutated={onDataMutated}
+        onToast={onToast}
+        onBack={onBack}
       />
     );
   }

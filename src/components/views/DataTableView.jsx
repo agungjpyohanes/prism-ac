@@ -1,19 +1,28 @@
 import React, { useState, useMemo } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
+import { canMutateData } from '../../constants/navigation';
 import { parseDateVal, fmtDate, cell, formatYMD } from '../../utils/formatters';
-import { Search, Database } from 'lucide-react';
+import { Search, Database, PlusCircle } from 'lucide-react';
+import CreateJobModal from '../common/CreateJobModal';
 
 export default function DataTableView({
   tabKey = 'rec_ctcp',
   onTabChange,
-  data,
+  data = {},
   period,
-  onSelectRow
+  onSelectRow,
+  user,
+  onDataMutated,
+  onToast
 }) {
   const activeKey = tabKey || 'rec_ctcp';
   const cfg = SHEETS[activeKey] || SHEETS.rec_ctcp;
   const rawRows = data[activeKey] || [];
   
+  const userRole = String(user?.ROLE || user?.role || 'tamu').toLowerCase().trim();
+  const canCreate = canMutateData(userRole);
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [sortCol, setSortCol] = useState(cfg.i.date);
   const [sortDir, setSortDir] = useState(-1);
@@ -119,18 +128,32 @@ export default function DataTableView({
             </div>
           </div>
 
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Cari ID, Job, Plate, Operator..."
-              className="inp !pl-10 w-full sm:w-72"
-            />
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Cari ID, Job, Plate, Operator..."
+                className="inp !pl-10 w-full"
+              />
+            </div>
+
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(true)}
+                className="btn-primary text-xs py-2 px-3.5 rounded-xl font-bold flex items-center gap-1.5 shadow-md shrink-0 hover:scale-[1.02] transition"
+                title={`Tambah Job Baru untuk ${cfg.label}`}
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span className="hidden xs:inline sm:inline">+ Tambah Job Baru</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -206,6 +229,23 @@ export default function DataTableView({
           </div>
         </div>
       </div>
+
+      {/* Modal Tambah Job Baru */}
+      <CreateJobModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        tableKey={activeKey}
+        existingRows={rawRows}
+        data={data}
+        personilList={data?.rec_personil || []}
+        currentUser={user}
+        onCreated={(newRecord) => {
+          if (onDataMutated) {
+            onDataMutated(activeKey, 'create', newRecord);
+          }
+        }}
+        onToast={onToast}
+      />
     </div>
   );
 }

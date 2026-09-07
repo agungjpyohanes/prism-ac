@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchAllRows } from '../services/supabase';
 import { SHEETS, ALL_KEYS } from '../constants/schema';
 
-function mapRowToMatrix(key, row) {
+export function mapRowToMatrix(key, row) {
   if (!row) return [];
   if (Array.isArray(row)) return row;
 
@@ -162,9 +162,47 @@ export function useProductionData() {
     setLoading(false);
   }, []);
 
+  const mutateDataRow = useCallback((key, action, recordOrRow) => {
+    setData((prev) => {
+      const currentList = prev[key] || [];
+      const matrixRow = Array.isArray(recordOrRow) ? recordOrRow : mapRowToMatrix(key, recordOrRow);
+      const cfg = SHEETS[key];
+      const idIdx = cfg?.i?.id ?? 0;
+      const targetId = matrixRow[idIdx];
+
+      if (action === 'create') {
+        return {
+          ...prev,
+          [key]: [matrixRow, ...currentList]
+        };
+      } else if (action === 'update') {
+        const idx = currentList.findIndex((r) => {
+          if (!r) return false;
+          const rId = Array.isArray(r) ? r[idIdx] : r.id;
+          return String(rId) === String(targetId);
+        });
+
+        if (idx !== -1) {
+          const updatedList = [...currentList];
+          updatedList[idx] = matrixRow;
+          return {
+            ...prev,
+            [key]: updatedList
+          };
+        } else {
+          return {
+            ...prev,
+            [key]: [matrixRow, ...currentList]
+          };
+        }
+      }
+      return prev;
+    });
+  }, []);
+
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
 
-  return { data, loading, serverStatus, reload: loadAllData };
+  return { data, loading, serverStatus, reload: loadAllData, mutateDataRow, setData };
 }
