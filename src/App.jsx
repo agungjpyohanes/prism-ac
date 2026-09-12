@@ -31,12 +31,24 @@ export default function App() {
     } catch {
       /* ignore storage errors */
     }
+    const root = document.documentElement;
+    const body = document.body;
     if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
+      root.classList.remove('dark');
+      root.classList.add('light');
+      if (body) {
+        body.classList.remove('dark');
+        body.classList.add('light');
+      }
+      root.style.colorScheme = 'light';
     } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
+      root.classList.remove('light');
+      root.classList.add('dark');
+      if (body) {
+        body.classList.remove('light');
+        body.classList.add('dark');
+      }
+      root.style.colorScheme = 'dark';
     }
   }, [theme]);
 

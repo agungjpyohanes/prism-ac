@@ -544,24 +544,33 @@ html.light .card-title {
   color: #0f172a;
 }
 
-html.light h1:not(.btn *),
-html.light h2:not(.btn *),
-html.light h3:not(.btn *),
-html.light .text-white:not(.btn *):not(.badge *) {
+html.light h1:not(.btn):not(.btn *),
+html.light h2:not(.btn):not(.btn *),
+html.light h3:not(.btn):not(.btn *),
+html.light .text-white:not(.btn):not(.btn *):not(.badge):not(.badge *):not(button):not(button *):not([role="button"]):not([role="button"] *):not(.\!text-white):not(.\!text-white *) {
   color: #0f172a !important;
 }
 
-html.light .text-slate-100:not(.btn *):not(.badge *),
-html.light .text-slate-200:not(.btn *):not(.badge *) {
+html.light .text-slate-100:not(.btn):not(.btn *):not(.badge):not(.badge *):not(button):not(button *),
+html.light .text-slate-200:not(.btn):not(.btn *):not(.badge):not(.badge *):not(button):not(button *) {
   color: #1e293b !important;
 }
 
-html.light .text-slate-300:not(.btn *):not(.badge *) {
+html.light .text-slate-300:not(.btn):not(.btn *):not(.badge):not(.badge *):not(button):not(button *) {
   color: #475569 !important;
 }
 
-html.light .text-slate-400:not(.btn *):not(.badge *) {
+html.light .text-slate-400:not(.btn):not(.btn *):not(.badge):not(.badge *):not(button):not(button *) {
   color: #64748b !important;
+}
+
+/* Primary/Solid Buttons & High-Contrast White Text in Light Mode */
+html.light .btn-primary,
+html.light .btn-primary *,
+html.light .btn.\!text-white,
+html.light .btn.\!text-white *,
+html.light .\!text-white {
+  color: #ffffff !important;
 }
 
 html.light .text-cyan-300,

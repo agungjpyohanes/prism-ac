@@ -248,9 +248,9 @@ export const FORMS = [
     desc: 'Form permintaan pembuatan plate CTCP Offset (UV-CTCP) untuk mesin cetak offset.',
     url: 'https://forms.gle/sjXvX1mQLmfconpaA',
     iconType: 'printer',
-    color: '#8b5cf6',
-    borderClass: 'border-violet-500/40 hover:border-violet-500',
-    bgBadge: 'bg-violet-50 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+    color: '#7c3aed',
+    borderClass: 'border-slate-200 hover:border-violet-500 dark:border-slate-700 dark:hover:border-violet-500',
+    bgBadge: 'bg-purple-100 text-purple-900 border border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800'
   },
   {
     key: 'rec_ctp',
@@ -261,9 +261,9 @@ export const FORMS = [
     desc: 'Form permintaan pembuatan plate CTP Thermal berpresisi tinggi tanpa proses kimia basah.',
     url: 'https://forms.gle/Y2iumgVVMk8Ph8Ez8',
     iconType: 'file-text',
-    color: '#10b981',
-    borderClass: 'border-emerald-500/40 hover:border-emerald-500',
-    bgBadge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+    color: '#059669',
+    borderClass: 'border-slate-200 hover:border-emerald-500 dark:border-slate-700 dark:hover:border-emerald-500',
+    bgBadge: 'bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
   },
   {
     key: 'rec_screen',
@@ -274,9 +274,9 @@ export const FORMS = [
     desc: 'Form permintaan afdruk, perbaikan, dan pembuatan master kain Screen Sablon.',
     url: 'https://forms.gle/KUBCCpbE9ocRKUgC9',
     iconType: 'frame',
-    color: '#06b6d4',
-    borderClass: 'border-cyan-500/40 hover:border-cyan-500',
-    bgBadge: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300'
+    color: '#0891b2',
+    borderClass: 'border-slate-200 hover:border-cyan-500 dark:border-slate-700 dark:hover:border-cyan-500',
+    bgBadge: 'bg-cyan-100 text-cyan-900 border border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800'
   },
   {
     key: 'rec_flexo',
@@ -287,22 +287,22 @@ export const FORMS = [
     desc: 'Form permintaan pembuatan plate Polimer Flexography kemasan & label sticker.',
     url: 'https://forms.gle/yux9WXnftA4isDW77',
     iconType: 'package',
-    color: '#6366f1',
-    borderClass: 'border-indigo-500/40 hover:border-indigo-500',
-    bgBadge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
+    color: '#4f46e5',
+    borderClass: 'border-slate-200 hover:border-indigo-500 dark:border-slate-700 dark:hover:border-indigo-500',
+    bgBadge: 'bg-indigo-100 text-indigo-900 border border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
   },
   {
     key: 'rec_etching',
     id: 'etching',
     label: 'ETCHING',
     title: 'Etching Plate / Emboss / Foil',
-    badge: 'Magnesium / Zinc Etch',
+    badge: 'ZINC ETCH',
     desc: 'Form permintaan pembuatan plat logam Etching untuk foil emas, emboss, dan deboss.',
     url: 'https://forms.gle/JLu6gVW3qcCv5xvR8',
     iconType: 'sparkles',
-    color: '#f59e0b',
-    borderClass: 'border-amber-500/40 hover:border-amber-500',
-    bgBadge: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+    color: '#d97706',
+    borderClass: 'border-slate-200 hover:border-amber-500 dark:border-slate-700 dark:hover:border-amber-500',
+    bgBadge: 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
   }
 ];
 

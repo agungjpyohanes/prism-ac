@@ -14,9 +14,13 @@ import {
 } from 'lucide-react';
 
 export default function FormsView({ onToast }) {
-  const handleCopy = (url, label) => {
+  const [copiedId, setCopiedId] = React.useState(null);
+
+  const handleCopy = (url, label, id) => {
     try {
       navigator.clipboard.writeText(url);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
       if (onToast) onToast(`Link Form ${label} disalin ke clipboard!`, 'ok');
     } catch {
       if (onToast) onToast('Gagal menyalin link.', 'err');
@@ -43,24 +47,24 @@ export default function FormsView({ onToast }) {
   return (
     <div className="space-y-6 anim-in">
       {/* Header Banner */}
-      <div className="card p-6 bg-gradient-to-r from-slate-900 via-sky-950/80 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
+      <div className="rounded-2xl border p-6 flex flex-wrap items-center justify-between gap-4 bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-white shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="badge bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-bold">
+            <span className="badge font-mono text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800">
               PORTAL PERMINTAAN PREPRESS
             </span>
-            <span className="text-xs text-slate-300">&bull; Google Form Terintegrasi</span>
+            <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">&bull; Google Form Terintegrasi</span>
           </div>
-          <h2 className="font-display font-black text-xl sm:text-2xl mt-1.5 text-white tracking-wide">
+          <h2 className="font-display font-bold text-xl sm:text-2xl mt-1.5 text-slate-900 dark:text-white tracking-wide">
             Form Permintaan Pembuatan Plate &amp; Master Prepress
           </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed font-normal">
             Pilih divisi prepress di bawah untuk mengisi formulir permintaan pekerjaan baru atau penggantian plate. Isian form otomatis tersinkronisasi ke dalam database sistem monitoring PRISM.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+          <div className="w-12 h-12 rounded-2xl bg-blue-100 border border-blue-200 text-blue-700 dark:bg-cyan-500/10 dark:border-cyan-400/30 dark:text-cyan-300 flex items-center justify-center shadow-sm dark:shadow-[0_0_20px_rgba(6,182,212,0.3)]">
             <ClipboardList className="w-6 h-6" />
           </div>
         </div>
@@ -69,10 +73,11 @@ export default function FormsView({ onToast }) {
       {/* Grid 5 Divisi Form */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {FORMS.map((f, idx) => {
+          const isCopied = copiedId === (f.id || idx);
           return (
             <div
               key={f.id || f.key}
-              className={`card p-6 relative overflow-hidden flex flex-col justify-between hover:scale-[1.02] hover:shadow-2xl transition duration-200 border ${f.borderClass} bg-white dark:bg-[#0c1430]/90 group`}
+              className="p-6 rounded-2xl border bg-white border-slate-200 shadow-sm text-slate-900 dark:bg-slate-800/80 dark:border-slate-700 dark:text-white hover:scale-[1.02] hover:shadow-md transition duration-200 relative overflow-hidden flex flex-col justify-between group"
             >
               {/* Top Accent Color Bar */}
               <div
@@ -94,34 +99,34 @@ export default function FormsView({ onToast }) {
                       <span className={`badge ${f.bgBadge} font-mono font-bold text-[10px] uppercase tracking-wider`}>
                         {f.badge}
                       </span>
-                      <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white mt-1 group-hover:text-blue-600 dark:group-hover:text-cyan-300 transition">
+                      <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 dark:text-white mt-1 group-hover:text-blue-600 dark:group-hover:text-cyan-300 transition">
                         {f.title}
                       </h3>
                     </div>
                   </div>
 
-                  <span className="font-mono text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                  <span className="font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400">
                     #0{idx + 1}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-4 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-4 leading-relaxed font-normal">
                   {f.desc}
                 </p>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Auto-sync ke Google Sheets &amp; Database PRISM</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center gap-2">
                 <a
                   href={f.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-md hover:shadow-lg transition-all duration-150 transform active:scale-95"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs text-white font-semibold shadow-sm hover:shadow-lg transition-all duration-150 transform active:scale-95"
                   style={{ background: f.color }}
                   title="Buka Form di Tab Baru"
                 >
@@ -131,11 +136,15 @@ export default function FormsView({ onToast }) {
 
                 <button
                   type="button"
-                  onClick={() => handleCopy(f.url, f.label)}
-                  className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95 shrink-0"
+                  onClick={() => handleCopy(f.url, f.label, f.id || idx)}
+                  className="p-2.5 rounded-xl border bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 shadow-sm transition active:scale-95 shrink-0"
                   title="Salin Link Google Form"
                 >
-                  <Copy className="w-4 h-4" />
+                  {isCopied ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -144,10 +153,10 @@ export default function FormsView({ onToast }) {
       </div>
 
       {/* Footer Informational Box */}
-      <div className="card p-4 sm:p-5 bg-blue-50/60 dark:bg-slate-900/60 border border-blue-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between flex-wrap gap-3">
+      <div className="rounded-2xl border p-4 sm:p-5 bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-white text-xs flex items-center justify-between flex-wrap gap-3 shadow-sm">
         <div className="flex items-center gap-2.5">
           <ClipboardList className="w-5 h-5 text-blue-600 dark:text-cyan-400 shrink-0" />
-          <span>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">
             Ada kendala dengan formulir permintaan atau membutuhkan akses penambahan link? Hubungi tim Admin / Prepress Leader.
           </span>
         </div>
