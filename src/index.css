@@ -1,0 +1,818 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   PRISM Design System v2.5
+   High Contrast Deep Slate Glassmorphism
+   iOS Safari & Multi-Device Optimized
+   ======================================== */
+
+:root {
+  /* Primary Deep Slate Palette */
+  --primary-50: #f0f4ff;
+  --primary-100: #e0e9ff;
+  --primary-200: #c7d6fe;
+  --primary-300: #a4bbfd;
+  --primary-400: #7c97f9;
+  --primary-500: #5b73f5;
+  --primary-600: #4551e8;
+  --primary-700: #3740d1;
+  --primary-800: #2e35a9;
+  --primary-900: #2a3085;
+  
+  /* Accent Colors - High Contrast */
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-violet: #8b5cf6;
+  --accent-indigo: #6366f1;
+  
+  /* Slate Neutral Spectrum */
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+  --neutral-950: #020617;
+  
+  /* Semantic Tokens */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #f43f5e;
+  --info: #06b6d4;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+  
+  /* Shadows - Layered Depth */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.5);
+  --shadow-xl: 0 20px 35px -5px rgb(0 0 0 / 0.65);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.85);
+  --shadow-glow: 0 0 25px rgba(6, 182, 212, 0.3);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #060a14;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(14, 116, 144, 0.12) 0px, transparent 50%),
+    radial-gradient(at 85% 85%, rgba(99, 102, 241, 0.10) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.6) 0px, transparent 100%);
+  background-attachment: fixed;
+  color: var(--neutral-100);
+  min-height: 100vh;
+}
+
+/* ========================================
+   Typography
+   ======================================== */
+
+.text-display {
+  font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.text-heading {
+  font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.card-title {
+  font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+/* ========================================
+   High Contrast Glassmorphism Card Components
+   ======================================== */
+
+.card {
+  @apply relative overflow-hidden;
+  background: rgba(15, 23, 42, 0.85);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.65);
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75);
+}
+
+.card-glass {
+  background: rgba(15, 23, 42, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.card-solid {
+  background: #0f172a;
+  border: 1px solid #334155;
+}
+
+.card-gradient {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.90) 0%, rgba(30, 41, 59, 0.85) 100%);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* ========================================
+   Button Components
+   ======================================== */
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 font-semibold transition-all select-none;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+  color: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: rgba(30, 41, 59, 0.85);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.btn-secondary:hover {
+  background: rgba(51, 65, 85, 0.95);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.btn-icon {
+  @apply p-2 rounded-xl flex items-center justify-center;
+  background: rgba(30, 41, 59, 0.8);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+  background: rgba(51, 65, 85, 0.95);
+  color: #ffffff;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+/* ========================================
+   Form Input Components
+   ======================================== */
+
+.inp, .input {
+  @apply w-full px-3.5 py-2 rounded-xl transition-all font-medium text-xs sm:text-sm;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.inp:focus, .input:focus {
+  outline: none;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.inp::placeholder, .input::placeholder {
+  color: #64748b;
+}
+
+select.inp, select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.15rem;
+  padding-right: 2.25rem;
+  cursor: pointer;
+}
+
+select.inp option, select.input option {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+/* ========================================
+   Badge Components
+   ======================================== */
+
+.badge {
+  @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide;
+  border: 1px solid transparent;
+}
+
+.badge-primary {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.badge-error, .badge-danger {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+.badge-info {
+  background: rgba(6, 182, 212, 0.2);
+  color: #67e8f9;
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+/* ========================================
+   Stat Card Components
+   ======================================== */
+
+.stat-card {
+  @apply relative overflow-hidden p-5 rounded-2xl transition-all;
+  background: rgba(15, 23, 42, 0.85);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6);
+}
+
+.stat-card:hover {
+  background: rgba(15, 23, 42, 0.92);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.75);
+}
+
+/* ========================================
+   Table Components - High Contrast & iOS Scrollable
+   ======================================== */
+
+.table-responsive {
+  @apply w-full overflow-x-auto rounded-2xl border border-slate-700/60;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tbl, .table {
+  @apply w-full text-left text-xs border-collapse;
+}
+
+.tbl thead, .table thead {
+  background: rgba(15, 23, 42, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tbl th, .table th {
+  @apply px-3.5 py-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-300;
+  white-space: nowrap;
+}
+
+.tbl tbody tr, .table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color var(--transition-fast);
+}
+
+.tbl tbody tr:hover, .table tbody tr:hover {
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.tbl td, .table td {
+  @apply px-3.5 py-2.5 sm:py-3 text-slate-200;
+}
+
+/* ========================================
+   Modal Panel - iOS Safe Glassmorphism
+   ======================================== */
+
+.modal-panel {
+  background: rgba(11, 19, 38, 0.97);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-in, .animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ========================================
+   Scrollbar Styling
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+/* ========================================
+   Toast Notifications
+   ======================================== */
+
+.toast {
+  @apply px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold transition-all transform;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.toast.ok {
+  background: rgba(16, 185, 129, 0.95);
+  color: white;
+  border: 1px solid rgba(16, 185, 129, 0.6);
+}
+
+.toast.err {
+  background: rgba(244, 63, 94, 0.95);
+  color: white;
+  border: 1px solid rgba(244, 63, 94, 0.6);
+}
+
+.toast.warn {
+  background: rgba(245, 158, 11, 0.95);
+  color: white;
+  border: 1px solid rgba(245, 158, 11, 0.6);
+}
+
+.toast.info {
+  background: rgba(6, 182, 212, 0.95);
+  color: white;
+  border: 1px solid rgba(6, 182, 212, 0.6);
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.glass {
+  background: rgba(15, 23, 42, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Explicit iOS Safari Blur Helpers */
+.backdrop-blur-none { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.backdrop-blur-sm { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.backdrop-blur { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.backdrop-blur-md { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.backdrop-blur-lg { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.backdrop-blur-xl { -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+.backdrop-blur-2xl { -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); }
+.backdrop-blur-3xl { -webkit-backdrop-filter: blur(64px); backdrop-filter: blur(64px); }
+
+/* ========================================
+   Light Theme System (Custom-Engineered Precision)
+   ======================================== */
+
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 85%, rgba(99, 102, 241, 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(241, 245, 249, 0.95) 0px, transparent 100%);
+}
+
+/* Surfaces & Containers */
+html.light .card {
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+}
+
+html.light .card:hover {
+  background: #ffffff;
+  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+html.light .card-glass {
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+html.light .stat-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: #0f172a;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04);
+}
+
+html.light .stat-card:hover {
+  background: #ffffff;
+  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+html.light .modal-panel {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #0f172a;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Inner containers / detail boxes */
+html.light .bg-slate-900\/60,
+html.light .bg-slate-950\/40,
+html.light .bg-slate-900\/90 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Typography & WCAG AA Colors */
+html.light .card-title {
+  color: #0f172a;
+}
+
+html.light h1:not(.btn *),
+html.light h2:not(.btn *),
+html.light h3:not(.btn *),
+html.light .text-white:not(.btn *):not(.badge *) {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-100:not(.btn *):not(.badge *),
+html.light .text-slate-200:not(.btn *):not(.badge *) {
+  color: #1e293b !important;
+}
+
+html.light .text-slate-300:not(.btn *):not(.badge *) {
+  color: #475569 !important;
+}
+
+html.light .text-slate-400:not(.btn *):not(.badge *) {
+  color: #64748b !important;
+}
+
+html.light .text-cyan-300,
+html.light .text-cyan-400 {
+  color: #0284c7 !important;
+}
+
+/* Metric Colors - Deep High Contrast in Light Mode */
+html.light .text-emerald-400,
+html.light .text-emerald-300 {
+  color: #15803d !important;
+}
+
+html.light .text-rose-400,
+html.light .text-rose-300 {
+  color: #b91c1c !important;
+}
+
+html.light .text-amber-400,
+html.light .text-amber-300 {
+  color: #b45309 !important;
+}
+
+html.light .text-indigo-300,
+html.light .text-indigo-400 {
+  color: #4338ca !important;
+}
+
+/* Table System */
+html.light .table-responsive {
+  border-color: #e2e8f0;
+  background: #ffffff;
+}
+
+html.light .tbl thead,
+html.light .table thead {
+  background: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+html.light .tbl th,
+html.light .table th {
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+html.light .tbl tbody tr,
+html.light .table tbody tr {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+html.light .tbl tbody tr:nth-child(even),
+html.light .table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+html.light .tbl tbody tr:hover,
+html.light .table tbody tr:hover {
+  background: #f1f5f9 !important;
+}
+
+html.light .tbl td,
+html.light .table td {
+  color: #1e293b;
+}
+
+/* Inputs & Form Elements */
+html.light .inp,
+html.light .input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+html.light .inp:focus,
+html.light .input:focus {
+  background: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+html.light .inp::placeholder,
+html.light .input::placeholder {
+  color: #94a3b8;
+}
+
+html.light select.inp option,
+html.light select.input option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Buttons */
+html.light .btn-secondary {
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+html.light .btn-secondary:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+html.light .btn-ghost {
+  background: rgba(0, 0, 0, 0.03);
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+html.light .btn-ghost:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* Navigation & Layout Elements */
+html.light header {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light aside {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light footer {
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+/* Scrollbars in Light Mode */
+html.light ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.8);
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 1);
+}
+
+/* Print Styles */
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* 1. Paksa seluruh latar belakang level tertinggi menjadi putih murni */
+  html,
+  body,
+  #root,
+  .app,
+  main,
+  div {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+
+  /* 2. Set ukuran halaman A4 tanpa margin & header/footer otomatis browser */
+  @page {
+    size: A4 portrait;
+    margin: 0 !important; /* WAJIB 0 agar browser tidak mencetak date/time, url, dan header file */
+  }
+
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  body {
+    width: 210mm !important;
+    height: 297mm !important;
+    max-width: 210mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 12mm 15mm 12mm 15mm !important;
+    font-size: 10px !important;
+    font-family: Arial, Calibri, 'Helvetica Neue', Helvetica, sans-serif !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: hidden !important;
+  }
+
+  /* 3. Hilangkan seluruh backdrop gelap modal preview & shell */
+  aside,
+  header,
+  nav,
+  footer,
+  #toasts,
+  .no-print,
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .fixed,
+  .inset-0,
+  .modal-backdrop,
+  [role="dialog"] {
+    display: none !important;
+    visibility: hidden !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  /* 4. Tampilkan kontainer print-only tunggal yang bersih */
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+  }
+
+  /* 5. Pastikan kontainer dokumen menempati lembar putih tanpa outline/shadow */
+  #printable-kpi,
+  #printable-kpi-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 265mm !important;
+    height: 265mm !important;
+    max-height: 270mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
