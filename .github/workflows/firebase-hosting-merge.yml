@@ -13,12 +13,7 @@ jobs:
         run: npm ci
       - name: Build App
         run: npm run build
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseToken: '${{ secrets.FIREBASE_CLI_TOKEN }}'
-          channelId: live
-          projectId: prism-ac
+      - name: Deploy to Firebase
+        run: npx firebase-tools deploy --only hosting --token "${{ secrets.FIREBASE_CLI_TOKEN }}"
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
