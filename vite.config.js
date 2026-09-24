@@ -15,5 +15,8 @@ export default defineConfig({
       host: 'localhost',
       port: 5173
     }
+  },
+  build: {
+    outDir: 'build_output', // Menghindari bentrok folder dist yang terkunci
   }
 });
