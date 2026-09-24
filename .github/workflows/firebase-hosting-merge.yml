@@ -1,9 +1,8 @@
-name: Deploy to Firebase Hosting on Push
+name: Deploy to Firebase Hosting
 'on':
   push:
     branches:
       - versi-8
-      - main
 
 jobs:
   build_and_deploy:
@@ -18,7 +17,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRISM_AC }}'
+          firebaseToken: '${{ secrets.FIREBASE_CLI_TOKEN }}'
           channelId: live
           projectId: prism-ac
         env:
