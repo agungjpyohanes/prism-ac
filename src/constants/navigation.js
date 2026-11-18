@@ -59,7 +59,7 @@ export const MENUS = [
   },
   { 
     id: 'oee_performance', 
-    label: 'Production Performance & OEE', 
+    label: 'Performa & OEE', 
     icon: Gauge,
     order: 5
   },
