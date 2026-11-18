@@ -612,7 +612,7 @@ export default function ExecutiveOeeDashboard({
             <div className="flex flex-wrap items-center gap-2">
               <span className="badge font-mono text-[10px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300 dark:bg-cyan-950/80 dark:text-cyan-300 dark:border-cyan-800 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
                 <Gauge className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
-                EXECUTIVE PRODUCTION &amp; OEE CONTROL
+                PRODUCTION PERFORMANCE &amp; OEE CONTROL
               </span>
               <span className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -625,7 +625,7 @@ export default function ExecutiveOeeDashboard({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white font-display">
-              Overall Equipment Effectiveness &amp; Production Performance
+              Production Performance &amp; Overall Equipment Effectiveness (OEE)
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
               Monitoring efisiensi lini produksi terpadu 5 divisi (CTP, CTCP, Flexo, Etching, Screen) dengan kalkulasi OEE otomatis berbasis output real-time.

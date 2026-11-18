@@ -11,17 +11,17 @@ import {
 // - developer, prepress, manager : Akses menu 1, 2, 3, 4, 5, 6
 // - tamu, user, staff           : Akses terbatas hanya menu 1 dan 3
 export const ROLE_PERMISSIONS = {
-  developer: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
-  prepress: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
-  manager: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
+  developer: ['overview', 'analytics', 'data', 'team_kpi', 'oee_performance', 'executive'],
+  prepress: ['overview', 'analytics', 'data', 'team_kpi', 'oee_performance', 'executive'],
+  manager: ['overview', 'analytics', 'data', 'team_kpi', 'oee_performance', 'executive'],
   tamu: ['overview', 'data'],
   user: ['overview', 'data'],
   staff: ['overview', 'data'],
 
   // Legacy / Aliases support
-  admin: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
-  manajemen: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
-  operator: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
+  admin: ['overview', 'analytics', 'data', 'team_kpi', 'oee_performance', 'executive'],
+  manajemen: ['overview', 'analytics', 'data', 'team_kpi', 'oee_performance', 'executive'],
+  operator: ['overview', 'analytics', 'data', 'team_kpi', 'oee_performance', 'executive'],
   guest: ['overview', 'data']
 };
 
@@ -58,15 +58,15 @@ export const MENUS = [
     order: 4
   },
   { 
-    id: 'executive', 
-    label: 'Management Executive', 
-    icon: Briefcase,
+    id: 'oee_performance', 
+    label: 'Production Performance & OEE', 
+    icon: Gauge,
     order: 5
   },
   { 
-    id: 'oee_performance', 
-    label: 'Executive Production & OEE', 
-    icon: Gauge,
+    id: 'executive', 
+    label: 'Management Executive', 
+    icon: Briefcase,
     order: 6
   }
 ];
