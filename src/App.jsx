@@ -224,7 +224,7 @@ export default function App() {
       case 'data':
         return <DataTableView tabKey={activeTabKey} {...commonProps} user={currentUser} />;
       case 'team_kpi':
-        return <TeamKpiView data={data} user={currentUser} period={period} onOpenList={handleOpenList} />;
+        return <TeamKpiView data={data} user={currentUser} period={period} onOpenList={handleOpenList} onToast={commonProps.onToast} />;
       case 'executive':
         return <ExecutiveOverallView {...commonProps} />;
       case 'oee_performance':
