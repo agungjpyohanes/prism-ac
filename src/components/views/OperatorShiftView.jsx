@@ -63,7 +63,19 @@ export default function OperatorShiftView({ data, period }) {
   // Agregasi Terpisah: Operator
   const operatorStats = useMemo(() => {
     const map = new Map();
+    const inactiveNames = new Set(['vilan', 'dwi']);
+    (data?.rec_personil || []).forEach((p) => {
+      const st = String(p.status_nik || p.status || '').toLowerCase().trim();
+      if (st && st !== 'active') {
+        if (p.nick_name) inactiveNames.add(p.nick_name.toLowerCase().trim());
+        if (p.nama_lengkap) inactiveNames.add(p.nama_lengkap.toLowerCase().trim());
+      }
+    });
+
     allRows.forEach(r => {
+      // Filter: Hanya tampilkan operator berstatus active
+      if (inactiveNames.has(String(r.operator || '').toLowerCase())) return;
+
       const e = map.get(r.operator) || { name: r.operator, good: 0, reject: 0, replace: 0, process: r.process };
       e.good += r.good;
       e.reject += r.reject;
@@ -78,7 +90,7 @@ export default function OperatorShiftView({ data, period }) {
         return { ...o, output, lossRate };
       })
       .sort((a, b) => b.output - a.output);
-  }, [allRows]);
+  }, [allRows, data?.rec_personil]);
 
   // Agregasi Terpisah: PO (Customer)
   const poStats = useMemo(() => {

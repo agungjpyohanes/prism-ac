@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { SHEETS, PROD_KEYS } from '../../constants/schema';
 import { parseDateVal, num, cell, fmtPeriodRange, getChartTheme, formatYMD, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from '../../utils/formatters';
 import { Bar, Doughnut } from 'react-chartjs-2';
@@ -26,6 +26,10 @@ import {
   X,
   Eye,
   FileSpreadsheet,
+  FileText,
+  Download,
+  ChevronDown,
+  Loader2,
   Printer,
   ZoomIn,
   ZoomOut,
@@ -33,6 +37,7 @@ import {
 } from 'lucide-react';
 import StatCard from '../ui/StatCard';
 import KpiPrintDocument from './KpiPrintDocument';
+import { exportActivePersonnelKpiToExcel, exportActivePersonnelKpiToPdf } from '../../utils/kpiExport';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -275,6 +280,28 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
+  // State Fitur Export All KPI (Excel .xlsx & PDF .pdf)
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportFormatRunning, setExportFormatRunning] = useState(''); // 'xlsx' | 'pdf'
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [exportSuccessMsg, setExportSuccessMsg] = useState('');
+  const exportDropdownRef = useRef(null);
+
+  // Tutup dropdown menu ekspor saat klik di luar area tombol
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportDropdownOpen(false);
+      }
+    };
+    if (isExportDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExportDropdownOpen]);
+
   // Normalisasi filter rentang tanggal dashboard ke format YYYY-MM-DD
   const periodFromStr = useMemo(() => formatYMD(period?.from), [period?.from]);
   const periodToStr = useMemo(() => formatYMD(period?.to), [period?.to]);
@@ -299,7 +326,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
         lini_mesin = String(r.lini_mesin || r.mesin || r.machine || '-').trim();
         nik_lama = String(r.nik_lama || '-').trim();
         nik_baru = String(r.nik_baru || '-').trim();
-        status_nik = String(r.status_nik || r.statusnik || '-').trim();
+        status_nik = String(r.status_nik || r.statusnik || r.status || '-').trim();
         role_type = String(r.role_type || r.role || 'OP').trim().toUpperCase();
       } else if (Array.isArray(r)) {
         id = cell(r, 0, `prs_${idx + 1}`);
@@ -312,6 +339,13 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
         nik_baru = cell(r, 7, '-').trim();
         status_nik = cell(r, 8, '-').trim();
         role_type = cell(r, 9, 'OP').trim().toUpperCase();
+      }
+
+      // FILTER GLOBAL: Hanya masukkan karyawan berstatus "active" (case-insensitive)
+      // Exclude karyawan inactive/resign/non-aktif dari tabel, scorecard, maupun rata-rata tim
+      const normalizedStatus = status_nik.toLowerCase().trim();
+      if (normalizedStatus && normalizedStatus !== 'active' && normalizedStatus !== '-') {
+        return;
       }
 
       if (!id) id = `prs_${idx + 1}`;
@@ -1061,6 +1095,65 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
     }
   };
 
+  // Handler Fitur Export All Rekap KPI Personil Aktif (Excel .xlsx & PDF .pdf)
+  const handleExportAllKpi = async (format = 'xlsx') => {
+    try {
+      setIsExporting(true);
+      setExportFormatRunning(format);
+      setIsExportDropdownOpen(false);
+
+      // Gunakan personil aktif sesuai filter yang sedang aktif, atau seluruh personil aktif jika filter ALL
+      const hasSpecificFilter = roleFilter !== 'ALL' || divisionFilter !== 'ALL' || machineFilter !== 'ALL' || (searchQuery && searchQuery.trim() !== '');
+      const baseList = hasSpecificFilter ? filteredAndSortedList : fullKpiCalculatedList;
+
+      // Filter ketat: Hanya personil berstatus "ACTIVE" (case-insensitive) yang boleh diekspor
+      const targetList = (baseList || []).filter((p) => {
+        const s = String(p.status_nik || p.status || 'ACTIVE').trim().toUpperCase();
+        return s === 'ACTIVE' || s === '-' || s === '';
+      });
+
+      if (!targetList || targetList.length === 0) {
+        alert('Tidak ada data personil aktif yang cocok dengan kriteria filter saat ini untuk diekspor.');
+        setIsExporting(false);
+        setExportFormatRunning('');
+        return;
+      }
+
+      // Format keterangan filter yang sedang diterapkan
+      const filterParts = [];
+      if (divisionFilter !== 'ALL') filterParts.push(`Divisi: ${divisionFilter}`);
+      if (machineFilter !== 'ALL') filterParts.push(`Lini: ${machineFilter}`);
+      if (roleFilter !== 'ALL') filterParts.push(`Role: ${roleFilter}`);
+      if (searchQuery.trim()) filterParts.push(`Pencarian: "${searchQuery.trim()}"`);
+      const filterLabel = filterParts.length > 0 ? filterParts.join(' | ') : 'Semua Divisi & Lini';
+
+      // Feedback delay singkat (250ms) agar transisi loading terasa responsif
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      let res;
+      if (format === 'pdf') {
+        res = await exportActivePersonnelKpiToPdf(targetList, period, {
+          filterLabel,
+          teamMetrics,
+          allPersonnel: fullKpiCalculatedList
+        });
+      } else {
+        // Default format 1: Native Workbook Excel (.xlsx) via SheetJS
+        res = exportActivePersonnelKpiToExcel(targetList, period, { filterLabel, teamMetrics });
+      }
+
+      const successText = `Berhasil mengekspor ${res.count} data KPI personil aktif (${res.filename})!`;
+      setExportSuccessMsg(successText);
+      setTimeout(() => setExportSuccessMsg(''), 6000);
+    } catch (err) {
+      console.error('Export KPI Error:', err);
+      alert(`Gagal mengekspor data KPI: ${err.message || 'Terjadi kesalahan sistem'}`);
+    } finally {
+      setIsExporting(false);
+      setExportFormatRunning('');
+    }
+  };
+
   return (
     <>
       <div className="space-y-5 anim-in no-print">
@@ -1120,12 +1213,113 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
           </button>
         </div>
 
-        {/* Info Periode Aktif */}
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-          <Calendar className="w-4 h-4 text-blue-600 dark:text-cyan-400" />
-          <span>Periode: <b className="text-slate-900 dark:text-slate-200">{fmtPeriodRange(period?.from, period?.to)}</b></span>
+        {/* Toolbar Kanan: Info Periode & Dropdown Tombol Export All */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-[#090d16] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 min-h-[44px]">
+            <Calendar className="w-4 h-4 text-blue-600 dark:text-cyan-400 shrink-0" />
+            <span>Periode: <b className="text-slate-900 dark:text-slate-100">{fmtPeriodRange(period?.from, period?.to)}</b></span>
+          </div>
+
+          {/* Dropdown Menu Tombol Export All (Excel .xlsx & PDF .pdf) */}
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsExportDropdownOpen((prev) => !prev)}
+              disabled={isExporting}
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 active:scale-95 text-white flex items-center gap-2 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-emerald-500/30"
+              title="Pilih Format Ekspor Rekap KPI Personil Aktif (.xlsx / .pdf)"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                  <span>{exportFormatRunning === 'pdf' ? 'Mengekspor PDF...' : 'Mengekspor Excel...'}</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 text-emerald-100 shrink-0" />
+                  <span>Export All</span>
+                  <span className="text-[10px] opacity-80 font-mono">(Active)</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-emerald-100 shrink-0 transition-transform duration-200 ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
+                </>
+              )}
+            </button>
+
+            {/* Dropdown Options Box */}
+            {isExportDropdownOpen && !isExporting && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-2 z-50 anim-in">
+                <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 font-mono">
+                    Pilihan Format Ekspor Resmi
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Hanya personil <b>Active</b> sesuai filter yang dipilih.
+                  </p>
+                </div>
+
+                <div className="py-1 space-y-1">
+                  {/* Pilihan 1: Native Excel (.xlsx) */}
+                  <button
+                    type="button"
+                    onClick={() => handleExportAllKpi('xlsx')}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800/60 transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-500/40 group-hover:scale-105 transition-transform">
+                      <FileSpreadsheet className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center justify-between">
+                        <span>Export Excel (.xlsx)</span>
+                        <span className="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 text-[9px] font-mono">SheetJS</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                        Workbook asli .xlsx untuk olah data, audit, &amp; rekapitulasi HR/manajemen.
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Pilihan 2: Laporan Resmi PDF (.pdf) */}
+                  <button
+                    type="button"
+                    onClick={() => handleExportAllKpi('pdf')}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border border-transparent hover:border-cyan-200 dark:hover:border-cyan-800/60 transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-300 dark:border-cyan-500/40 group-hover:scale-105 transition-transform">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 flex items-center justify-between">
+                        <span>Export PDF (.pdf)</span>
+                        <span className="badge bg-cyan-100 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-300 text-[9px] font-mono">Resmi A4</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                        Laporan resmi Landscape A4 vektor siap cetak, arsip, &amp; blok tanda tangan.
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Toast Alert Notifikasi Sukses Export */}
+      {exportSuccessMsg && (
+        <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 rounded-2xl flex items-center justify-between text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm font-bold shadow-sm anim-in">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>{exportSuccessMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExportSuccessMsg('')}
+            className="p-1 hover:bg-emerald-200/50 dark:hover:bg-emerald-800/50 rounded-lg text-emerald-700 dark:text-emerald-300 cursor-pointer"
+            title="Tutup Notifikasi"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* 4 Stat Cards KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
@@ -1154,7 +1348,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
         <div
           onClick={() => setActiveTab('all_personnel')}
           className="cursor-pointer transition-transform hover:scale-[1.02]"
-          title="Klik untuk membuka daftar semua 25 personil & rekap absensi"
+          title={`Klik untuk membuka daftar semua ${teamMetrics.totalPersons} personil aktif & rekap absensi`}
         >
           <StatCard
             label="Total Personil Aktif"
@@ -1297,9 +1491,34 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
                   Formula: 60% Hasil Kerja (Yield &amp; Penalti Defect) + 40% Kedisiplinan Absensi (rec_absensi)
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
-                Menampilkan {filteredAndSortedList.length} Personil
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                  Menampilkan {filteredAndSortedList.length} Personil Aktif
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mr-0.5 hidden sm:inline">Export:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleExportAllKpi('xlsx')}
+                    disabled={isExporting}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-sm"
+                    title="Export ranking personil aktif ke Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>.xlsx</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportAllKpi('pdf')}
+                    disabled={isExporting}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-sm"
+                    title="Export ranking personil aktif ke Laporan PDF (.pdf)"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>.pdf</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="table-responsive">
@@ -1490,9 +1709,34 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
                   <span>💡 Klik baris manapun untuk membuka rekap absensi dan profil personal detail</span>
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold text-blue-600 dark:text-cyan-300">
-                {filteredPersonnelMaster.length} dari {personilMasterList.length} Personil
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono font-bold text-blue-600 dark:text-cyan-300">
+                  {filteredPersonnelMaster.length} dari {personilMasterList.length} Personil Aktif
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mr-0.5 hidden sm:inline">Export:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleExportAllKpi('xlsx')}
+                    disabled={isExporting}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-sm"
+                    title="Export seluruh personil aktif ke Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>.xlsx</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportAllKpi('pdf')}
+                    disabled={isExporting}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-sm"
+                    title="Export seluruh personil aktif ke Laporan PDF (.pdf)"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>.pdf</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="table-responsive">
@@ -2225,6 +2469,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
                 <KpiPrintDocument
                   personil={activeSelectedPersonil}
                   period={period}
+                  allPersonnel={fullKpiCalculatedList}
                 />
               </div>
             </div>
@@ -2239,6 +2484,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList }) {
         <KpiPrintDocument
           personil={activeSelectedPersonil}
           period={period}
+          allPersonnel={fullKpiCalculatedList}
         />
       </div>
     )}

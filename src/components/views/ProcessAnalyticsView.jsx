@@ -364,9 +364,21 @@ export default function ProcessAnalyticsView({
 
   const opRanking = useMemo(() => {
     const map = new Map();
+    const inactiveNames = new Set(['vilan', 'dwi']);
+    (data?.rec_personil || []).forEach((p) => {
+      const st = String(p.status_nik || p.status || '').toLowerCase().trim();
+      if (st && st !== 'active') {
+        if (p.nick_name) inactiveNames.add(p.nick_name.toLowerCase().trim());
+        if (p.nama_lengkap) inactiveNames.add(p.nama_lengkap.toLowerCase().trim());
+      }
+    });
+
     (rows || []).forEach((r) => {
       if (!r) return;
       const op = cell(r, cfg?.i?.op, '').trim() || 'Unassigned';
+      // Filter: Hanya tampilkan personil berstatus active (exclude inactive)
+      if (inactiveNames.has(op.toLowerCase())) return;
+
       const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0, rowList: [] };
       e.good += getRowQtyGood(r, cfg);
       e.reject += getRowQtyDefect(r, cfg);
@@ -382,7 +394,7 @@ export default function ProcessAnalyticsView({
         return { ...o, output, lossRate };
       })
       .sort((a, b) => b.output - a.output);
-  }, [rows, cfg]);
+  }, [rows, cfg, data?.rec_personil]);
 
   const poRanking = useMemo(() => {
     const map = new Map();

@@ -226,9 +226,9 @@ export const SHEETS = {
   },
   rec_personil: {
     label: 'Data Personil & Operator',
-    headers: ['id', 'nick_name', 'nama_lengkap', 'jabatan', 'divisi', 'lini_mesin', 'nik_lama', 'nik_baru', 'role_type'],
-    dataCols: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-    i: { id: 0, nick_name: 1, nama_lengkap: 2, jabatan: 3, divisi: 4, lini_mesin: 5, nik_lama: 6, nik_baru: 7, role_type: 8 }
+    headers: ['id', 'nick_name', 'nama_lengkap', 'jabatan', 'divisi', 'lini_mesin', 'nik_lama', 'nik_baru', 'status_nik', 'role_type'],
+    dataCols: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    i: { id: 0, nick_name: 1, nama_lengkap: 2, jabatan: 3, divisi: 4, lini_mesin: 5, nik_lama: 6, nik_baru: 7, status_nik: 8, status: 8, role_type: 9 }
   },
   rec_absensi: {
     label: 'Data Absensi & Kehadiran',

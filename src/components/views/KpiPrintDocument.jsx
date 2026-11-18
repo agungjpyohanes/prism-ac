@@ -1,32 +1,50 @@
 import React from 'react';
 import { formatYMD } from '../../utils/formatters';
+import { resolveManagerPersonil, resolveSupervisorKoordinator } from '../../utils/kpiExport';
 
-// Helper susunan tanda tangan formal dinamis berdasarkan jabatan / hierarki
-function renderSignatures(personil) {
-  const jabatan = String(personil?.jabatan || '').trim().toUpperCase();
-  const nama = personil?.nama_lengkap || personil?.nick_name || 'KARYAWAN';
+/**
+ * Helper susunan 3 kolom tanda tangan formal dinamis (Penyederhanaan Lembar Pengesahan KPI Personal)
+ * - Kolom 1: KARYAWAN (Jabatan sesuai personil yang dinilai)
+ * - Kolom 2: DIBUAT OLEH (SUPERVISOR / KOORDINATOR - Diambil otomatis dari personil aktif)
+ * - Kolom 3: DIPERIKSA OLEH (MANAGER PREPRESS - Diambil otomatis dari personil aktif)
+ */
+function renderSignatures(personil, allPersonnel = []) {
+  const jabatan = String(personil?.jabatan || personil?.hierarchy?.label || 'OPERATOR').trim().toUpperCase();
+  const nama = String(personil?.nama_lengkap || personil?.nick_name || 'KARYAWAN').trim().toUpperCase();
 
-  // KONDISI 1: MANAGER (3 KOLOM)
-  if (jabatan.includes('MANAGER')) {
+  // 1. Resolusi dinamis Manager Prepress dari database personil aktif
+  const managerPersonil = resolveManagerPersonil(allPersonnel);
+  const managerName = managerPersonil
+    ? String(managerPersonil.nama_lengkap || managerPersonil.nick_name || '').trim().toUpperCase()
+    : '( ............................ )';
+
+  // 2. Resolusi dinamis Supervisor / Koordinator yang membawahi karyawan bersangkutan
+  const spvKoorPersonil = resolveSupervisorKoordinator(personil, allPersonnel);
+  const spvKoorName = spvKoorPersonil
+    ? String(spvKoorPersonil.nama_lengkap || spvKoorPersonil.nick_name || '').trim().toUpperCase()
+    : '( ............................ )';
+
+  // KHUSUS: Jika personil yang dinilai adalah MANAGER PREPRESS itu sendiri
+  if (personil?.hierarchy?.level === 5 || jabatan.includes('MANAGER')) {
     return (
       <tr>
-        <td className="w-1/3 p-1.5 text-center align-top border border-slate-400 bg-white">
+        <td className="w-1/3 p-2 text-center align-top border border-slate-400 bg-white">
           <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">KARYAWAN</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">MANAGER PREPRESS</div>
+          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight font-medium">MANAGER PREPRESS</div>
           <div className="h-14"></div>
           <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">{nama}</div>
           <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
         </td>
-        <td className="w-1/3 p-1.5 text-center align-top border border-slate-400 bg-white">
+        <td className="w-1/3 p-2 text-center align-top border border-slate-400 bg-white">
           <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DISETUJUI OLEH (1)</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">PLANT MANAGER</div>
+          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight font-medium">PLANT MANAGER</div>
           <div className="h-14"></div>
           <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">YOH. SRIYANA</div>
           <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
         </td>
-        <td className="w-1/3 p-1.5 text-center align-top border border-slate-400 bg-white">
+        <td className="w-1/3 p-2 text-center align-top border border-slate-400 bg-white">
           <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DISETUJUI OLEH (2)</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">HRBP PRODUCTION &amp; WAREHOUSE</div>
+          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight font-medium">HRBP PRODUCTION &amp; WAREHOUSE</div>
           <div className="h-14"></div>
           <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">SUGENG KURNIAWAN DJATI</div>
           <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
@@ -35,85 +53,42 @@ function renderSignatures(personil) {
     );
   }
 
-  // KONDISI 2: SUPERVISOR (4 KOLOM - TANPA KOLOM DIBUAT OLEH)
-  if (jabatan.includes('SUPERVISOR') || String(nama).toUpperCase().includes('DWI ISWAHYUDI')) {
-    return (
-      <tr>
-        <td className="w-1/4 p-1.5 text-center align-top border border-slate-400 bg-white">
-          <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">KARYAWAN</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">SUPERVISOR PREPRESS</div>
-          <div className="h-14"></div>
-          <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">{nama}</div>
-          <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
-        </td>
-        <td className="w-1/4 p-1.5 text-center align-top border border-slate-400 bg-white">
-          <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DIPERIKSA OLEH</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">MANAGER PREPRESS</div>
-          <div className="h-14"></div>
-          <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">YOHANES AGUNG JAKA P</div>
-          <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
-        </td>
-        <td className="w-1/4 p-1.5 text-center align-top border border-slate-400 bg-white">
-          <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DISETUJUI OLEH (1)</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">PLANT MANAGER</div>
-          <div className="h-14"></div>
-          <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">YOH. SRIYANA</div>
-          <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
-        </td>
-        <td className="w-1/4 p-1.5 text-center align-top border border-slate-400 bg-white">
-          <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DISETUJUI OLEH (2)</div>
-          <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">HRBP PRODUCTION &amp; WAREHOUSE</div>
-          <div className="h-14"></div>
-          <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">SUGENG KURNIAWAN DJATI</div>
-          <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
-        </td>
-      </tr>
-    );
-  }
-
-  // KONDISI 3: OPERATOR, PO, ADMIN, WIP, KOORDINATOR (5 KOLOM STANDAR)
+  // STANDAR RESMI: 3 KOLOM SEJAJAR (KARYAWAN - DIBUAT OLEH SPV/KOOR - DIPERIKSA OLEH MANAGER)
   return (
     <tr>
-      <td className="w-1/5 p-1.5 text-center align-top border border-slate-400 bg-white">
+      {/* Kolom 1: KARYAWAN */}
+      <td className="w-1/3 p-2 text-center align-top border border-slate-400 bg-white">
         <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">KARYAWAN</div>
-        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">{jabatan || 'OPERATOR'}</div>
+        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight font-medium truncate max-w-[180px] mx-auto" title={jabatan}>
+          {jabatan}
+        </div>
         <div className="h-14"></div>
         <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">{nama}</div>
         <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
       </td>
-      <td className="w-1/5 p-1.5 text-center align-top border border-slate-400 bg-white">
+
+      {/* Kolom 2: DIBUAT OLEH (SUPERVISOR / KOORDINATOR DINAMIS) */}
+      <td className="w-1/3 p-2 text-center align-top border border-slate-400 bg-white">
         <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DIBUAT OLEH</div>
-        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">SUPERVISOR / KOOR</div>
+        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight font-medium">SUPERVISOR / KOORDINATOR</div>
         <div className="h-14"></div>
-        <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">DWI ISWAHYUDI</div>
+        <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">{spvKoorName}</div>
         <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
       </td>
-      <td className="w-1/5 p-1.5 text-center align-top border border-slate-400 bg-white">
+
+      {/* Kolom 3: DIPERIKSA OLEH (MANAGER PREPRESS DINAMIS) */}
+      <td className="w-1/3 p-2 text-center align-top border border-slate-400 bg-white">
         <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DIPERIKSA OLEH</div>
-        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">MANAGER PREPRESS</div>
+        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight font-medium">MANAGER PREPRESS</div>
         <div className="h-14"></div>
-        <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">YOHANES AGUNG JAKA P</div>
-        <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
-      </td>
-      <td className="w-1/5 p-1.5 text-center align-top border border-slate-400 bg-white">
-        <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DISETUJUI OLEH (1)</div>
-        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">PLANT MANAGER</div>
-        <div className="h-14"></div>
-        <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">YOH. SRIYANA</div>
-        <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
-      </td>
-      <td className="w-1/5 p-1.5 text-center align-top border border-slate-400 bg-white">
-        <div className="font-bold text-[8.5px] uppercase text-slate-800 leading-tight">DISETUJUI OLEH (2)</div>
-        <div className="text-[7.5px] uppercase text-slate-600 mb-0.5 leading-tight">HRBP PRODUCTION &amp; WAREHOUSE</div>
-        <div className="h-14"></div>
-        <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">SUGENG KURNIAWAN DJATI</div>
+        <div className="font-bold text-[8.5px] underline uppercase text-slate-950 leading-tight">{managerName}</div>
         <div className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Tgl: ....................</div>
       </td>
     </tr>
   );
 }
 
-export default function KpiPrintDocument({ personil, period }) {
+export default function KpiPrintDocument({ personil, period, allPersonnel = [] }) {
   if (!personil) return null;
 
   const periodFromStr = formatYMD(period?.from);
@@ -441,19 +416,19 @@ export default function KpiPrintDocument({ personil, period }) {
       </div>
 
       {/* ========================================================================= */}
-      {/* 6. LEMBAR PENGESAHAN (MEPET MARGIN BAWAH KERTAS A4 - DINAMIS SESUAI JABATAN) */}
+      {/* 6. LEMBAR PENGESAHAN (PENYEDERHANAAN 3 KOLOM SEJAJAR PROPORSIONAL w-1/3) */}
       {/* ========================================================================= */}
       <div className="mt-auto pt-1">
         <table className="w-full border-collapse border border-slate-400 text-center bg-white">
           <thead>
             <tr className="bg-slate-100 text-slate-950 font-extrabold text-[8.5px] uppercase tracking-wider border-b border-slate-400">
-              <th colSpan={5} className="py-0.5 border border-slate-400">
+              <th colSpan={3} className="py-0.5 border border-slate-400">
                 LEMBAR PENGESAHAN &amp; PERSETUJUAN
               </th>
             </tr>
           </thead>
           <tbody>
-            {renderSignatures(personil)}
+            {renderSignatures(personil, allPersonnel)}
           </tbody>
         </table>
 

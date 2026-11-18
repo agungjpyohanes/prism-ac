@@ -67,6 +67,10 @@ function mapRowToMatrix(key, row) {
   }
 
   if (key === 'rec_personil') {
+    const rawStatus = findVal('status_nik') || findVal('statusnik') || findVal('status') || row.status_nik || row.status || '';
+    const statusVal = String(rawStatus).trim();
+    const is_active = statusVal.toLowerCase() === 'active';
+
     return {
       id: String(findVal('id') || row.id || ''),
       nick_name: String(findVal('nick_name') || findVal('nickname') || findVal('nama') || findVal('name') || row.nick_name || row.nama || '').trim(),
@@ -76,9 +80,10 @@ function mapRowToMatrix(key, row) {
       lini_mesin: String(findVal('lini_mesin') || findVal('mesin') || findVal('machine') || row.lini_mesin || '-').trim(),
       nik_lama: String(findVal('nik_lama') || row.nik_lama || '-').trim(),
       nik_baru: String(findVal('nik_baru') || row.nik_baru || '-').trim(),
-      status_nik: String(findVal('status_nik') || findVal('statusnik') || row.status_nik || '-').trim(),
+      status_nik: statusVal || 'active',
       role_type: String(findVal('role_type') || findVal('role') || row.role_type || 'OP').trim().toUpperCase(),
-      status: row.status !== undefined ? row.status : null,
+      status: statusVal,
+      is_active,
       raw: row
     };
   }
@@ -147,7 +152,17 @@ export function useProductionData() {
           const rawRows = await fetchAllRows(key);
           console.log(`[Supabase Raw Data Count]: ${key} = ${rawRows?.length || 0} rows`);
           const matrix = (rawRows || []).map((r) => mapRowToMatrix(key, r));
-          results[key] = matrix;
+          if (key === 'rec_personil') {
+            // FILTER GLOBAL: Hanya simpan & sediakan personil dengan status 'active' (case-insensitive)
+            // Karyawan inactive/resign/non-aktif tidak dirender pada modul monitoring, KPI, maupun rekap tim
+            results[key] = matrix.filter((p) => {
+              const st = String(p.status_nik || p.status || '').toLowerCase().trim();
+              return st === 'active';
+            });
+            console.log(`[useProductionData] rec_personil filtered (active only): ${results[key].length} dari ${matrix.length} baris`);
+          } else {
+            results[key] = matrix;
+          }
           statuses[key] = 'live';
         } catch (err) {
           console.error(`Gagal load key ${key}:`, err);

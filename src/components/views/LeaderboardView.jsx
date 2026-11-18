@@ -14,6 +14,16 @@ export default function LeaderboardView({ data, period }) {
     const toStr = period?.to ? formatYMD(period.to) : '';
     const map = new Map();
 
+    // Set identifikasi karyawan inactive / non-aktif
+    const inactiveNames = new Set(['vilan', 'dwi']);
+    (data?.rec_personil || []).forEach((p) => {
+      const st = String(p.status_nik || p.status || '').toLowerCase().trim();
+      if (st && st !== 'active') {
+        if (p.nick_name) inactiveNames.add(p.nick_name.toLowerCase().trim());
+        if (p.nama_lengkap) inactiveNames.add(p.nama_lengkap.toLowerCase().trim());
+      }
+    });
+
     targetKeys.forEach((key) => {
       const cfg = SHEETS[key];
       const rows = data[key] || [];
@@ -29,6 +39,9 @@ export default function LeaderboardView({ data, period }) {
         }
 
         const op = cell(r, cfg?.i?.op, '').trim() || 'Unassigned';
+        // Filter: Hanya tampilkan personil berstatus active (exclude inactive)
+        if (inactiveNames.has(op.toLowerCase())) return;
+
         const e = map.get(op) || { name: op, good: 0, reject: 0, replace: 0 };
         e.good += getRowQtyGood(r, cfg);
         e.reject += getRowQtyDefect(r, cfg);
