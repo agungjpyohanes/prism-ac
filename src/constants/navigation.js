@@ -3,24 +3,25 @@ import {
   TrendingUp,
   Database,
   Users,
-  Briefcase
+  Briefcase,
+  Gauge
 } from 'lucide-react';
 
 // Matriks Hak Akses Menu:
-// - developer, prepress, manager : Akses menu 1, 2, 3, 4, 5
+// - developer, prepress, manager : Akses menu 1, 2, 3, 4, 5, 6
 // - tamu, user, staff           : Akses terbatas hanya menu 1 dan 3
 export const ROLE_PERMISSIONS = {
-  developer: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  prepress: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  manager: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  developer: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
+  prepress: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
+  manager: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
   tamu: ['overview', 'data'],
   user: ['overview', 'data'],
   staff: ['overview', 'data'],
 
   // Legacy / Aliases support
-  admin: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  manajemen: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
-  operator: ['overview', 'analytics', 'data', 'team_kpi', 'executive'],
+  admin: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
+  manajemen: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
+  operator: ['overview', 'analytics', 'data', 'team_kpi', 'executive', 'oee_performance'],
   guest: ['overview', 'data']
 };
 
@@ -30,7 +31,7 @@ export const hasMenuAccess = (role, menuId) => {
   return allowed.includes(menuId);
 };
 
-// 5 Menu Utama PRISM
+// Menu Utama PRISM
 export const MENUS = [
   { 
     id: 'overview', 
@@ -61,5 +62,11 @@ export const MENUS = [
     label: 'Management Executive', 
     icon: Briefcase,
     order: 5
+  },
+  { 
+    id: 'oee_performance', 
+    label: 'Executive Production & OEE', 
+    icon: Gauge,
+    order: 6
   }
 ];

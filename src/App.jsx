@@ -9,6 +9,7 @@ import ProcessAnalyticsView from './components/views/ProcessAnalyticsView';
 import DataTableView from './components/views/DataTableView';
 import TeamKpiView from './components/views/TeamKpiView';
 import ExecutiveOverallView from './components/views/ExecutiveOverallView';
+import ExecutiveOeeDashboard from './components/views/ExecutiveOeeDashboard';
 import { SHEETS } from './constants/schema';
 import { hasMenuAccess } from './constants/navigation';
 import { getDefaultPeriod, num, parseDateVal, cell, getRowQtyGood, getRowQtyDefect, getRowQtyReplace } from './utils/formatters';
@@ -211,7 +212,8 @@ export default function App() {
         handleMenuChange('data');
       },
       onMenuChange: handleMenuChange,
-      onToast: (msg) => alert(msg)
+      onToast: (msg) => alert(msg),
+      reload
     };
 
     switch (currentMenu) {
@@ -225,6 +227,8 @@ export default function App() {
         return <TeamKpiView data={data} user={currentUser} period={period} onOpenList={handleOpenList} />;
       case 'executive':
         return <ExecutiveOverallView {...commonProps} />;
+      case 'oee_performance':
+        return <ExecutiveOeeDashboard {...commonProps} user={currentUser} reload={reload} />;
       default:
         return <OverviewView {...commonProps} />;
     }
