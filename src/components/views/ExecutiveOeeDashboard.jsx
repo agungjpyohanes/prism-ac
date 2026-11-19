@@ -354,11 +354,16 @@ export default function ExecutiveOeeDashboard({
       totalReplace += r.qty_replace;
     });
 
-    const totalProcessed = totalGood + totalDefect + totalReplace;
-    const totalDefectRework = totalDefect + totalReplace;
+    const totalValidOutput = totalGood + totalReplace;
+    const totalProduced = totalGood + totalReplace + totalDefect;
+    const totalDefectRework = totalDefect; // Internal defect (loss)
 
-    // Quality First-Pass (%) = qty_good / totalProcessed
-    const firstPassQuality = totalProcessed > 0 ? (totalGood / totalProcessed) * 100 : (totalJobs > 0 ? 100 : 0);
+    // Quality Rate (%) = totalProduced > 0 ? ((qty_good + qty_replace) / totalProduced) * 100 : 100.0
+    // qty_defect = internal quality loss
+    // qty_replace = penggantian plate permintaan user / pressroom (faktor eksternal - BUKAN defect/loss)
+    const firstPassQuality = totalProduced > 0
+      ? (totalValidOutput / totalProduced) * 100
+      : (totalJobs > 0 ? 100.0 : 100.0);
 
     // OEE = (Availability/100) * (Performance/100) * (Quality/100) * 100
     // Fallback benchmark saat ada job aktif: Availability 96.5%, Performance 94.0%
@@ -373,6 +378,8 @@ export default function ExecutiveOeeDashboard({
       totalGood,
       totalDefect,
       totalReplace,
+      totalValidOutput,
+      totalProduced,
       totalDefectRework,
       firstPassQuality,
       availability,
@@ -415,8 +422,11 @@ export default function ExecutiveOeeDashboard({
         replace += r.qty_replace;
       });
 
+      const totalValidOutput = good + replace;
       const totalProc = good + defect + replace;
-      const qual = totalProc > 0 ? (good / totalProc) * 100 : (jobCount > 0 ? 100 : 0);
+      // Quality Rate (%) = totalProc > 0 ? ((good + replace) / totalProc) * 100 : 100.0
+      // qty_defect = internal quality loss; qty_replace = permintaan user (output valid)
+      const qual = totalProc > 0 ? (totalValidOutput / totalProc) * 100 : (jobCount > 0 ? 100.0 : 100.0);
       const avail = jobCount > 0 ? BENCHMARK_AVAILABILITY : 0;
       const perf = jobCount > 0 ? BENCHMARK_PERFORMANCE : 0;
       const oee = jobCount > 0 ? (avail / 100) * (perf / 100) * (qual / 100) * 100 : 0;
@@ -430,6 +440,7 @@ export default function ExecutiveOeeDashboard({
         defect,
         replace,
         totalProc,
+        totalValidOutput,
         avail,
         perf,
         qual,
@@ -880,8 +891,8 @@ export default function ExecutiveOeeDashboard({
               className="h-full rounded-full bg-emerald-500 transition-all duration-700"
               style={{
                 width: `${
-                  kpiSummary.totalGood + kpiSummary.totalDefectRework > 0
-                    ? (kpiSummary.totalGood / (kpiSummary.totalGood + kpiSummary.totalDefectRework)) * 100
+                  kpiSummary.totalProduced > 0
+                    ? (kpiSummary.totalGood / kpiSummary.totalProduced) * 100
                     : 100
                 }%`
               }}
@@ -931,15 +942,15 @@ export default function ExecutiveOeeDashboard({
 
           <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono">
             <span>Standar Mutu: <b>&ge; 98.0%</b></span>
-            <span>Rasio Output Baik</span>
+            <span>Rasio Output Sah</span>
           </div>
         </div>
 
-        {/* Card 4: Defect & Rework */}
+        {/* Card 4: Internal Defect (Loss) */}
         <div className="card p-5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-rose-400/50 dark:hover:border-rose-500/50 transition">
           <div className="flex items-center justify-between gap-3 mb-3">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Defect &amp; Rework
+              Internal Defect (Loss)
             </span>
             <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-400/30 text-rose-600 dark:text-rose-300 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-4 h-4" />
@@ -948,7 +959,7 @@ export default function ExecutiveOeeDashboard({
 
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-3xl font-black font-display text-rose-600 dark:text-rose-400">
-              {kpiSummary.totalDefectRework.toLocaleString('id-ID')}
+              {kpiSummary.totalDefect.toLocaleString('id-ID')}
             </span>
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Unit Loss</span>
           </div>
@@ -958,8 +969,8 @@ export default function ExecutiveOeeDashboard({
               className="h-full rounded-full bg-rose-500 transition-all duration-700"
               style={{
                 width: `${
-                  kpiSummary.totalGood + kpiSummary.totalDefectRework > 0
-                    ? Math.min(100, (kpiSummary.totalDefectRework / (kpiSummary.totalGood + kpiSummary.totalDefectRework)) * 100 * 5)
+                  kpiSummary.totalProduced > 0
+                    ? Math.min(100, (kpiSummary.totalDefect / kpiSummary.totalProduced) * 100 * 5)
                     : 0
                 }%`
               }}
@@ -968,10 +979,10 @@ export default function ExecutiveOeeDashboard({
 
           <div className="flex items-center justify-between text-[11px] font-mono">
             <span className="text-rose-600 dark:text-rose-400 font-bold">
-              Defect: {kpiSummary.totalDefect} pcs
+              Defect (Loss): {kpiSummary.totalDefect.toLocaleString('id-ID')} pcs
             </span>
-            <span className="text-amber-600 dark:text-amber-400 font-bold">
-              Replace: {kpiSummary.totalReplace} pcs
+            <span className="text-slate-500 dark:text-slate-400 font-medium" title="Penggantian plate akibat permintaan user / pressroom (bukan defect)">
+              Replace (User Req): <b className="text-amber-600 dark:text-amber-400 font-mono">{kpiSummary.totalReplace.toLocaleString('id-ID')}</b> pcs
             </span>
           </div>
         </div>
@@ -1043,7 +1054,7 @@ export default function ExecutiveOeeDashboard({
                     <div className="text-right">
                       <span className="text-[10px] font-bold text-slate-400 uppercase block">Loss</span>
                       <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">
-                        {div.defect + div.replace} unit
+                        {div.defect} unit
                       </span>
                     </div>
                   </div>
@@ -1087,10 +1098,15 @@ export default function ExecutiveOeeDashboard({
 
                 {/* Footer Card */}
                 <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                  <div>
+                  <div className="truncate">
                     Good: <b className="text-slate-900 dark:text-white">{div.good.toLocaleString('id-ID')}</b>
+                    {div.replace > 0 && (
+                      <span className="text-amber-600 dark:text-amber-400 text-[10px] ml-1 font-semibold" title="Penggantian permintaan user (bukan defect)">
+                        (+{div.replace.toLocaleString('id-ID')} Rep)
+                      </span>
+                    )}
                   </div>
-                  <div>
+                  <div className="shrink-0">
                     Jobs: <b className="text-slate-900 dark:text-white">{div.jobCount}</b>
                   </div>
                 </div>
