@@ -111,9 +111,48 @@ const DIVISIONS = [
   }
 ];
 
-// Benchmark Standar Industri OEE (Fallback Logic canvas.html)
-const BENCHMARK_AVAILABILITY = 96.5; // 96.5% Availability
-const BENCHMARK_PERFORMANCE = 94.0;  // 94.0% Performance
+// Target Kapasitas Standar Output per Shift per Lini Prepress (Unit / Plate per Shift)
+// Dapat disesuaikan sesuai target operasional pabrik / divisi prepress
+export const DEFAULT_SHIFT_CAPACITY_TARGETS = {
+  CTP: 80,      // CTP Thermal (~80 plate/shift)
+  CTCP: 100,    // CTCP Offset UV (~100 plate/shift)
+  FLEXO: 15,    // Flexography (~15 plate/shift)
+  ETCHING: 20,  // Etching Plate (~20 plate/shift)
+  SCREEN: 25    // Screen Printing (~25 screen/shift)
+};
+
+// Helper status absensi PRISM (rec_absensi)
+export const checkAbsensiStatus = (rawCode, jamMasuk) => {
+  const code = String(rawCode || '').trim().toUpperCase();
+  const masuk = String(jamMasuk || '').trim();
+
+  // OFF / Libur / Hari Libur Nasional (bukan hari kerja terjadwal)
+  const isOff = code === 'OFF' || code.includes('LIBUR') || code.includes('MERAH');
+
+  // Hadir (HDOK = Hadir Tepat Waktu, HDTL = Hadir Terlambat, JKKR = Jam Kurang, LMBR = Lembur)
+  const isHadir = !isOff && (
+    ['HDOK', 'HDTL', 'JKKR', 'LMBR'].includes(code) ||
+    code.includes('HADIR') ||
+    code.includes('MASUK') ||
+    code === 'H' ||
+    code === 'OT' ||
+    (masuk && masuk !== '-' && !['ALPA', 'IZSK', 'IZRS', 'CUTI'].includes(code))
+  );
+
+  // Terjadwal (Hari kerja terjadwal: Hadir, Sakit, Izin, Cuti, Alpa)
+  const isScheduled = !isOff && (
+    isHadir ||
+    ['ALPA', 'IZSK', 'IZRS', 'CUTI'].includes(code) ||
+    code.includes('ALPA') ||
+    code.includes('MANGKIR') ||
+    code.includes('SAKIT') ||
+    code.includes('IZIN') ||
+    code.includes('CUTI') ||
+    (masuk && masuk !== '-')
+  );
+
+  return { isHadir, isScheduled, isOff };
+};
 
 export default function ExecutiveOeeDashboard({
   data = {},
@@ -275,6 +314,131 @@ export default function ExecutiveOeeDashboard({
   }, [data.rec_personil, allNormalizedRecords]);
 
   // ==========================================
+  // DATA ABSENSI & OPERATOR PRESENSI (rec_absensi & rec_personil)
+  // Digunakan untuk kalkulasi dinamis Availability (%) aktual per divisi
+  // ==========================================
+  const filteredAbsensi = useMemo(() => {
+    const rawList = data.rec_absensi || [];
+    return rawList.filter((r) => {
+      if (!r) return false;
+      let dRaw = '';
+      if (typeof r === 'object' && !Array.isArray(r)) {
+        dRaw = r.date || r.tanggal || r.tgl || '';
+      } else if (Array.isArray(r)) {
+        dRaw = r[1] || '';
+      }
+      const dObj = parseDateVal(dRaw);
+      const dStr = dObj ? formatYMD(dObj) : String(dRaw || '').substring(0, 10);
+      if (fromStr && toStr && dStr) {
+        if (dStr < fromStr || dStr > toStr) return false;
+      }
+      return true;
+    });
+  }, [data.rec_absensi, fromStr, toStr]);
+
+  // Pemetaan nama personil/operator untuk masing-masing divisi prepress
+  const divisionPersonnelMap = useMemo(() => {
+    const map = {};
+    DIVISIONS.forEach((d) => {
+      map[d.code] = new Set();
+    });
+
+    // 1. Dari master personil (rec_personil)
+    const personilList = data.rec_personil || [];
+    personilList.forEach((p) => {
+      const nick = String(p.nick_name || p.nama || p.nama_lengkap || '').trim().toUpperCase();
+      const full = String(p.nama_lengkap || '').trim().toUpperCase();
+      let lini = '';
+      let div = '';
+      let jab = '';
+
+      if (typeof p === 'object' && !Array.isArray(p)) {
+        lini = String(p.lini_mesin || '').toUpperCase();
+        div = String(p.divisi || '').toUpperCase();
+        jab = String(p.jabatan || '').toUpperCase();
+      } else if (Array.isArray(p)) {
+        div = cell(p, 4, '').toUpperCase();
+        lini = cell(p, 5, '').toUpperCase();
+        jab = cell(p, 3, '').toUpperCase();
+      }
+
+      DIVISIONS.forEach((d) => {
+        const code = d.code.toUpperCase();
+        let match = lini.includes(code) || div.includes(code) || jab.includes(code);
+        if (!match && code === 'CTCP') match = lini.includes('UV') || lini.includes('OFFSET') || div.includes('OFFSET');
+        if (!match && code === 'CTP') match = lini.includes('THERMAL') || div.includes('THERMAL');
+        if (match) {
+          if (nick) map[d.code].add(nick);
+          if (full) map[d.code].add(full);
+        }
+      });
+    });
+
+    // 2. Dari catatan produksi aktual (operator yang pernah mengeksekusi job di lini tsb)
+    allNormalizedRecords.forEach((r) => {
+      if (r.division && r.operator && r.operator !== '-') {
+        const divCode = r.division.toUpperCase();
+        if (map[divCode]) {
+          const parts = r.operator.split('&');
+          parts.forEach((part) => {
+            const clean = part.trim().toUpperCase();
+            if (clean && clean !== 'OPERATOR PREPRESS' && clean !== '-') {
+              map[divCode].add(clean);
+            }
+          });
+        }
+      }
+    });
+
+    return map;
+  }, [data.rec_personil, allNormalizedRecords]);
+
+  // Fungsi kalkulasi Availability aktual divisi dari data rec_absensi PRISM
+  const getDivisionAvailabilityStats = useCallback((divCode) => {
+    const validNames = divisionPersonnelMap[divCode] || new Set();
+    let shiftHadir = 0;
+    let shiftTerjadwal = 0;
+
+    filteredAbsensi.forEach((r) => {
+      let rawNick = '';
+      let rawCode = '';
+      let jamMasuk = '';
+
+      if (typeof r === 'object' && !Array.isArray(r)) {
+        rawNick = String(r.nick_name || r.nama || '').trim().toUpperCase();
+        rawCode = r.status_presensi || r.kode || '';
+        jamMasuk = r.jam_masuk || '';
+      } else if (Array.isArray(r)) {
+        rawNick = cell(r, 2, '').trim().toUpperCase();
+        rawCode = cell(r, 3, '');
+        jamMasuk = cell(r, 5, '');
+      }
+
+      if (!rawNick) return;
+
+      const isMatch = validNames.has(rawNick) || Array.from(validNames).some((n) => n.includes(rawNick) || rawNick.includes(n));
+      if (!isMatch) return;
+
+      const { isHadir, isScheduled } = checkAbsensiStatus(rawCode, jamMasuk);
+      if (isScheduled) {
+        shiftTerjadwal++;
+        if (isHadir) shiftHadir++;
+      }
+    });
+
+    // Rasio kehadiran = (Shift Hadir / Shift Terjadwal) * 100%, fallback 100% jika jadwal kosong
+    const rate = shiftTerjadwal > 0 
+      ? Math.min(100.0, Math.max(0.0, (shiftHadir / shiftTerjadwal) * 100))
+      : 100.0;
+
+    return {
+      shiftHadir,
+      shiftTerjadwal,
+      rate
+    };
+  }, [divisionPersonnelMap, filteredAbsensi]);
+
+  // ==========================================
   // FILTERING MULTI-DIMENSI
   // ==========================================
   const filteredRecords = useMemo(() => {
@@ -365,10 +529,44 @@ export default function ExecutiveOeeDashboard({
       ? (totalValidOutput / totalProduced) * 100
       : (totalJobs > 0 ? 100.0 : 100.0);
 
-    // OEE = (Availability/100) * (Performance/100) * (Quality/100) * 100
-    // Fallback benchmark saat ada job aktif: Availability 96.5%, Performance 94.0%
-    const availability = totalJobs > 0 ? BENCHMARK_AVAILABILITY : 0;
-    const performance = totalJobs > 0 ? BENCHMARK_PERFORMANCE : 0;
+    // Availability Dinamis Global PRISM:
+    // Rasio kehadiran operator (Total Shift Hadir / Total Shift Terjadwal) * 100% dari rec_absensi
+    const activeDivCodes = selectedDivision !== 'ALL' 
+      ? [selectedDivision] 
+      : DIVISIONS.map((d) => d.code);
+
+    let globalHadir = 0;
+    let globalTerjadwal = 0;
+    activeDivCodes.forEach((code) => {
+      const stats = getDivisionAvailabilityStats(code);
+      globalHadir += stats.shiftHadir;
+      globalTerjadwal += stats.shiftTerjadwal;
+    });
+
+    const availability = globalTerjadwal > 0
+      ? Math.min(100.0, Math.max(0.0, (globalHadir / globalTerjadwal) * 100))
+      : (totalJobs > 0 ? 100.0 : 0);
+
+    // Performance Dinamis Global PRISM:
+    // Total Output Aktual dibagi (Jumlah Shift Aktif * Target Kapasitas per Shift) maksimal 100%
+    let totalGlobalTarget = 0;
+    activeDivCodes.forEach((code) => {
+      const targetPerShift = DEFAULT_SHIFT_CAPACITY_TARGETS[code] || 80;
+      const shiftsSet = new Set();
+      filteredRecords
+        .filter((r) => r.division.toUpperCase() === code.toUpperCase())
+        .forEach((r) => {
+          shiftsSet.add(`${r.date || 'NODATE'}__${r.shift || 'SHIFT A'}`);
+        });
+      totalGlobalTarget += shiftsSet.size * targetPerShift;
+    });
+
+    const rawPerformance = totalGlobalTarget > 0
+      ? (totalValidOutput / totalGlobalTarget) * 100
+      : (totalJobs > 0 ? 100.0 : 0);
+    const performance = totalJobs > 0 ? Math.min(100.0, Math.max(0.0, rawPerformance)) : 0;
+
+    // Overall OEE (%) = (Availability/100) * (Performance/100) * (Quality/100) * 100
     const overallOee = totalJobs > 0
       ? (availability / 100) * (performance / 100) * (firstPassQuality / 100) * 100
       : 0;
@@ -386,7 +584,7 @@ export default function ExecutiveOeeDashboard({
       performance,
       overallOee
     };
-  }, [filteredRecords]);
+  }, [filteredRecords, selectedDivision, getDivisionAvailabilityStats]);
 
   // ==========================================
   // KALKULASI 5 LINI PERFORMANCE MATRIX CARDS
@@ -416,19 +614,36 @@ export default function ExecutiveOeeDashboard({
       let defect = 0;
       let replace = 0;
 
+      // Kumpulkan shift aktif unik (date + shift)
+      const activeShiftsSet = new Set();
       lineRecords.forEach((r) => {
         good += r.qty_good;
         defect += r.qty_defect;
         replace += r.qty_replace;
+        activeShiftsSet.add(`${r.date || 'NODATE'}__${r.shift || 'SHIFT A'}`);
       });
 
       const totalValidOutput = good + replace;
       const totalProc = good + defect + replace;
-      // Quality Rate (%) = totalProc > 0 ? ((good + replace) / totalProc) * 100 : 100.0
+
+      // 1. Quality Rate (%) = totalProc > 0 ? ((good + replace) / totalProc) * 100 : 100.0
       // qty_defect = internal quality loss; qty_replace = permintaan user (output valid)
       const qual = totalProc > 0 ? (totalValidOutput / totalProc) * 100 : (jobCount > 0 ? 100.0 : 100.0);
-      const avail = jobCount > 0 ? BENCHMARK_AVAILABILITY : 0;
-      const perf = jobCount > 0 ? BENCHMARK_PERFORMANCE : 0;
+
+      // 2. Availability (%) dinamis dari data absensi PRISM
+      const availStats = getDivisionAvailabilityStats(div.code);
+      const avail = jobCount > 0 ? availStats.rate : (availStats.shiftTerjadwal > 0 ? availStats.rate : 100.0);
+
+      // 3. Performance (%) dinamis dari Total Output Aktual / (Jumlah Shift Aktif * Target Kapasitas per Shift)
+      const activeShiftCount = activeShiftsSet.size;
+      const targetPerShift = DEFAULT_SHIFT_CAPACITY_TARGETS[div.code] || 80;
+      const totalTargetCapacity = activeShiftCount * targetPerShift;
+      const rawPerf = totalTargetCapacity > 0 
+        ? (totalValidOutput / totalTargetCapacity) * 100 
+        : (jobCount > 0 ? 100.0 : 0);
+      const perf = jobCount > 0 ? Math.min(100.0, Math.max(0.0, rawPerf)) : 0; // dibatasi maksimal 100%
+
+      // 4. Overall OEE (%) = (Availability/100) * (Performance/100) * (Quality/100) * 100
       const oee = jobCount > 0 ? (avail / 100) * (perf / 100) * (qual / 100) * 100 : 0;
 
       const isSelected = selectedDivision === div.code;
@@ -441,6 +656,11 @@ export default function ExecutiveOeeDashboard({
         replace,
         totalProc,
         totalValidOutput,
+        activeShiftCount,
+        targetPerShift,
+        totalTargetCapacity,
+        shiftHadir: availStats.shiftHadir,
+        shiftTerjadwal: availStats.shiftTerjadwal,
         avail,
         perf,
         qual,
@@ -448,7 +668,7 @@ export default function ExecutiveOeeDashboard({
         isSelected
       };
     });
-  }, [allNormalizedRecords, selectedDivision, selectedShift, fromStr, toStr, searchQuery]);
+  }, [allNormalizedRecords, selectedDivision, selectedShift, fromStr, toStr, searchQuery, getDivisionAvailabilityStats]);
 
   // ==========================================
   // HANDLERS CRUD & AKSI
@@ -835,7 +1055,7 @@ export default function ExecutiveOeeDashboard({
 
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-3xl font-black font-display text-slate-900 dark:text-white">
-              {kpiSummary.overallOee.toFixed(1)}%
+              {kpiSummary.overallOee.toFixed(2)}%
             </span>
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md font-mono ${
               kpiSummary.overallOee >= 85
@@ -918,7 +1138,7 @@ export default function ExecutiveOeeDashboard({
 
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-3xl font-black font-display text-slate-900 dark:text-white">
-              {kpiSummary.firstPassQuality.toFixed(1)}%
+              {kpiSummary.firstPassQuality.toFixed(2)}%
             </span>
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md font-mono ${
               kpiSummary.firstPassQuality >= 98
@@ -1000,7 +1220,7 @@ export default function ExecutiveOeeDashboard({
             </h2>
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            Availability: <b>96.5%</b> &bull; Performance: <b>94.0%</b> (Benchmark)
+            Kalkulasi Aktual PRISM: <b>Avail (Presensi Operator)</b> &bull; <b>Perf (Target Shift)</b> &bull; <b>Qual (Loss Internal)</b>
           </span>
         </div>
 
@@ -1048,7 +1268,7 @@ export default function ExecutiveOeeDashboard({
                         OEE Score
                       </div>
                       <div className="text-2xl font-black font-display text-slate-900 dark:text-white" style={{ color: hasJobs ? div.color : undefined }}>
-                        {div.oee.toFixed(1)}%
+                        {div.oee.toFixed(2)}%
                       </div>
                     </div>
                     <div className="text-right">
@@ -1062,35 +1282,35 @@ export default function ExecutiveOeeDashboard({
                   {/* 3 Pillars Breakdown: Avail, Perf, Qual */}
                   <div className="space-y-2 py-2 border-t border-b border-slate-100 dark:border-slate-800/80 my-2 text-[11px] font-mono">
                     {/* Avail */}
-                    <div>
+                    <div title={`Availability: ${div.shiftHadir} hadir dari ${div.shiftTerjadwal} shift terjadwal operator`}>
                       <div className="flex justify-between text-slate-600 dark:text-slate-400 mb-0.5">
                         <span>Avail</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">{div.avail.toFixed(1)}%</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-100">{div.avail.toFixed(2)}%</span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${div.avail}%` }} />
+                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, Math.max(0, div.avail))}%` }} />
                       </div>
                     </div>
 
                     {/* Perf */}
-                    <div>
+                    <div title={`Performance: ${div.totalValidOutput} unit output / target ${div.totalTargetCapacity} unit (${div.targetPerShift}/shift x ${div.activeShiftCount} shift)`}>
                       <div className="flex justify-between text-slate-600 dark:text-slate-400 mb-0.5">
                         <span>Perf</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">{div.perf.toFixed(1)}%</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-100">{div.perf.toFixed(2)}%</span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${div.perf}%` }} />
+                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, Math.max(0, div.perf))}%` }} />
                       </div>
                     </div>
 
                     {/* Qual */}
-                    <div>
+                    <div title={`Quality Rate: ${div.totalValidOutput} valid dari ${div.totalProc} total produksi`}>
                       <div className="flex justify-between text-slate-600 dark:text-slate-400 mb-0.5">
                         <span>Qual</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">{div.qual.toFixed(1)}%</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-100">{div.qual.toFixed(2)}%</span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${div.qual}%` }} />
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, Math.max(0, div.qual))}%` }} />
                       </div>
                     </div>
                   </div>
