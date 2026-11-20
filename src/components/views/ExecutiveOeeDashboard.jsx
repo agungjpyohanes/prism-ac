@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Gauge,
-  Activity,
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
@@ -11,28 +10,20 @@ import {
   Trash2,
   RefreshCw,
   Download,
-  Filter,
   X,
   Layers,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
-  Cpu,
   Printer,
-  Sparkles,
   Info,
   Calendar,
-  User,
   SlidersHorizontal,
-  Sliders,
-  Settings,
-  Clock,
-  ShieldCheck
+  Clock
 } from 'lucide-react';
-import { SHEETS, PROD_KEYS } from '../../constants/schema';
+import { SHEETS } from '../../constants/schema';
 import {
   cell,
-  num,
   parseDateVal,
   fmtDate,
   formatYMD,
@@ -45,8 +36,7 @@ import {
   addProductionJob,
   updateProductionJob,
   deleteProductionJob,
-  DIVISION_TO_TABLE,
-  TABLE_TO_DIVISION
+  DIVISION_TO_TABLE
 } from '../../services/productionService';
 
 // Konfigurasi 5 Divisi Utama
@@ -113,24 +103,64 @@ const DIVISIONS = [
   }
 ];
 
-// Target Kapasitas Rata-Rata per Shift Aktif per Lini Prepress (Make-to-Order)
-// Satuan: pcs per shift aktif berproduksi
-export const DEFAULT_LINE_TARGETS = {
-  CTP: 25,      // CTP Thermal (25 pcs / shift aktif)
-  CTCP: 220,    // CTCP Offset UV (220 pcs / shift aktif)
-  FLEXO: 35,    // Flexography (35 pcs / shift aktif)
-  ETCHING: 35,  // Etching Plate (35 pcs / shift aktif)
-  SCREEN: 3     // Screen Printing (3 pcs / shift aktif)
-};
+// ==========================================
+// RUMUS BAKU OEE - FUNGSI PEMBANTU (HELPERS)
+// ==========================================
 
-// Alias untuk kompatibilitas
-export const DEFAULT_SHIFT_CAPACITY_TARGETS = DEFAULT_LINE_TARGETS;
+// 1. Konstanta Menit Bersih Shift Kerja PRISM
+function getNetShiftMinutes(dateStr, divisionCode) {
+  let isSaturday = false;
+  if (dateStr) {
+    const parts = String(dateStr).split('-');
+    if (parts.length === 3) {
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      if (!isNaN(d.getTime())) {
+        isSaturday = d.getDay() === 6;
+      }
+    }
+  }
+  if (isSaturday) return 300; // Sabtu = 300 menit (semua divisi)
+  const div = String(divisionCode || '').toUpperCase();
+  if (div === 'CTCP') return 480; // CTCP = 480 menit
+  return 420; // CTP, Screen, Flexo, Etching = 420 menit
+}
 
-// Kunci penyimpanan LocalStorage target OEE
-export const OEE_LINE_TARGETS_STORAGE_KEY = 'prism_oee_line_targets';
+// 2. Perhitungan Median Array
+function calculateMedian(arr) {
+  if (!arr || arr.length === 0) return 0;
+  const sorted = [...arr].filter((v) => typeof v === 'number' && !isNaN(v)).sort((a, b) => a - b);
+  if (sorted.length === 0) return 0;
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 !== 0) {
+    return sorted[mid];
+  }
+  return Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+// 3. Perhitungan Persentil (P90 default)
+function calculatePercentile(arr, p = 90) {
+  if (!arr || arr.length === 0) return 0;
+  const sorted = [...arr].filter((v) => typeof v === 'number' && !isNaN(v)).sort((a, b) => a - b);
+  if (sorted.length === 0) return 0;
+  const idx = (p / 100) * (sorted.length - 1);
+  const lower = Math.floor(idx);
+  const upper = Math.ceil(idx);
+  const weight = idx - lower;
+  if (lower === upper) return sorted[lower];
+  return Math.round(sorted[lower] * (1 - weight) + sorted[upper] * weight);
+}
+
+// 4. Deteksi Alasan Penggantian Eksternal (Aus Cetak Pressroom / Revisi Customer)
+function isExternalReplace(reasonStr) {
+  if (!reasonStr) return false;
+  const s = String(reasonStr).toUpperCase();
+  if (s.includes('AUS') || s.includes('ORDER TAMBAH') || s.includes('REPEAT ORDER')) return true;
+  if (s.includes('REVISI') || s.includes('CUSTOMER') || s.includes('PPIC') || s.includes('DESIGN') || s.includes('ACC')) return true;
+  return false;
+}
 
 // Helper status absensi PRISM (rec_absensi)
-export const checkAbsensiStatus = (rawCode, jamMasuk) => {
+const checkAbsensiStatus = (rawCode, jamMasuk) => {
   const code = String(rawCode || '').trim().toUpperCase();
   const masuk = String(jamMasuk || '').trim();
 
@@ -163,21 +193,19 @@ export const checkAbsensiStatus = (rawCode, jamMasuk) => {
 };
 
 // ==========================================
-// FUNGSI KALKULASI METRIK 5 LINI PERFORMANCE MATRIX CARDS
-// Dihitung dinamis per divisi berbasis Make-to-Order (Shift/Hari Aktif Berproduksi)
+// FUNGSI KALKULASI METRIK 5 LINI PERFORMANCE MATRIX CARDS (RUMUS BAKU OEE)
 // ==========================================
-export const computeDivisionMetrics = ({
+const computeDivisionMetrics = ({
   allNormalizedRecords = [],
   selectedDivision = 'ALL',
   selectedShift = 'ALL',
   fromStr = '',
   toStr = '',
   searchQuery = '',
-  lineTargets = DEFAULT_LINE_TARGETS,
   getDivisionAvailabilityStats = () => ({ shiftHadir: 0, shiftTerjadwal: 0, rate: 100.0 })
 }) => {
   return DIVISIONS.map((div) => {
-    // Ambil records untuk divisi ini yang juga mematuhi filter shift, tanggal global, & search
+    // 1. Filter records aktif sesuai tanggal global, shift, dan search
     const lineRecords = allNormalizedRecords.filter((rec) => {
       if (rec.division.toUpperCase() !== div.code.toUpperCase()) return false;
       if (selectedShift !== 'ALL' && rec.shift.toUpperCase() !== selectedShift.toUpperCase()) return false;
@@ -198,54 +226,158 @@ export const computeDivisionMetrics = ({
     let good = 0;
     let defect = 0;
     let replace = 0;
+    let replaceInternal = 0;
+    let replaceExternal = 0;
+    let validJobRows = 0;
+    let totalDowntimeMin = 0;
 
-    // Kumpulkan shift aktif unik (date + shift)
-    // activeProductionShifts = jumlah pasangan unik `${r.date}_${r.shift}` dari filteredRecords milik divisi tsb
-    // (jika ada record tetapi shift kosong, kelompokkan berdasarkan r.date)
-    const activeShiftsSet = new Set();
+    // Kelompokkan shift berbeban pada periode aktif (date + shift)
+    const loadedShiftsMap = new Map();
+
     lineRecords.forEach((r) => {
-      good += Number(r.qty_good) || 0;
-      defect += Number(r.qty_defect) || 0;
-      replace += Number(r.qty_replace) || 0;
+      const g = Number(r.qty_good) || 0;
+      const d = Number(r.qty_defect) || 0;
+      const rep = Number(r.qty_replace) || 0;
+      const isExt = isExternalReplace(r.replace_reason);
+      const repInt = isExt ? 0 : rep;
+      const repExt = isExt ? rep : 0;
+      const rowDowntime = Number(r.downtime_minutes || r.menit_henti) || 0;
 
-      const d = r.date || 'NODATE';
-      const s = r.shift && String(r.shift).trim();
-      const shiftKey = s ? `${d}_${s}` : `${d}`;
-      activeShiftsSet.add(shiftKey);
+      good += g;
+      defect += d;
+      replace += rep;
+      replaceInternal += repInt;
+      replaceExternal += repExt;
+      totalDowntimeMin += rowDowntime;
+
+      if (d === 0 && repInt === 0) {
+        validJobRows++;
+      }
+
+      const dateStr = r.date || 'NODATE';
+      const shiftStr = r.shift && String(r.shift).trim() ? r.shift : 'SHIFT A';
+      const shiftKey = `${dateStr}_${shiftStr}`;
+
+      if (!loadedShiftsMap.has(shiftKey)) {
+        loadedShiftsMap.set(shiftKey, {
+          date: dateStr,
+          shift: shiftStr,
+          totalOutput: 0,
+          downtimeMin: 0
+        });
+      }
+      const sEntry = loadedShiftsMap.get(shiftKey);
+      sEntry.totalOutput += (g + d + rep);
+      sEntry.downtimeMin += rowDowntime;
     });
 
-    const activeProductionShifts = activeShiftsSet.size;
-    const targetPerShift = lineTargets[div.code] ?? DEFAULT_LINE_TARGETS[div.code] ?? 25;
-    const expectedTargetOutput = activeProductionShifts * targetPerShift;
+    const loadedShifts = Array.from(loadedShiftsMap.values());
+    const loadedShiftsCount = loadedShifts.length;
+
+    // ==========================================
+    // 2. AMBANG PADAT & KAPASITAS (P90) DARI PERIODE AKTIF (BEBAS BIAS DISTRIBUSI)
+    // ==========================================
+    // 1. Kumpulkan seluruh output per shift unik (date + shift) pada periode aktif menjadi array terurut sortedOutputs
+    const shiftOutputs = loadedShifts.map((s) => s.totalOutput).filter((v) => v > 0);
+    const sortedOutputs = [...shiftOutputs].sort((a, b) => a - b);
+
+    // 2. Hitung medianOutput = nilai tengah (Persentil ke-50) dari sortedOutputs
+    // 3. Hitung p90Output = Persentil ke-90 dari sortedOutputs
+    let medianOutput = 0;
+    let p90Output = 0;
+
+    if (sortedOutputs.length === 0) {
+      medianOutput = 0;
+      p90Output = 0;
+    } else if (sortedOutputs.length < 5) {
+      p90Output = Math.max(...sortedOutputs);
+      medianOutput = calculateMedian(sortedOutputs) || p90Output;
+    } else {
+      medianOutput = calculateMedian(sortedOutputs);
+      p90Output = calculatePercentile(sortedOutputs, 90);
+    }
+
+    // 4. Filter denseShifts = shift dari sortedOutputs dengan nilai >= medianOutput (~50% dari total shift berbeban)
+    const denseShifts = loadedShifts.filter((s) => s.totalOutput >= medianOutput);
+    const denseShiftsCount = denseShifts.length;
+
+    // ==========================================
+    // 1. AVAILABILITY (A)
+    // Sesuai aturan: jika ada downtime_minutes > 0, kurangkan downtime dari menit bersih.
+    // Jika tidak ada downtime, lini beroperasi pada shift berbeban = 100.00%
+    // (menghindari angka semu akibat rotasi operator)
+    // ==========================================
+    let numA = 0;
+    let denA = 0;
+
+    if (totalDowntimeMin > 0) {
+      loadedShifts.forEach((s) => {
+        const netMin = getNetShiftMinutes(s.date, div.code);
+        denA += netMin;
+        numA += Math.max(0, netMin - s.downtimeMin);
+      });
+    } else {
+      loadedShifts.forEach((s) => {
+        const netMin = getNetShiftMinutes(s.date, div.code);
+        denA += netMin;
+        numA += netMin;
+      });
+    }
+
+    const avail = (jobCount === 0 || denA === 0)
+      ? 100.0
+      : Math.min(100.0, Math.max(0.0, (numA / denA) * 100));
+
+    // ==========================================
+    // 2. PERFORMANCE (P)
+    // Dihitung HANYA pada Shift Padat (output >= medianOutput)
+    // Numerator P = sum(min(s.totalOutput, p90Output))
+    // Denominator P = denseShifts.length * p90Output
+    // P = Denominator > 0 ? (Numerator / Denominator) : 1
+    // ==========================================
+    let numP = 0;
+    const denP = denseShiftsCount * p90Output;
+
+    if (denseShiftsCount > 0 && p90Output > 0) {
+      denseShifts.forEach((s) => {
+        numP += Math.min(s.totalOutput, p90Output);
+      });
+    }
+
+    const perf = (denseShiftsCount === 0 || denP === 0)
+      ? 100.0
+      : Math.min(100.0, Math.max(0.0, (numP / denP) * 100));
+
+    // ==========================================
+    // 3. QUALITY (Q)
+    // CTP & CTCP: Basis Plat
+    // Flexo, Etching, Screen: Basis Job Row
+    // Exclude replace eksternal
+    // ==========================================
+    let numQ;
+    let denQ;
+    const isPlateBasis = div.code === 'CTP' || div.code === 'CTCP';
+    const qualityBasis = isPlateBasis ? 'Plat' : 'Job Row';
+
+    if (isPlateBasis) {
+      numQ = good;
+      denQ = good + defect + replaceInternal;
+    } else {
+      numQ = validJobRows;
+      denQ = jobCount;
+    }
+
+    const qual = denQ > 0 ? (numQ / denQ) * 100 : 100.0;
+
+    // ==========================================
+    // 4. OVERALL OEE (%)
+    // ==========================================
+    const oee = jobCount > 0 ? (avail / 100) * (perf / 100) * (qual / 100) * 100 : 0;
+
     const totalActualOutput = good + replace + defect;
     const totalValidOutput = good + replace;
     const totalProc = totalActualOutput;
-
-    // 1. Quality Rate (%) = totalProc > 0 ? ((good + replace) / totalProc) * 100 : 100.0
-    const qual = totalProc > 0 ? (totalValidOutput / totalProc) * 100 : 100.0;
-
-    // 2. Availability (%) dinamis dari data absensi PRISM
     const availStats = getDivisionAvailabilityStats(div.code);
-    const avail = jobCount > 0 ? availStats.rate : (availStats.shiftTerjadwal > 0 ? availStats.rate : 100.0);
-
-    // 3. Performance Rate (%) Berbasis Make-to-Order (Shift/Hari Aktif Berproduksi):
-    // Jika activeProductionShifts === 0: tetapkan performance = 100.0 (status Idle/No Order tanpa menjatuhkan skor)
-    // Jika activeProductionShifts > 0: expectedTargetOutput = activeProductionShifts * lineTargets[division]
-    //                                  totalActualOutput = qty_good + qty_replace + qty_defect
-    //                                  performance = Math.min(100, (totalActualOutput / expectedTargetOutput) * 100)
-    let perf = 100.0;
-    if (activeProductionShifts === 0) {
-      perf = 100.0;
-    } else {
-      perf = expectedTargetOutput > 0
-        ? Math.min(100.0, Math.max(0.0, (totalActualOutput / expectedTargetOutput) * 100))
-        : 100.0;
-    }
-
-    // 4. Overall OEE (%) = (Availability/100) * (Performance/100) * (Quality/100) * 100
-    // Menghitung ulang berdasarkan Availability, Performance, dan Quality terbaru
-    const oee = jobCount > 0 ? (avail / 100) * (perf / 100) * (qual / 100) * 100 : 0;
-
     const isSelected = selectedDivision === div.code;
 
     return {
@@ -254,16 +386,32 @@ export const computeDivisionMetrics = ({
       good,
       defect,
       replace,
+      replaceInternal,
+      replaceExternal,
       totalProc,
       totalActualOutput,
       totalValidOutput,
-      activeProductionShifts,
-      activeShiftCount: activeProductionShifts, // alias
-      targetPerShift,
-      expectedTargetOutput,
-      totalTargetCapacity: expectedTargetOutput, // alias
+      activeProductionShifts: loadedShiftsCount,
+      activeShiftCount: loadedShiftsCount,
+      loadedShiftsCount,
+      denseShiftsCount,
+      denseThreshold: medianOutput,
+      autoDenseThreshold: medianOutput,
+      capacityP90: p90Output,
+      autoCapacityP90: p90Output,
+      targetPerShift: p90Output,
+      expectedTargetOutput: loadedShiftsCount * p90Output,
+      totalTargetCapacity: loadedShiftsCount * p90Output,
       shiftHadir: availStats.shiftHadir,
       shiftTerjadwal: availStats.shiftTerjadwal,
+      qualityBasis,
+      isPlateBasis,
+      numA,
+      denA,
+      numP,
+      denP,
+      numQ,
+      denQ,
       avail,
       perf,
       qual,
@@ -277,8 +425,8 @@ export default function ExecutiveOeeDashboard({
   data = {},
   period,
   reload,
-  user,
-  onSelectRow,
+  user: _user,
+  onSelectRow: _onSelectRow,
   onToast
 }) {
   // ==========================================
@@ -302,46 +450,6 @@ export default function ExecutiveOeeDashboard({
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // State Target Kapasitas Lini (Make-to-Order) dengan persistensi localStorage (prism_oee_line_targets)
-  const [lineTargets, setLineTargets] = useState(() => {
-    try {
-      const saved = localStorage.getItem(OEE_LINE_TARGETS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return { ...DEFAULT_LINE_TARGETS, ...parsed };
-      }
-    } catch (err) {
-      console.warn('Gagal memuat target OEE dari localStorage:', err);
-    }
-    return { ...DEFAULT_LINE_TARGETS };
-  });
-
-  // Modal State Pengaturan Target OEE
-  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
-
-  // Handler Simpan & Reset Target OEE
-  const handleSaveLineTargets = (newTargets) => {
-    setLineTargets(newTargets);
-    try {
-      localStorage.setItem(OEE_LINE_TARGETS_STORAGE_KEY, JSON.stringify(newTargets));
-    } catch (err) {
-      console.warn('Gagal menyimpan target OEE ke localStorage:', err);
-    }
-    if (onToast) onToast('Target OEE lini produksi berhasil disimpan!', 'ok');
-  };
-
-  const handleResetLineTargets = () => {
-    const defaults = { ...DEFAULT_LINE_TARGETS };
-    setLineTargets(defaults);
-    try {
-      localStorage.removeItem(OEE_LINE_TARGETS_STORAGE_KEY);
-    } catch (err) {
-      console.warn('Gagal mereset target OEE di localStorage:', err);
-    }
-    if (onToast) onToast('Target OEE lini produksi dikembalikan ke nilai default.', 'info');
-    return defaults;
-  };
 
   // Detail Drawer / Quick View State
   const [detailItem, setDetailItem] = useState(null);
@@ -663,108 +771,8 @@ export default function ExecutiveOeeDashboard({
   }, [sortedRecords, page, pageSize]);
 
   // ==========================================
-  // KALKULASI 4 TOP SUMMARY KPI CARDS
-  // ==========================================
-  const kpiSummary = useMemo(() => {
-    const totalJobs = filteredRecords.length;
-    let totalGood = 0;
-    let totalDefect = 0;
-    let totalReplace = 0;
-
-    filteredRecords.forEach((r) => {
-      totalGood += Number(r.qty_good) || 0;
-      totalDefect += Number(r.qty_defect) || 0;
-      totalReplace += Number(r.qty_replace) || 0;
-    });
-
-    const totalValidOutput = totalGood + totalReplace;
-    const totalProduced = totalGood + totalReplace + totalDefect;
-    const totalActualOutput = totalProduced;
-    const totalDefectRework = totalDefect; // Internal defect (loss)
-
-    // Quality Rate (%) = totalProduced > 0 ? ((qty_good + qty_replace) / totalProduced) * 100 : 100.0
-    // qty_defect = internal quality loss
-    // qty_replace = penggantian plate permintaan user / pressroom (faktor eksternal - BUKAN defect/loss)
-    const firstPassQuality = totalProduced > 0
-      ? (totalValidOutput / totalProduced) * 100
-      : (totalJobs > 0 ? 100.0 : 100.0);
-
-    // Availability Dinamis Global PRISM:
-    // Rasio kehadiran operator (Total Shift Hadir / Total Shift Terjadwal) * 100% dari rec_absensi
-    const activeDivCodes = selectedDivision !== 'ALL' 
-      ? [selectedDivision] 
-      : DIVISIONS.map((d) => d.code);
-
-    let globalHadir = 0;
-    let globalTerjadwal = 0;
-    activeDivCodes.forEach((code) => {
-      const stats = getDivisionAvailabilityStats(code);
-      globalHadir += stats.shiftHadir;
-      globalTerjadwal += stats.shiftTerjadwal;
-    });
-
-    const availability = globalTerjadwal > 0
-      ? Math.min(100.0, Math.max(0.0, (globalHadir / globalTerjadwal) * 100))
-      : (totalJobs > 0 ? 100.0 : 0);
-
-    // Performance Dinamis Global PRISM Berbasis Make-to-Order (Shift/Hari Aktif Berproduksi):
-    // Total Output Aktual dibagi Total Expected Target Output dari seluruh divisi yang memiliki shift aktif
-    let totalGlobalTarget = 0;
-    let totalActiveProductionShifts = 0;
-
-    activeDivCodes.forEach((code) => {
-      const targetPerShift = lineTargets[code] ?? DEFAULT_LINE_TARGETS[code] ?? 25;
-      const shiftsSet = new Set();
-      filteredRecords
-        .filter((r) => r.division.toUpperCase() === code.toUpperCase())
-        .forEach((r) => {
-          const d = r.date || 'NODATE';
-          const s = r.shift && String(r.shift).trim();
-          const shiftKey = s ? `${d}_${s}` : `${d}`;
-          shiftsSet.add(shiftKey);
-        });
-
-      const activeShifts = shiftsSet.size;
-      totalActiveProductionShifts += activeShifts;
-      totalGlobalTarget += activeShifts * targetPerShift;
-    });
-
-    let performance = 100.0;
-    if (totalActiveProductionShifts > 0) {
-      performance = totalGlobalTarget > 0
-        ? Math.min(100.0, Math.max(0.0, (totalActualOutput / totalGlobalTarget) * 100))
-        : 100.0;
-    } else {
-      performance = totalJobs > 0 ? 100.0 : 0.0;
-    }
-
-    // Overall OEE (%) = (Availability/100) * (Performance/100) * (Quality/100) * 100
-    // Menghitung ulang berdasarkan Availability, Performance, dan Quality terbaru
-    const overallOee = totalJobs > 0
-      ? (availability / 100) * (performance / 100) * (firstPassQuality / 100) * 100
-      : 0;
-
-    return {
-      totalJobs,
-      totalGood,
-      totalDefect,
-      totalReplace,
-      totalValidOutput,
-      totalProduced,
-      totalActualOutput,
-      totalDefectRework,
-      firstPassQuality,
-      availability,
-      performance,
-      overallOee,
-      totalActiveProductionShifts,
-      totalGlobalTarget
-    };
-  }, [filteredRecords, selectedDivision, getDivisionAvailabilityStats, lineTargets]);
-
-  // ==========================================
-  // KALKULASI 5 LINI PERFORMANCE MATRIX CARDS
-  // Dihitung dinamis per divisi berbasis Make-to-Order (Shift/Hari Aktif Berproduksi)
+  // KALKULASI 5 LINI PERFORMANCE MATRIX CARDS (RUMUS BAKU OEE)
+  // Dihitung dinamis per divisi berbasis Shift Padat, P90, & Basis Kualitas
   // ==========================================
   const divisionMetrics = useMemo(() => {
     return computeDivisionMetrics({
@@ -774,7 +782,6 @@ export default function ExecutiveOeeDashboard({
       fromStr,
       toStr,
       searchQuery,
-      lineTargets,
       getDivisionAvailabilityStats
     });
   }, [
@@ -784,9 +791,99 @@ export default function ExecutiveOeeDashboard({
     fromStr,
     toStr,
     searchQuery,
-    lineTargets,
     getDivisionAvailabilityStats
   ]);
+
+  // ==========================================
+  // KALKULASI 4 TOP SUMMARY KPI CARDS (AGREGASI NUMERATOR / DENOMINATOR)
+  // DILARANG merata-ratakan persentase OEE antar lini
+  // Seluruh pembilang dan penyebut dijumlahkan terlebih dahulu baru dibagi
+  // ==========================================
+  const kpiSummary = useMemo(() => {
+    const activeDivMetrics = selectedDivision !== 'ALL'
+      ? divisionMetrics.filter((d) => d.code === selectedDivision)
+      : divisionMetrics;
+
+    let totalJobs = 0;
+    let totalGood = 0;
+    let totalDefect = 0;
+    let totalReplace = 0;
+    let totalReplaceInternal = 0;
+    let totalReplaceExternal = 0;
+    let totalActiveProductionShifts = 0;
+
+    let globalNumA = 0;
+    let globalDenA = 0;
+    let globalNumP = 0;
+    let globalDenP = 0;
+    let globalNumQ = 0;
+    let globalDenQ = 0;
+
+    activeDivMetrics.forEach((d) => {
+      totalJobs += d.jobCount;
+      totalGood += d.good;
+      totalDefect += d.defect;
+      totalReplace += d.replace;
+      totalReplaceInternal += d.replaceInternal;
+      totalReplaceExternal += d.replaceExternal;
+      totalActiveProductionShifts += d.loadedShiftsCount;
+
+      globalNumA += d.numA;
+      globalDenA += d.denA;
+      globalNumP += d.numP;
+      globalDenP += d.denP;
+      globalNumQ += d.numQ;
+      globalDenQ += d.denQ;
+    });
+
+    const availability = globalDenA > 0
+      ? Math.min(100.0, Math.max(0.0, (globalNumA / globalDenA) * 100))
+      : (totalJobs > 0 ? 100.0 : 0);
+
+    const performance = globalDenP > 0
+      ? Math.min(100.0, Math.max(0.0, (globalNumP / globalDenP) * 100))
+      : (totalJobs > 0 ? 100.0 : 0);
+
+    const quality = globalDenQ > 0
+      ? Math.min(100.0, Math.max(0.0, (globalNumQ / globalDenQ) * 100))
+      : (totalJobs > 0 ? 100.0 : 100.0);
+
+    const firstPassQuality = quality;
+
+    const overallOee = totalJobs > 0
+      ? (availability / 100) * (performance / 100) * (quality / 100) * 100
+      : 0;
+
+    const totalProduced = totalGood + totalReplace + totalDefect;
+    const totalActualOutput = totalProduced;
+    const totalValidOutput = totalGood + totalReplace;
+    const totalDefectRework = totalDefect;
+
+    return {
+      totalJobs,
+      totalGood,
+      totalDefect,
+      totalReplace,
+      totalReplaceInternal,
+      totalReplaceExternal,
+      totalValidOutput,
+      totalProduced,
+      totalActualOutput,
+      totalDefectRework,
+      firstPassQuality,
+      availability,
+      performance,
+      quality,
+      overallOee,
+      totalActiveProductionShifts,
+      globalNumA,
+      globalDenA,
+      globalNumP,
+      globalDenP,
+      globalNumQ,
+      globalDenQ
+    };
+  }, [divisionMetrics, selectedDivision]);
 
   // ==========================================
   // HANDLERS CRUD & AKSI
@@ -991,17 +1088,6 @@ export default function ExecutiveOeeDashboard({
             >
               <Download className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               <span>Export CSV</span>
-            </button>
-
-            {/* Tombol Pengaturan Target OEE Lini */}
-            <button
-              type="button"
-              onClick={() => setIsTargetModalOpen(true)}
-              className="btn-secondary !py-2 !px-3.5 text-xs flex items-center gap-2 rounded-xl shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-slate-700 dark:text-slate-200 transition"
-              title="Pengaturan Target Kapasitas Lini (OEE)"
-            >
-              <Sliders className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Target OEE</span>
             </button>
 
             {reload && (
@@ -1349,7 +1435,7 @@ export default function ExecutiveOeeDashboard({
             </h2>
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            Kalkulasi Aktual PRISM: <b>Avail (Presensi Operator)</b> &bull; <b>Perf (Target Shift)</b> &bull; <b>Qual (Loss Internal)</b>
+            Rumus Baku OEE &bull; <b>Kapasitas P90 (Shift Padat &ge; Median)</b> &bull; <b>Agregasi Numerator/Denominator</b>
           </span>
         </div>
 
@@ -1408,10 +1494,20 @@ export default function ExecutiveOeeDashboard({
                     </div>
                   </div>
 
+                  {/* Metadata Shift Padat & Basis Satuan */}
+                  <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 text-[10px] font-mono text-slate-500 dark:text-slate-400 mb-2">
+                    <span title={`Shift Padat: ${div.denseShiftsCount} dari ${div.loadedShiftsCount} shift berbeban (output \u2265 median)`}>
+                      Shift Padat: <b className="text-slate-800 dark:text-slate-200">{div.denseShiftsCount} / {div.loadedShiftsCount}</b>
+                    </span>
+                    <span title={`Basis Pengukuran Kualitas: ${div.qualityBasis}`}>
+                      Basis: <b className="text-indigo-600 dark:text-cyan-400">{div.qualityBasis}</b>
+                    </span>
+                  </div>
+
                   {/* 3 Pillars Breakdown: Avail, Perf, Qual */}
                   <div className="space-y-2 py-2 border-t border-b border-slate-100 dark:border-slate-800/80 my-2 text-[11px] font-mono">
                     {/* Avail */}
-                    <div title={`Availability: ${div.shiftHadir} hadir dari ${div.shiftTerjadwal} shift terjadwal operator`}>
+                    <div title={`Availability: ${div.avail.toFixed(2)}% (${div.numA}/${div.denA} menit bersih) • Presensi: ${div.shiftHadir}/${div.shiftTerjadwal} shift`}>
                       <div className="flex justify-between text-slate-600 dark:text-slate-400 mb-0.5">
                         <span>Avail</span>
                         <span className="font-bold text-slate-900 dark:text-slate-100">{div.avail.toFixed(2)}%</span>
@@ -1422,12 +1518,12 @@ export default function ExecutiveOeeDashboard({
                     </div>
 
                     {/* Perf */}
-                    <div title={div.activeProductionShifts === 0 
-                      ? 'Performance: 100% (No Order / Idle)' 
-                      : `Performance: ${div.totalActualOutput} unit output aktual / target ${div.expectedTargetOutput} unit (${div.targetPerShift} pcs/shift x ${div.activeProductionShifts} shift aktif)`
+                    <div title={div.denseShiftsCount === 0 
+                      ? 'Performance: 100% (Tidak ada shift padat / Idle)' 
+                      : `Performance: ${div.perf.toFixed(2)}% (${div.numP}/${div.denP} pada ${div.denseShiftsCount} shift padat \u2265 median)`
                     }>
                       <div className="flex justify-between text-slate-600 dark:text-slate-400 mb-0.5">
-                        <span>Perf {div.activeProductionShifts > 0 ? `(${div.targetPerShift}/shf)` : ''}</span>
+                        <span>Perf</span>
                         <span className="font-bold text-slate-900 dark:text-slate-100">{div.perf.toFixed(2)}%</span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
@@ -1436,9 +1532,9 @@ export default function ExecutiveOeeDashboard({
                     </div>
 
                     {/* Qual */}
-                    <div title={`Quality Rate: ${div.totalValidOutput} valid dari ${div.totalProc} total produksi`}>
+                    <div title={`Quality Rate: ${div.numQ}/${div.denQ} basis ${div.qualityBasis} (exclude keausan cetak/revisi eksternal)`}>
                       <div className="flex justify-between text-slate-600 dark:text-slate-400 mb-0.5">
-                        <span>Qual</span>
+                        <span>Qual ({div.qualityBasis})</span>
                         <span className="font-bold text-slate-900 dark:text-slate-100">{div.qual.toFixed(2)}%</span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
@@ -1908,19 +2004,6 @@ export default function ExecutiveOeeDashboard({
           </div>
         </div>
       )}
-
-      {/* ==========================================
-          MODAL PENGATURAN TARGET OEE (MAKE-TO-ORDER)
-          ========================================== */}
-      <TargetOeeSettingsModal
-        isOpen={isTargetModalOpen}
-        onClose={() => setIsTargetModalOpen(false)}
-        lineTargets={lineTargets}
-        onSave={handleSaveLineTargets}
-        onReset={handleResetLineTargets}
-        divisionMetrics={divisionMetrics}
-        period={period}
-      />
     </div>
   );
 }
@@ -2249,220 +2332,6 @@ function ProductionJobFormModal({
                 </>
               )}
             </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// SUBKOMPONEN MODAL PENGATURAN TARGET OEE LINI
-// ==========================================
-function TargetOeeSettingsModal({
-  isOpen,
-  onClose,
-  lineTargets = DEFAULT_LINE_TARGETS,
-  onSave,
-  onReset,
-  divisionMetrics = [],
-  period
-}) {
-  const [formTargets, setFormTargets] = useState({ ...lineTargets });
-
-  // Sinkronisasi state internal saat modal dibuka atau lineTargets berubah
-  React.useEffect(() => {
-    if (isOpen) {
-      setFormTargets({ ...lineTargets });
-    }
-  }, [isOpen, lineTargets]);
-
-  if (!isOpen) return null;
-
-  const handleInputChange = (code, val) => {
-    const parsed = parseInt(val, 10);
-    setFormTargets((prev) => ({
-      ...prev,
-      [code]: isNaN(parsed) ? '' : Math.max(0, parsed)
-    }));
-  };
-
-  const handleResetDefaults = () => {
-    const defaults = onReset ? onReset() : { ...DEFAULT_LINE_TARGETS };
-    setFormTargets(defaults);
-  };
-
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    const finalTargets = {};
-    DIVISIONS.forEach((div) => {
-      const v = Number(formTargets[div.code]);
-      finalTargets[div.code] = !isNaN(v) && v > 0 ? v : (DEFAULT_LINE_TARGETS[div.code] || 25);
-    });
-    if (onSave) onSave(finalTargets);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-5">
-      <div
-        className="absolute inset-0 bg-[#030712]/85 backdrop-blur-md"
-        onClick={onClose}
-      />
-      <div className="relative w-full max-w-2xl bg-white dark:bg-[#0c1430] rounded-3xl border border-slate-200 dark:border-indigo-500/30 p-6 sm:p-7 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto anim-in">
-        {/* Header Modal */}
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-400/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-              <Sliders className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-display font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                Pengaturan Target Kapasitas Lini (OEE)
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Konfigurasi target rata-rata output per shift aktif (Make-to-Order) untuk kalkulasi Performance Rate (%).
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Info Banner: Periode Aktif & Transparansi Make-to-Order */}
-        <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 text-xs text-indigo-950 dark:text-indigo-200 space-y-1">
-          <div className="flex items-center gap-2 font-bold">
-            <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <span>Kalkulasi Kapasitas Berbasis Shift/Hari Aktif (Make-to-Order):</span>
-          </div>
-          <p className="text-[11px] leading-relaxed pl-6 text-slate-600 dark:text-slate-300">
-            Target kapasitas dihitung berdasarkan: <code className="px-1 py-0.5 rounded bg-indigo-100/60 dark:bg-indigo-900/60 font-mono text-indigo-800 dark:text-indigo-300 font-bold">Expected Output = Shift Aktif &times; Target/Shift</code>. Pembagi kapasitas <b>hanya</b> memperhitungkan shift yang benar-benar memiliki order produksi pada periode <b>{fmtPeriodRange(period?.from, period?.to)}</b>.
-          </p>
-        </div>
-
-        {/* Form Body: Daftar 5 Lini */}
-        <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-          <div className="space-y-3">
-            {DIVISIONS.map((div) => {
-              const divMetric = divisionMetrics.find((m) => m.code === div.code);
-              const activeShifts = divMetric ? divMetric.activeProductionShifts : 0;
-              const currentVal = formTargets[div.code] !== undefined ? formTargets[div.code] : DEFAULT_LINE_TARGETS[div.code];
-              const numVal = Number(currentVal) || 0;
-              const expectedTotal = activeShifts * numVal;
-
-              return (
-                <div
-                  key={div.code}
-                  className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition space-y-2.5"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    {/* Nama Lini & Badge */}
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="w-3.5 h-3.5 rounded-full shrink-0"
-                        style={{ background: div.color }}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 dark:text-white text-sm">
-                            {div.name}
-                          </span>
-                          <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full border ${div.badgeClass}`}>
-                            {div.badge}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Info Shift Aktif Terdeteksi */}
-                    <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Shift Aktif Terdeteksi:
-                      </span>
-                      <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                        activeShifts > 0
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                          : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}>
-                        {activeShifts} Shift
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Input Target & Ringkasan Perhitungan */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2 border-t border-slate-200/80 dark:border-slate-800/80 items-center">
-                    <div className="sm:col-span-6">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                        Target Kapasitas / Shift Aktif (Pcs)
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="1"
-                          max="99999"
-                          value={currentVal}
-                          onChange={(e) => handleInputChange(div.code, e.target.value)}
-                          className="inp w-full !py-2 !pr-16 font-mono font-bold text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl"
-                          placeholder={String(DEFAULT_LINE_TARGETS[div.code])}
-                          required
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-slate-400 font-mono pointer-events-none">
-                          pcs / shift
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="sm:col-span-6 text-[11px] font-mono space-y-0.5 text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
-                      <div className="flex justify-between">
-                        <span>Default Sistem:</span>
-                        <b className="text-slate-700 dark:text-slate-300">{DEFAULT_LINE_TARGETS[div.code]} pcs/shift</b>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Target Periode Ini:</span>
-                        <b className="text-indigo-600 dark:text-indigo-400">
-                          {activeShifts > 0 ? `${expectedTotal.toLocaleString('id-ID')} pcs (${activeShifts} \u00D7 ${numVal})` : '0 pcs (Idle)'}
-                        </b>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Action Buttons Modal */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={handleResetDefaults}
-              className="btn-secondary !py-2 !px-3.5 rounded-xl text-xs flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-              title="Kembalikan semua nilai ke target bawaan default"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Default</span>
-            </button>
-
-            <div className="flex items-center gap-2.5 ml-auto">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-secondary !py-2 !px-4 rounded-xl text-xs"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                className="btn-primary !py-2 !px-5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-gradient-to-r dark:from-indigo-600 dark:to-blue-600 shadow-md transition"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Simpan Target</span>
-              </button>
-            </div>
           </div>
         </form>
       </div>
