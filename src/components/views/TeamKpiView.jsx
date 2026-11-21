@@ -1013,7 +1013,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList, onToa
             <style>
               @page {
                 size: A4 portrait;
-                margin: 0 !important; /* WAJIB 0 agar browser tidak mencetak date/time, url, dan header file */
+                margin: 8mm 9mm 10mm 9mm !important;
               }
               *, *::before, *::after, html, body {
                 box-sizing: border-box !important;
@@ -1030,13 +1030,10 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList, onToa
               }
               body {
                 margin: 0 !important;
-                /* Pindahkan margin 1.5 cm ke padding fisik body kertas A4 */
-                padding: 12mm 15mm 12mm 15mm !important;
+                padding: 0 !important;
                 font-family: Arial, Calibri, 'Helvetica Neue', Helvetica, sans-serif !important;
-                width: 210mm !important;
-                height: 297mm !important;
-                max-width: 210mm !important;
-                max-height: 297mm !important;
+                width: 100% !important;
+                max-width: 192mm !important;
                 overflow: hidden !important;
                 background-color: #ffffff !important;
                 background: #ffffff !important;
@@ -1048,11 +1045,11 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList, onToa
                 border: none !important;
                 outline: none !important;
                 box-shadow: none !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 padding: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
-                max-height: 273mm !important;
+                max-height: 275mm !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
@@ -1060,7 +1057,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList, onToa
               }
             </style>
           </head>
-          <body style="background-color: #ffffff !important; background: #ffffff !important; margin: 0; padding: 12mm 15mm;">
+          <body style="background-color: #ffffff !important; background: #ffffff !important; margin: 0; padding: 0;">
             ${printElement.outerHTML}
           </body>
         </html>
@@ -1306,7 +1303,7 @@ export default function TeamKpiView({ data = {}, user, period, onOpenList, onToa
                         <span className="badge bg-cyan-100 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-300 text-[9px] font-mono">Resmi A4</span>
                       </div>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                        Laporan resmi Landscape A4 vektor siap cetak, arsip, &amp; blok tanda tangan.
+                        Laporan resmi A4 Portrait (2 Halaman) vektor siap cetak, arsip, &amp; blok tanda tangan.
                       </p>
                     </div>
                   </button>

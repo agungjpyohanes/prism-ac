@@ -304,11 +304,13 @@ export function exportActivePersonnelKpiToExcel(personnelList, period, options =
  * FORMAT 2: LAPORAN RESMI PDF (.pdf) — Menggunakan jsPDF + jspdf-autotable
  * ============================================================================
  * Menghasilkan dokumen PDF vektor beresolusi tajam:
- * - Orientasi Landscape A4
+ * - Orientasi A4 Portrait (210mm x 297mm)
+ * - Margin Halaman: 10mm 10mm 12mm 10mm (atas, kanan, bawah, kiri)
  * - Kop resmi dengan Logo Prepress (kiri) dan Logo KIKY (kanan)
  * - Sub-judul divisi resmi: Divisi Prepress (CTCP, CTP, Flexo, Etching, Screen)
- * - Distribusi tabel proporsional 2 halaman (sekitar 14-16 baris Hal 1 & 8-10 baris Hal 2)
- * - Blok Pengesahan 3 Kolom Sejajar: Dibuat Oleh (Manager Prepress otomatis dinamis),
+ * - Distribusi tabel presisi tepat 2 halaman (18 baris pertama Hal 1 & sisa baris + pengesahan Hal 2)
+ * - 12 Kolom proporsional dengan font 7.5pt, compact vertical padding (3.5px 4px)
+ * - Blok Pengesahan 3 Kolom Sejajar di Halaman 2: Dibuat Oleh (Manager Prepress otomatis dinamis),
  *   Disetujui Oleh (1) (Plant Manager: YOH. SRIYANA), Disetujui Oleh (2) (HRBP: SUGENG KURNIAWAN DJATI)
  */
 export async function exportActivePersonnelKpiToPdf(personnelList, period, options = {}) {
@@ -353,9 +355,9 @@ export async function exportActivePersonnelKpiToPdf(personnelList, period, optio
     ? (managerPersonil.nama_lengkap || managerPersonil.nick_name || '').toUpperCase().trim()
     : '( .................................................. )';
 
-  // Inisialisasi dokumen jsPDF (Landscape A4: 297mm x 210mm)
+  // Inisialisasi dokumen jsPDF (Portrait A4: 210mm x 297mm)
   const doc = new jsPDF({
-    orientation: 'landscape',
+    orientation: 'portrait',
     format: 'a4',
     unit: 'mm'
   });
@@ -366,70 +368,77 @@ export async function exportActivePersonnelKpiToPdf(personnelList, period, optio
   // Header Kiri: Logo Prepress
   if (prepressLogo) {
     try {
-      doc.addImage(prepressLogo, 'PNG', 10, 7, 36, 8.8);
+      doc.addImage(prepressLogo, 'PNG', 9, 7.5, 30, 7.3);
     } catch (err) {
       console.warn('Gagal render prepress logo pada PDF:', err);
     }
   }
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(15, 23, 42);
-  doc.text('PREPRESS DEPARTMENT', 10, 19.5);
-
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(71, 85, 105);
-  doc.text('PT SOLO MURNI', 10, 23.5);
-
-  // Header Tengah: Judul & Sub-judul Divisi Resmi
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11.5);
-  doc.setTextColor(2, 132, 199);
-  doc.text('LAPORAN KINERJA TIM & KPI DIVISI PREPRESS', 148.5, 12, { align: 'center' });
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
   doc.setTextColor(15, 23, 42);
-  doc.text('Divisi Prepress (CTCP, CTP, Flexo, Etching, Screen)', 148.5, 17, { align: 'center' });
+  doc.text('PREPRESS DEPARTMENT', 9, 18.5);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105);
-  doc.text(`Periode: ${periodLabel}    |    Filter: ${filterLabel}`, 148.5, 22, { align: 'center' });
-
-  // Header Kanan: Kotak Ringkasan Statistik Tim & Logo KIKY
-  doc.setDrawColor(203, 213, 225);
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(194, 6.5, 70, 18, 1.5, 1.5, 'FD');
-
   doc.setFontSize(7);
+  doc.setTextColor(71, 85, 105);
+  doc.text('PT SOLO MURNI', 9, 22);
+
+  // Header Tengah: Judul & Sub-judul Divisi Resmi (Center: 105mm)
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(2, 132, 199);
+  doc.text('LAPORAN KINERJA TIM & KPI DIVISI PREPRESS', 105, 12, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
   doc.setTextColor(15, 23, 42);
-  doc.text('RINGKASAN TIM AKTIF', 197, 10.5);
+  doc.text('Divisi Prepress (CTCP, CTP, Flexo, Etching, Screen)', 105, 16.5, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Personil: ${activeList.length} Org   |   Skor: ${teamMetrics.avgKpi} / 100`, 197, 15);
-  doc.text(`Mutu: ${teamMetrics.avgQuality}%   •   Disiplin: ${teamMetrics.avgAttendance} pts`, 197, 19.5);
-  doc.setFontSize(6);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Cetak: ${printDateTimeStr}`, 197, 23);
+  doc.setFontSize(7);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Periode: ${periodLabel}    |    Filter: ${filterLabel}`, 105, 21, { align: 'center' });
 
+  // Header Kanan: Logo KIKY
   if (kikyLogo) {
     try {
-      doc.addImage(kikyLogo, 'PNG', 267, 6.5, 19, 15.8);
+      doc.addImage(kikyLogo, 'PNG', 183, 7.5, 18, 14.5);
     } catch (err) {
       console.warn('Gagal render kiky logo pada PDF:', err);
     }
   }
 
-  // Garis Pembatas Kop
+  // Garis Pembatas Kop (Lebar 192mm dari X:9 s/d X:201)
   doc.setDrawColor(15, 23, 42);
-  doc.setLineWidth(0.4);
-  doc.line(10, 27, 287, 27);
+  doc.setLineWidth(0.35);
+  doc.line(9, 24, 201, 24);
+
+  // Kotak Ringkasan Statistik Tim (Lebar 192mm sejajar tabel)
+  doc.setDrawColor(203, 213, 225);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(9, 25.5, 192, 9, 1.2, 1.2, 'FD');
+
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text('RINGKASAN TIM AKTIF', 12, 29);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(51, 65, 85);
+  doc.text(`Personil: ${activeList.length} Orang   •   Rata-rata Skor KPI: ${teamMetrics.avgKpi} / 100`, 52, 29);
+
+  doc.setFontSize(6.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Dicetak: ${printDateTimeStr}`, 198, 29, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Standar Mutu (60%): ${teamMetrics.avgQuality}%   •   Disiplin & Presensi (40%): ${teamMetrics.avgAttendance} pts   •   Target Toleransi Defect: ≤ 0.5%`, 12, 32.8);
 
   // =========================================================================
-  // 2. TABEL UTAMA LAPORAN KPI (PROPORSI SEIMBANG 2 HALAMAN)
+  // 2. TABEL UTAMA LAPORAN KPI (ALIRAN ALAMI & PROPORSI TEPAT 2 HALAMAN)
   // =========================================================================
   const tableHead = [[
     'No',
@@ -468,74 +477,89 @@ export async function exportActivePersonnelKpiToPdf(personnelList, period, optio
     ];
   });
 
+  // Kalibrasi ulang lebar 12 kolom proporsional A4 Portrait (Lebar Total: 192mm)
+  // No: 3.5% (6.72mm), NIK: 8.5% (16.32mm, nowrap), Nama: 17.5% (33.60mm),
+  // Divisi & Lini: 13.5% (25.92mm), Jabatan / Role: 11.5% (22.08mm, nowrap agar kata KOORDINATOR tidak terbelah),
+  // Hari: 4.5% (8.64mm), Disiplin: 6.5% (12.48mm), Output: 7% (13.44mm),
+  // Kualitas: 6.5% (12.48mm), Penalti: 6% (11.52mm), Total KPI: 6.5% (12.48mm), Predikat/Grade: 8.5% (16.32mm)
+  const columnStyles = {
+    0: { halign: 'center', cellWidth: 6.72 },
+    1: { halign: 'center', cellWidth: 16.32, overflow: 'visible' },
+    2: { halign: 'left', cellWidth: 33.6, fontStyle: 'bold' },
+    3: { halign: 'left', cellWidth: 25.92 },
+    4: { halign: 'left', cellWidth: 22.08, overflow: 'visible' },
+    5: { halign: 'center', cellWidth: 8.64 },
+    6: { halign: 'right', cellWidth: 12.48 },
+    7: { halign: 'right', cellWidth: 13.44 },
+    8: { halign: 'right', cellWidth: 12.48 },
+    9: { halign: 'right', cellWidth: 11.52 },
+    10: { halign: 'right', cellWidth: 12.48, fontStyle: 'bold', textColor: [2, 132, 199] },
+    11: { halign: 'center', cellWidth: 16.32, fontStyle: 'bold' }
+  };
+
+  // Kalibrasi padding sel dan tinggi baris minimal agar Halaman 1 terisi penuh (sekitar baris 1-20),
+  // dan Halaman 2 memuat sisa baris + blok tanda tangan pengesahan
+  const tableStyles = {
+    fontSize: 7.5,
+    cellPadding: { top: 2.2, bottom: 2.2, left: 0.8, right: 0.8 },
+    minCellHeight: 11.5,
+    valign: 'middle',
+    overflow: 'linebreak',
+    lineColor: [226, 232, 240],
+    lineWidth: 0.1
+  };
+
+  const headStyles = {
+    fillColor: [15, 23, 42],
+    textColor: [255, 255, 255],
+    fontStyle: 'bold',
+    fontSize: 7.5,
+    cellPadding: { top: 1.8, bottom: 1.8, left: 0.8, right: 0.8 },
+    halign: 'center',
+    valign: 'middle',
+    overflow: 'linebreak'
+  };
+
+  // Mengalirkan satu tabel secara alami (tanpa pemotongan statis/hardcoded .slice(0, 18))
   autoTable(doc, {
-    startY: 30,
-    margin: { top: 12, bottom: 12, left: 10, right: 10 },
+    startY: 36,
+    margin: { top: 8, bottom: 10, left: 9, right: 9 },
     rowPageBreak: 'avoid',
+    showHead: 'everyPage',
     head: tableHead,
     body: tableBody,
     theme: 'grid',
-    styles: {
-      fontSize: 8,
-      cellPadding: { top: 2.5, bottom: 2.5, left: 1.5, right: 1.5 },
-      valign: 'middle',
-      lineColor: [226, 232, 240],
-      lineWidth: 0.1
-    },
-    headStyles: {
-      fillColor: [15, 23, 42],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 8,
-      cellPadding: { top: 2.8, bottom: 2.8, left: 1.5, right: 1.5 },
-      halign: 'center'
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252]
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 8 },
-      1: { halign: 'center', cellWidth: 18 },
-      2: { halign: 'left', cellWidth: 42, fontStyle: 'bold' },
-      3: { halign: 'left', cellWidth: 47 },
-      4: { halign: 'left', cellWidth: 28 },
-      5: { halign: 'center', cellWidth: 11 },
-      6: { halign: 'right', cellWidth: 18 },
-      7: { halign: 'right', cellWidth: 17 },
-      8: { halign: 'right', cellWidth: 18 },
-      9: { halign: 'right', cellWidth: 13 },
-      10: { halign: 'right', cellWidth: 16, fontStyle: 'bold', textColor: [2, 132, 199] },
-      11: { halign: 'center', cellWidth: 41, fontStyle: 'bold' }
-    },
+    styles: tableStyles,
+    headStyles: headStyles,
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    columnStyles: columnStyles,
     didDrawPage: (data) => {
       // Header halaman lanjutan (halaman 2 ke atas)
       if (data.pageNumber > 1) {
-        doc.setFontSize(8);
+        doc.setFontSize(7.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139);
-        doc.text(`LAPORAN KINERJA TIM & KPI DIVISI PREPRESS - PT SOLO MURNI (Lanjutan) • Periode: ${periodLabel}`, 10, 8);
+        doc.text(`LAPORAN KINERJA TIM & KPI DIVISI PREPRESS - PT SOLO MURNI (Lanjutan) • Periode: ${periodLabel}`, 9, 6.5);
         doc.setDrawColor(203, 213, 225);
         doc.setLineWidth(0.2);
-        doc.line(10, 9.5, 287, 9.5);
+        doc.line(9, 7.5, 201, 7.5);
       }
     }
   });
 
   // =========================================================================
-  // 3. BLOK PENGESAHAN (FOOTER TANDA TANGAN 3 KOLOM SEJAJAR) DI HALAMAN TERAKHIR
+  // 3. BLOK PENGESAHAN (FOOTER TANDA TANGAN 3 KOLOM SEJAJAR) DI HALAMAN 2
   // =========================================================================
   const finalY = doc.lastAutoTable.finalY;
-  // Jarak vertikal rapat & proporsional (8-12 mm) dari tabel, disesuaikan agar pas di halaman 2 tanpa memicu halaman 3
-  let signY = Math.max(finalY + 8, 122);
-  if (signY + 28 > 196) {
-    signY = Math.max(finalY + 6, 196 - 28);
-  }
+  // Menempel rapi tepat di bawah baris tabel terakhir di Halaman 2 (margin-top: 16px / ~5.5mm, tanpa page-break-before)
+  const signY = finalY + 5.5;
 
-  // Titik tengah 3 kolom tanda tangan sejajar (Landscape A4: 297mm)
-  const colCenters = [55, 148.5, 242];
+  // Titik tengah 3 kolom tanda tangan sejajar (A4 Portrait 210mm, margin kiri/kanan 9mm -> lebar 192mm)
+  // Lebar per kolom: 64mm. Kolom 1: 41mm | Kolom 2: 105mm | Kolom 3: 169mm
+  const colCenters = [41, 105, 169];
 
   // Tanggal Pengesahan di atas kolom kanan
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(30, 41, 59);
   doc.text(`Surakarta, ${printDateIndo}`, colCenters[2], signY, { align: 'center' });
@@ -543,7 +567,7 @@ export async function exportActivePersonnelKpiToPdf(personnelList, period, optio
   // Baris Header Pengesahan
   const headerSignY = signY + 4.5;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.text('DIBUAT OLEH:', colCenters[0], headerSignY, { align: 'center' });
   doc.text('DISETUJUI OLEH (1):', colCenters[1], headerSignY, { align: 'center' });
   doc.text('DISETUJUI OLEH (2):', colCenters[2], headerSignY, { align: 'center' });
@@ -551,15 +575,15 @@ export async function exportActivePersonnelKpiToPdf(personnelList, period, optio
   // Baris Jabatan Pengesahan
   const roleSignY = headerSignY + 4;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.text('Manager Prepress', colCenters[0], roleSignY, { align: 'center' });
   doc.text('Plant Manager', colCenters[1], roleSignY, { align: 'center' });
   doc.text('HRBP Production & Warehouse', colCenters[2], roleSignY, { align: 'center' });
 
-  // Baris Nama Pejabat (ruang tanda tangan fisik 16-17 mm)
-  const nameSignY = roleSignY + 16.5;
+  // Baris Nama Pejabat (ruang tanda tangan fisik 15.5 mm)
+  const nameSignY = roleSignY + 15.5;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.text(managerName, colCenters[0], nameSignY, { align: 'center' });
   doc.text('YOH. SRIYANA', colCenters[1], nameSignY, { align: 'center' });
   doc.text('SUGENG KURNIAWAN DJATI', colCenters[2], nameSignY, { align: 'center' });
@@ -581,28 +605,23 @@ export async function exportActivePersonnelKpiToPdf(personnelList, period, optio
   // Baris Catatan Tanggal
   const dateSignY = nameSignY + 5;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Tgl: .......................................', colCenters[0], dateSignY, { align: 'center' });
-  doc.text('Tgl: .......................................', colCenters[1], dateSignY, { align: 'center' });
-  doc.text('Tgl: .......................................', colCenters[2], dateSignY, { align: 'center' });
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
   doc.text('Tgl: .......................................', colCenters[0], dateSignY, { align: 'center' });
   doc.text('Tgl: .......................................', colCenters[1], dateSignY, { align: 'center' });
   doc.text('Tgl: .......................................', colCenters[2], dateSignY, { align: 'center' });
 
   // =========================================================================
-  // 4. PENOMORAN HALAMAN RESMI DI FOOTER SETIAP LEMBAR
+  // 4. PENOMORAN HALAMAN RESMI DI FOOTER SETIAP LEMBAR (A4 PORTRAIT)
   // =========================================================================
   const totalPages = doc.internal.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
-    doc.text(`Dokumen Resmi PRISM Prepress • PT Solo Murni • Dicetak: ${printDateTimeStr}`, 10, 203);
-    doc.text(`Halaman ${p} dari ${totalPages}`, 287, 203, { align: 'right' });
+    doc.text(`Dokumen Resmi PRISM Prepress • PT Solo Murni • Dicetak: ${printDateTimeStr}`, 9, 290);
+    doc.text(`Halaman ${p} dari ${totalPages}`, 201, 290, { align: 'right' });
   }
 
   // Nama file otomatis: Laporan_KPI_Active_PRISM_[Periode].pdf
